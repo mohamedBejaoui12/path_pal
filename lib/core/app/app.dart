@@ -6,7 +6,6 @@ import 'package:pfe1/features/authentication/presentation/login_screen.dart';
 import 'package:pfe1/features/authentication/presentation/signup_screen.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/features/home/presentation/home_screen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RouterNotifier extends ChangeNotifier {
   final WidgetRef _ref;
@@ -33,31 +32,9 @@ class MyApp extends ConsumerWidget {
     );
   }
 
-  GoRouter _router(WidgetRef ref) {
-    final notifier = RouterNotifier(ref);
+   GoRouter _router(WidgetRef ref) {
     return GoRouter(
-      refreshListenable: notifier,
-      redirect: (BuildContext context, GoRouterState state) {
-        final authState = ref.read(authProvider);
-        final currentPath = state.uri.path;
-
-        final isLoggingIn = currentPath == '/login';
-        final isSigningUp = currentPath == '/signup';
-        final isVerifyingEmail = currentPath == '/verify-email';
-
-        switch (authState.status) {
-          case AuthStatus.authenticated:
-            return (isLoggingIn || isSigningUp || isVerifyingEmail) ? '/' : null;
-          case AuthStatus.unauthenticated:
-            return (isLoggingIn || isSigningUp) ? null : '/login';
-          case AuthStatus.emailUnverified:
-            return isVerifyingEmail ? null : '/verify-email';
-          case AuthStatus.initial:
-            return '/login';
-          case AuthStatus.loading:
-            return isLoggingIn ? null : '/login';
-        }
-      },
+      initialLocation: '/signup',  // Change initial location
       routes: [
         GoRoute(
           path: '/',
@@ -79,6 +56,17 @@ class MyApp extends ConsumerWidget {
           },
         ),
       ],
+      // Minimal redirect logic
+      redirect: (BuildContext context, GoRouterState state) {
+        final authState = ref.read(authProvider);
+        final currentPath = state.uri.path;
+
+        // Only redirect to login for home screen if not authenticated
+        if (currentPath == '/' && authState.status != AuthStatus.authenticated) {
+          return '/login';
+        }
+
+        return null;
+      },
     );
-  }
-}
+  }}

@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../providers/auth_provider.dart';
-
-class EmailVerificationScreen extends ConsumerWidget {
+class EmailVerificationScreen extends StatelessWidget {
   final String email;
 
   const EmailVerificationScreen({
-    Key? key, 
-    required this.email
-  }) : super(key: key);
+    super.key, 
+    required this.email,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Verify Email'),
+        automaticallyImplyLeading: false, // Remove back button
+      ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -44,7 +45,7 @@ class EmailVerificationScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 20),
               const Text(
-                'Please check your inbox and click on the verification link to activate your account.',
+                'Please check your inbox and click on the verification link.',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey,
@@ -53,12 +54,8 @@ class EmailVerificationScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 30),
               ElevatedButton(
-                onPressed: () {
-                  // Simply log out and return to login screen
-                  ref.read(authProvider.notifier).logout();
-                  context.go('/login');
-                },
-                child: const Text('Back to Login'),
+                onPressed: () => context.go('/login'),
+                child: const Text('Proceed to Login'),
               ),
             ],
           ),

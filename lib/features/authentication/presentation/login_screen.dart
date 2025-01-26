@@ -19,6 +19,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -28,35 +30,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _login() async {
-  if (_formKey.currentState!.validate()) {
-    await ref.read(authProvider.notifier).login(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
 
-    final authState = ref.read(authProvider);
+      try {
+        await ref.read(authProvider.notifier).login(
+              email: _emailController.text.trim(),
+              password: _passwordController.text.trim(),
+            );
 
-    switch (authState.status) {
-      case AuthStatus.authenticated:
-        context.go('/');
-        break;
-      case AuthStatus.emailUnverified:
-        // Pass the email to the verification screen
-        context.push('/verify-email', extra: authState.user?.email);
-        break;
-      case AuthStatus.unauthenticated:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authState.errorMessage ?? 'Login failed'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        break;
-      default:
-        break;
+        final authState = ref.read(authProvider);
+
+        switch (authState.status) {
+          case AuthStatus.authenticated:
+            context.go('/');
+            break;
+          case AuthStatus.emailUnverified:
+            // Pass the email to the verification screen
+            context.push('/verify-email', extra: authState.user?.email);
+            break;
+          case AuthStatus.unauthenticated:
+            setState(() {
+              _errorMessage = authState.errorMessage ?? 'Login failed';
+            });
+            break;
+          default:
+            break;
+        }
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +81,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isLoading = authState.status == AuthStatus.loading;
 
     return LoadingOverlay(
-      isLoading: isLoading,
+      isLoading: isLoading || _isLoading,
       loadingText: 'Logging in...',
       child: Scaffold(
         appBar: AppBar(title: const Text('Login')),
@@ -81,6 +91,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             key: _formKey,
             child: ListView(
               children: [
+                if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
@@ -127,8 +146,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: isLoading ? null : _login,
-                  child: const Text('Login'),
+                  onPressed: isLoading || _isLoading ? null : _login,
+                  child: isLoading || _isLoading 
+                    ? CircularProgressIndicator() 
+                    : const Text('Login'),
                 ),
                 const SizedBox(height: 16),
                 TextButton(

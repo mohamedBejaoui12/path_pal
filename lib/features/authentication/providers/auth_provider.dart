@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../data/auth_service.dart';
 
 enum AuthStatus { 
   initial, 
@@ -40,7 +39,6 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final Ref ref;
   final _supabase = Supabase.instance.client;
-  final _authService = AuthService();
 
   AuthNotifier(this.ref) : super(AuthState()) {
     // Initialize auth status on creation
@@ -93,7 +91,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
           status: AuthStatus.emailUnverified,
           user: user,
         );
+        return; // Prevent further state changes
       }
+
+      // If signup fails
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        errorMessage: 'Signup failed',
+      );
     } on AuthException catch (e) {
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
@@ -101,6 +106,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     }
   }
+ 
+    // ... existing code ...
+  
+    void _logStateTransition(AuthStatus newStatus) {
+      debugPrint('Auth State Transition: ${state.status} -> $newStatus');
+    }
+  
+    // Modify state-changing methods to call _logStateTransition
+    void updateAuthStatus(AuthStatus newStatus) {
+      _logStateTransition(newStatus);
+      state = state.copyWith(status: newStatus);
+    }
+  
 
   Future<void> login({
     required String email,
