@@ -150,8 +150,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _submitForm,
-                  child: const Text('Sign Up'),
+                  onPressed: _isLoading ? null : _submitForm,
+                  child: Text(_isLoading ? 'Creating...' : 'Sign Up'),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Already have an account?'),
+                    TextButton(
+                      onPressed: () => context.go('/login'),
+                      child: const Text('Log In'),
+                    ),
+                  ],
                 ),
               ],
             ),

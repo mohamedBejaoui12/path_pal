@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
 enum AuthStatus { 
   initial, 
   authenticated, 
@@ -50,25 +49,74 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final session = _supabase.auth.currentSession;
       final user = _supabase.auth.currentUser;
 
-      if (session != null && user != null) {
-        if (user.emailConfirmedAt == null) {
-          state = state.copyWith(
-            status: AuthStatus.emailUnverified,
-            user: user,
-          );
-        } else {
-          state = state.copyWith(
-            status: AuthStatus.authenticated,
-            user: user,
-          );
+      // Listen for auth state changes
+      _supabase.auth.onAuthStateChange.listen((data) {
+        final AuthChangeEvent event = data.event;
+        final Session? session = data.session;
+
+        switch (event) {
+          case AuthChangeEvent.signedIn:
+            if (session != null) {
+              _updateAuthStateFromSession(session);
+            }
+            break;
+          case AuthChangeEvent.signedOut:
+            state = state.copyWith(
+              status: AuthStatus.unauthenticated,
+              user: null,
+            );
+            break;
+          case AuthChangeEvent.userUpdated:
+            // Handle user profile updates if needed
+            break;
+          default:
+            break;
         }
+      });
+
+      // Initial session check
+      if (session != null && user != null) {
+        _updateAuthStateFromSession(session);
       } else {
-        state = state.copyWith(status: AuthStatus.unauthenticated);
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          user: null,
+        );
       }
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
         errorMessage: e.toString(),
+        user: null,
+      );
+    }
+  }
+
+  void _updateAuthStateFromSession(Session session) {
+    final user = session.user;
+    if (user.emailConfirmedAt == null) {
+      state = state.copyWith(
+        status: AuthStatus.emailUnverified,
+        user: user,
+      );
+    } else {
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        user: user,
+      );
+    }
+  }
+
+  Future<void> restoreSession() async {
+    try {
+      final session = _supabase.auth.currentSession;
+      if (session != null) {
+        _updateAuthStateFromSession(session);
+      }
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        errorMessage: 'Session restoration failed: ${e.toString()}',
       );
     }
   }
@@ -77,9 +125,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String email,
     required String password,
   }) async {
-    state = state.copyWith(status: AuthStatus.loading);
-
     try {
+      state = state.copyWith(status: AuthStatus.loading);
+
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
@@ -91,10 +139,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
           status: AuthStatus.emailUnverified,
           user: user,
         );
-        return; // Prevent further state changes
+        return;
       }
 
-      // If signup fails
+      // Signup failed
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
         errorMessage: 'Signup failed',
@@ -106,45 +154,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     }
   }
- 
-    // ... existing code ...
-  
-    void _logStateTransition(AuthStatus newStatus) {
-      debugPrint('Auth State Transition: ${state.status} -> $newStatus');
-    }
-  
-    // Modify state-changing methods to call _logStateTransition
-    void updateAuthStatus(AuthStatus newStatus) {
-      _logStateTransition(newStatus);
-      state = state.copyWith(status: newStatus);
-    }
-  
 
   Future<void> login({
     required String email,
     required String password,
   }) async {
-    state = state.copyWith(status: AuthStatus.loading);
-
     try {
+      state = state.copyWith(status: AuthStatus.loading);
+
       final response = await _supabase.auth.signInWithPassword(
         email: email,
         password: password,
       );
 
+      final session = response.session;
       final user = response.user;
-      if (user != null) {
-        if (user.emailConfirmedAt == null) {
-          state = state.copyWith(
-            status: AuthStatus.emailUnverified,
-            user: user,
-          );
-        } else {
-          state = state.copyWith(
-            status: AuthStatus.authenticated,
-            user: user,
-          );
-        }
+
+      if (session != null && user != null) {
+        _updateAuthStateFromSession(session);
+      } else {
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          errorMessage: 'Login failed',
+        );
       }
     } on AuthException catch (e) {
       state = state.copyWith(
@@ -157,10 +189,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     try {
       await _supabase.auth.signOut();
-      state = state.copyWith(status: AuthStatus.unauthenticated);
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        user: null,
+        errorMessage: null,
+      );
     } catch (e) {
-      debugPrint('Logout error: $e');
+      state = state.copyWith(
+        errorMessage: 'Logout failed: ${e.toString()}',
+      );
     }
+  }
+
+  void _logStateTransition(AuthStatus newStatus) {
+    debugPrint('Auth State Transition: ${state.status} -> $newStatus');
+  }
+
+  void updateAuthStatus(AuthStatus newStatus) {
+    _logStateTransition(newStatus);
+    state = state.copyWith(status: newStatus);
   }
 }
 

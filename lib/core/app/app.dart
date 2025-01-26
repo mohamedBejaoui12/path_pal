@@ -18,13 +18,24 @@ class RouterNotifier extends ChangeNotifier {
 }
 
 class MyApp extends ConsumerWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final bool isAuthenticated;
+
+  const MyApp({
+    Key? key, 
+    required this.isAuthenticated
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Restore session on app startup
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authProvider.notifier).restoreSession();
+    });
+
     return MaterialApp.router(
-      title: 'Your App Name',
-      routerConfig: _router(ref),
+      title: 'PFE App',
+      debugShowCheckedModeBanner: false,
+      routerConfig: _router(ref, isAuthenticated),
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -32,9 +43,9 @@ class MyApp extends ConsumerWidget {
     );
   }
 
-   GoRouter _router(WidgetRef ref) {
+  GoRouter _router(WidgetRef ref, bool isAuthenticated) {
     return GoRouter(
-      initialLocation: '/signup',  // Change initial location
+      initialLocation: isAuthenticated ? '/' : '/login',  
       routes: [
         GoRoute(
           path: '/',
@@ -69,4 +80,5 @@ class MyApp extends ConsumerWidget {
         return null;
       },
     );
-  }}
+  }
+}

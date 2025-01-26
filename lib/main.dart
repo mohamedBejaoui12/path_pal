@@ -14,15 +14,16 @@ Future<void> main() async {
   await Supabase.initialize(
     url: AppConfig.supabaseUrl,
     anonKey: AppConfig.supabaseAnonKey,
+    debug: false, // Only enable debug in debug mode
   );
 
   // Initialize persistent session
   final authService = AuthService();
-  await authService.initializeSession();
+  final sessionMaintained = await authService.maintainSession();
 
   runApp(
-     ProviderScope(
-      child: MyApp(),
+    ProviderScope(
+      child: MyApp(isAuthenticated: sessionMaintained),
     ),
   );
 }

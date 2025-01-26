@@ -4,19 +4,28 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AuthService {
   final _supabase = Supabase.instance.client;
 
-  // Improved session initialization with more robust error handling
+  // Enhanced session initialization and persistence
   Future<Session?> initializeSession() async {
     try {
-      // Use currentSession instead of getSession
+      // Attempt to restore the session
       final session = _supabase.auth.currentSession;
 
       if (session != null) {
-        debugPrint('Session recovered successfully');
-        // Validate session before returning
+        // Check if the session is still valid
         if (_isSessionValid(session)) {
-          return session;
+          debugPrint('Existing session recovered successfully');
+          
+          // Attempt to refresh the session to extend its validity
+          try {
+            final refreshedSession = await _supabase.auth.refreshSession();
+            debugPrint('Session refreshed successfully');
+            return refreshedSession.session;
+          } catch (refreshError) {
+            debugPrint('Session refresh failed: $refreshError');
+            return null;
+          }
         } else {
-          debugPrint('Recovered session is invalid');
+          debugPrint('Existing session is invalid');
           return null;
         }
       } else {
@@ -29,7 +38,7 @@ class AuthService {
     }
   }
 
-  // Helper method to validate session
+  // Enhanced session validation
   bool _isSessionValid(Session session) {
     // Check if access token is not empty
     if (session.accessToken.isEmpty) {
@@ -37,7 +46,7 @@ class AuthService {
       return false;
     }
 
-    // Check session expiration
+    // Check session expiration with more robust handling
     final expiresAt = session.expiresAt;
     if (expiresAt != null) {
       final now = DateTime.now().toUtc();
@@ -46,13 +55,22 @@ class AuthService {
         isUtc: true,
       );
       
-      if (now.isAfter(expirationTime)) {
-        debugPrint('Session expired');
+      // Allow a small buffer before expiration (5 minutes)
+      final bufferTime = expirationTime.subtract(Duration(minutes: 5));
+      
+      if (now.isAfter(bufferTime)) {
+        debugPrint('Session near expiration or expired');
         return false;
       }
     }
 
     return true;
+  }
+
+  // Method to check and maintain session
+  Future<bool> maintainSession() async {
+    final session = await initializeSession();
+    return session != null;
   }
 
   Future<AuthResponse?> signUp({
