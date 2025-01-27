@@ -53,9 +53,12 @@ class EmailVerificationScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () => context.go('/login'),
-                child: const Text('Proceed to Login'),
+             ElevatedButton(
+                onPressed: () {
+                  // Navigate to user details page
+                  context.push('/user-details', extra: email);
+                },
+                child: const Text('Continue to Profile Setup'),
               ),
             ],
           ),

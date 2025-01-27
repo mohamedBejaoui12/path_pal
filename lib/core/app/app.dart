@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pfe1/features/authentication/presentation/email_verification_screen.dart';
+import 'package:pfe1/features/authentication/presentation/interests_selection_screen.dart';
 import 'package:pfe1/features/authentication/presentation/login_screen.dart';
 import 'package:pfe1/features/authentication/presentation/signup_screen.dart';
+import 'package:pfe1/features/authentication/presentation/user_details_screen.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/features/home/presentation/home_screen.dart';
 
@@ -65,6 +67,17 @@ class MyApp extends ConsumerWidget {
             final email = state.extra as String? ?? 'your email';
             return EmailVerificationScreen(email: email);
           },
+        ),
+        GoRoute(
+          path: '/user-details',
+          builder: (context, state) {
+            final email = state.extra as String;
+            return UserDetailsScreen(email: email);
+          },
+        ),
+        GoRoute(
+          path: '/select-interests',
+          builder: (context, state) => const InterestsSelectionScreen(),
         ),
       ],
       // Minimal redirect logic
