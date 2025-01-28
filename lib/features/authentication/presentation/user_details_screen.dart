@@ -25,33 +25,35 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
   final UserDetailsService _userDetailsService = UserDetailsService();
 
-  void _submitForm() async {
-  if (_formKey.currentState!.validate()) {
-    try {
-      final userDetails = UserDetailsModel(
-        name: _nameController.text.trim(),
-        familyName: _familyNameController.text.trim(),
-        dateOfBirth: _selectedDate!,
-        phoneNumber: _phoneController.text.trim(),
-        cityOfBirth: _cityController.text.trim(),
-        gender: _selectedGender!,
-        email: widget.email,
-      );
-
-      await _userDetailsService.saveUserDetails(userDetails);
-      
-      // Navigate to interests selection screen
-      context.push('/select-interests');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving user details: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-}
+ // lib/features/authentication/presentation/user_details_screen.dart
+ void _submitForm() async {
+   if (_formKey.currentState!.validate()) {
+     try {
+       final userDetails = UserDetailsModel(
+         name: _nameController.text.trim(),
+         familyName: _familyNameController.text.trim(),
+         dateOfBirth: _selectedDate!,
+         phoneNumber: _phoneController.text.trim(),
+         cityOfBirth: _cityController.text.trim(),
+         gender: _selectedGender!,
+         email: widget.email,
+       );
+ 
+       // Save user details and get the inserted user's ID
+       final userId = await _userDetailsService.saveUserDetails(userDetails);
+       
+       // Navigate to interests selection screen with user ID
+       context.push('/select-interests', extra: userId);
+     } catch (e) {
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('Error saving user details: ${e.toString()}'),
+           backgroundColor: Colors.red,
+         ),
+       );
+     }
+   }
+ }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
