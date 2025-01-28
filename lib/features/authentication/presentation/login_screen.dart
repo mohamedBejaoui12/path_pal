@@ -50,16 +50,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             break;
           case AuthStatus.emailUnverified:
             // Pass the email to the verification screen
-            context.push('/verify-email', extra: authState.user?.email);
+            context.go('/verify-email', extra: authState.user?.email);
             break;
           case AuthStatus.unauthenticated:
             setState(() {
-              _errorMessage = authState.errorMessage ?? 'Login failed';
+              _errorMessage = 'Login failed. Please check your credentials.';
             });
             break;
-          default:
-            break;
         }
+      } catch (e) {
+        setState(() {
+          _errorMessage = 'Login failed: ${e.toString()}';
+        });
       } finally {
         setState(() {
           _isLoading = false;
@@ -70,18 +72,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen to auth state changes
-    ref.listen<AuthState>(authProvider, (previous, next) {
-      if (next.status == AuthStatus.authenticated) {
-        context.go('/');
-      }
-    });
-
-    final authState = ref.watch(authProvider);
-    final isLoading = authState.status == AuthStatus.loading;
-
     return LoadingOverlay(
-      isLoading: isLoading || _isLoading,
+      isLoading: _isLoading,
       loadingText: 'Logging in...',
       child: Scaffold(
         appBar: AppBar(title: const Text('Login')),
@@ -96,7 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: Text(
                       _errorMessage!,
-                      style: TextStyle(color: Colors.red),
+                      style: const TextStyle(color: Colors.red),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -120,6 +112,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
+                  obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock),
@@ -136,25 +129,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       },
                     ),
                   ),
-                  obscureText: !_isPasswordVisible,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: isLoading || _isLoading ? null : _login,
-                  child: isLoading || _isLoading 
-                    ? CircularProgressIndicator() 
-                    : const Text('Login'),
+                  onPressed: _isLoading ? null : _login,
+                  child: const Text('Login'),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
-                    context.push('/signup');
+                    // Explicitly use context.go to navigate to signup
+                    context.go('/signup');
                   },
                   child: const Text('Don\'t have an account? Sign Up'),
                 ),

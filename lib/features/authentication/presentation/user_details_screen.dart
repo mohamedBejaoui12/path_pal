@@ -42,8 +42,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
        // Save user details and get the inserted user's ID
        final userId = await _userDetailsService.saveUserDetails(userDetails);
        
-       // Navigate to interests selection screen with user ID
-       context.push('/select-interests', extra: userId);
+       // Navigate to interests selection screen with user ID using context.go()
+       context.go('/select-interests', extra: userId);
      } catch (e) {
        ScaffoldMessenger.of(context).showSnackBar(
          SnackBar(

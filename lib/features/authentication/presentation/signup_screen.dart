@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/auth_service.dart';
+import '../providers/auth_provider.dart';
 import '../../../../shared/widgets/loading_overlay.dart';
 
-class SignUpScreen extends StatefulWidget {
+class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
 
   @override
   _SignUpScreenState createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _authService = AuthService();
 
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -35,25 +36,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
+        _errorMessage = null;
       });
 
-      final response = await _authService.signUp(
-        email: _emailController.text.trim(), 
-        password: _passwordController.text.trim()
-      );
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      // Always navigate to email verification screen
-      context.push('/verify-email', extra: _emailController.text.trim());
-
-      // Show error snackbar if signup failed
-      if (response == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sign up failed. Please try again.')),
+      try {
+        await ref.read(authProvider.notifier).signup(
+          email: _emailController.text.trim(), 
+          password: _passwordController.text.trim()
         );
+
+        // Use context.go instead of context.push
+        context.go('/verify-email', extra: _emailController.text.trim());
+      } catch (e) {
+        setState(() {
+          _errorMessage = 'Signup failed: ${e.toString()}';
+        });
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -62,7 +63,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return LoadingOverlay(
       isLoading: _isLoading,
-      loadingText: 'Creating your account...',
+      loadingText: 'Creating account...',
       child: Scaffold(
         appBar: AppBar(title: const Text('Sign Up')),
         body: Padding(
@@ -71,6 +72,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
             key: _formKey,
             child: ListView(
               children: [
+                if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
@@ -91,6 +101,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
+                  obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock),
@@ -107,7 +118,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       },
                     ),
                   ),
-                  obscureText: !_isPasswordVisible,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a password';
@@ -121,6 +131,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _confirmPasswordController,
+                  obscureText: !_isConfirmPasswordVisible,
                   decoration: InputDecoration(
                     labelText: 'Confirm Password',
                     prefixIcon: const Icon(Icons.lock),
@@ -137,11 +148,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       },
                     ),
                   ),
-                  obscureText: !_isConfirmPasswordVisible,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    }
                     if (value != _passwordController.text) {
                       return 'Passwords do not match';
                     }
@@ -151,18 +158,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _submitForm,
-                  child: Text(_isLoading ? 'Creating...' : 'Sign Up'),
+                  child: const Text('Sign Up'),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Already have an account?'),
-                    TextButton(
-                      onPressed: () => context.go('/login'),
-                      child: const Text('Log In'),
-                    ),
-                  ],
+                TextButton(
+                  onPressed: () {
+                    context.go('/login');
+                  },
+                  child: const Text('Already have an account? Log In'),
                 ),
               ],
             ),
