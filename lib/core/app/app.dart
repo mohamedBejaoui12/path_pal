@@ -7,6 +7,7 @@ import 'package:pfe1/features/authentication/presentation/signup_screen.dart';
 import 'package:pfe1/features/authentication/presentation/user_details_screen.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/features/home/presentation/home_screen.dart';
+import 'package:pfe1/features/home/presentation/user_profile_screen.dart';
 import 'package:pfe1/features/interests/presentation/interests_selection_screen.dart';
 
 class RouterNotifier extends ChangeNotifier {
@@ -82,6 +83,10 @@ class MyApp extends ConsumerWidget {
     final userId = state.extra as int;
     return InterestsSelectionScreen(userId: userId);
   },
+),
+GoRoute(
+  path: '/user-profile',
+  builder: (context, state) => const UserProfileScreen(),
 ),
       ],
       // Minimal redirect logic
