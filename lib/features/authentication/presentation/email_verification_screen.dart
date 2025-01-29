@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:pinput/pinput.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/loading_overlay.dart';
 import '../providers/auth_provider.dart';
 
 class EmailVerificationScreen extends ConsumerStatefulWidget {
@@ -101,73 +103,194 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
     super.dispose();
   }
 
+  Widget _buildHeader(Color primaryColor, Color accentColor) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 60, bottom: 20),
+      child: Column(
+        children: [
+          Text(
+            'Ahlan wa Sahlan',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'PlayfairDisplay',
+              shadows: [
+                const Shadow(
+                  color: Colors.black12,
+                  blurRadius: 5,
+                  offset: Offset(2, 2),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Verify Your Email',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 16,
+              fontStyle: FontStyle.italic,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            height: 2,
+            width: 100,
+            color: accentColor,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final defaultPinTheme = PinTheme(
       width: 56,
       height: 56,
-      textStyle: const TextStyle(
+      textStyle: TextStyle(
         fontSize: 20,
-        color: Colors.black,
+        color: AppColors.primaryColor,
         fontWeight: FontWeight.w600,
       ),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.black26),
+        color: Colors.white,
+        border: Border.all(color: AppColors.primaryColor.withOpacity(0.5)),
         borderRadius: BorderRadius.circular(10),
       ),
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Email Verification'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Enter the 6-digit code sent to ${widget.email}',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
+    return LoadingOverlay(
+      isLoading: _isLoading,
+      loadingText: 'Verifying...',
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [AppColors.primaryColor, AppColors.backgroundColor],
+              stops: const [0.3, 0.3],
             ),
-            const SizedBox(height: 20),
-            Pinput(
-              length: 6,
-              controller: _pinController,
-              defaultPinTheme: defaultPinTheme,
-              focusedPinTheme: defaultPinTheme.copyDecorationWith(
-                border: Border.all(color: Colors.blue),
-                borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              _buildHeader(AppColors.primaryColor, AppColors.secondaryColor),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundColor,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(40),
+                      topRight: Radius.circular(40),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryColor.withOpacity(0.1),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Enter the 6-digit code sent to ${widget.email}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.primaryColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        Pinput(
+                          length: 6,
+                          controller: _pinController,
+                          defaultPinTheme: defaultPinTheme,
+                          focusedPinTheme: defaultPinTheme.copyDecorationWith(
+                            border: Border.all(color: AppColors.primaryColor, width: 2),
+                          ),
+                          errorPinTheme: defaultPinTheme.copyDecorationWith(
+                            border: Border.all(color: AppColors.errorColor, width: 2),
+                          ),
+                          pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+                          showCursor: true,
+                          onCompleted: (_) => _verifyOtp(),
+                        ),
+                        const SizedBox(height: 20),
+                        if (_errorMessage != null)
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error_outline, color: AppColors.primaryColor),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    _errorMessage!,
+                                    style: TextStyle(
+                                      color: AppColors.primaryColor,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 30),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _verifyOtp,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryColor,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 3,
+                              shadowColor: AppColors.primaryColor.withOpacity(0.3),
+                            ),
+                            child: Text(
+                              _isLoading ? 'Verifying...' : 'Verify',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextButton(
+                          onPressed: _isLoading ? null : _sendOtp,
+                          child: Text(
+                            'Resend OTP',
+                            style: TextStyle(
+                              color: AppColors.primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              errorPinTheme: defaultPinTheme.copyDecorationWith(
-                border: Border.all(color: Colors.red),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
-              showCursor: true,
-              onCompleted: (_) => _verifyOtp(),
-            ),
-            const SizedBox(height: 20),
-            if (_errorMessage != null)
-              Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.red),
-                textAlign: TextAlign.center,
-              ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _verifyOtp,
-              child: _isLoading 
-                ? const CircularProgressIndicator() 
-                : const Text('Verify'),
-            ),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: _isLoading ? null : _sendOtp,
-              child: const Text('Resend OTP'),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
