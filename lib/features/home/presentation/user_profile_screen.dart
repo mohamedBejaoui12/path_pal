@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
 import 'package:pfe1/features/authentication/data/user_details_provider.dart';
 import 'package:pfe1/features/authentication/domain/user_details_model.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
@@ -28,7 +30,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   void initState() {
     super.initState();
     
-    // Initialize controllers with default empty values
+    // Initialize controllers
     _nameController = TextEditingController();
     _familyNameController = TextEditingController();
     _emailController = TextEditingController();
@@ -39,7 +41,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     _dateOfBirth = DateTime.now();
     _selectedGender = Gender.male;
 
-    // Use post frame callback to fetch user details
+    // Fetch user details after widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchUserDetails();
     });
@@ -48,193 +50,53 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   void _fetchUserDetails() {
     final authState = ref.read(authProvider);
     
-    // Test database connection first
-    ref.read(userDetailsProvider.notifier).testDatabaseConnection();
-    
-    // Fetch user details with comprehensive logging
     if (authState.user?.email != null) {
-      print('🔍 Initiating user details fetch for: ${authState.user!.email}');
       ref.read(userDetailsProvider.notifier).fetchUserDetails(authState.user!.email);
-    } else {
-      print('❌ No user email found during initState');
     }
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _familyNameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _cityController.dispose();
-    super.dispose();
-  }
+  void _uploadProfileImage() async {
+    final userDetailsNotifier = ref.read(userDetailsProvider.notifier);
+    final authState = ref.read(authProvider);
 
-  @override
-  Widget build(BuildContext context) {
-    // Watch the user details provider
-    final userDetailsState = ref.watch(userDetailsProvider);
-    final authState = ref.watch(authProvider);
-
-    // Update controllers when user details are loaded
-    if (userDetailsState.userDetails != null) {
-      final userDetails = userDetailsState.userDetails!;
-      _nameController.text = userDetails.name;
-      _familyNameController.text = userDetails.familyName;
-      _emailController.text = userDetails.email;
-      _phoneController.text = userDetails.phoneNumber;
-      _cityController.text = userDetails.cityOfBirth;
-      _dateOfBirth = userDetails.dateOfBirth;
-      _selectedGender = userDetails.gender;
+    if (authState.user?.email == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to upload image: No user email found'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('User Profile'),
-        backgroundColor: AppColors.primaryColor,
-      ),
-      body: userDetailsState.isLoading 
-        ? Center(child: CircularProgressIndicator(color: AppColors.primaryColor))
-        : userDetailsState.error != null
-          ? Center(child: Text('Error: ${userDetailsState.error}'))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 80,
-                      backgroundColor: AppColors.primaryColor.withOpacity(0.1),
-                      child: Icon(
-                        Icons.person,
-                        size: 100,
-                        color: AppColors.primaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    CustomTextFormField(
-                      controller: _nameController,
-                      labelText: 'First Name',
-                      prefixIcon: Icons.person,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your first name';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextFormField(
-                      controller: _familyNameController,
-                      labelText: 'Family Name',
-                      prefixIcon: Icons.family_restroom,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your family name';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextFormField(
-                      controller: _emailController,
-                      labelText: 'Email',
-                      prefixIcon: Icons.email,
-                     
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextFormField(
-                      controller: _phoneController,
-                      labelText: 'Phone Number',
-                      prefixIcon: Icons.phone,
-                      keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value != null && value.isNotEmpty) {
-                          final phoneRegex = RegExp(r'^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$');
-                          if (!phoneRegex.hasMatch(value)) {
-                            return 'Please enter a valid phone number';
-                          }
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextFormField(
-                      controller: _cityController,
-                      labelText: 'City of Birth',
-                      prefixIcon: Icons.location_city,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your city of birth';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Text('Date of Birth: ', style: TextStyle(fontSize: 16)),
-                        TextButton(
-                          onPressed: _selectDate,
-                          child: Text(
-                            DateFormat('yyyy-MM-dd').format(_dateOfBirth),
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Text('Gender: ', style: TextStyle(fontSize: 16)),
-                        DropdownButton<Gender>(
-                          value: _selectedGender,
-                          onChanged: (Gender? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                _selectedGender = newValue;
-                              });
-                            }
-                          },
-                          items: Gender.values
-                              .map<DropdownMenuItem<Gender>>((Gender gender) {
-                            return DropdownMenuItem<Gender>(
-                              value: gender,
-                              child: Text(gender.name.capitalize()),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _saveProfile,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryColor,
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
-                      child: const Text('Save Profile'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-    );
-  }
-
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _dateOfBirth,
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _dateOfBirth) {
-      setState(() {
-        _dateOfBirth = picked;
-      });
+    try {
+      final imageUrl = await userDetailsNotifier.uploadProfileImage(authState.user!.email!);
+      
+      if (imageUrl != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Profile image updated successfully'),
+            backgroundColor: AppColors.primaryColor,
+          ),
+        );
+        
+        // Refresh user details to show new image
+        await userDetailsNotifier.fetchUserDetails(authState.user!.email);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to upload image'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to upload profile image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -281,8 +143,242 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
       }
     }
   }
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _dateOfBirth,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _dateOfBirth) {
+      setState(() {
+        _dateOfBirth = picked;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _familyNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _cityController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final userDetailsState = ref.watch(userDetailsProvider);
+    final authState = ref.watch(authProvider);
+
+    // Update controllers when user details are loaded
+    if (userDetailsState.userDetails != null) {
+      final userDetails = userDetailsState.userDetails!;
+      _nameController.text = userDetails.name;
+      _familyNameController.text = userDetails.familyName;
+      _emailController.text = userDetails.email;
+      _phoneController.text = userDetails.phoneNumber;
+      _cityController.text = userDetails.cityOfBirth;
+      _dateOfBirth = userDetails.dateOfBirth;
+      _selectedGender = userDetails.gender;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('User Profile'),
+        backgroundColor: AppColors.primaryColor,
+      ),
+      body: userDetailsState.isLoading 
+        ? Center(child: CircularProgressIndicator(color: AppColors.primaryColor))
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Profile Image Section
+                  GestureDetector(
+                    onTap: _uploadProfileImage,
+                    child: Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        CircleAvatar(
+                          radius: 80,
+                          backgroundColor: AppColors.primaryColor.withOpacity(0.1),
+                          child: userDetailsState.userDetails?.profileImageUrl != null
+                            ? CachedNetworkImage(
+                                imageUrl: userDetailsState.userDetails!.profileImageUrl!,
+                                imageBuilder: (context, imageProvider) => Container(
+                                  width: 160,
+                                  height: 160,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    image: DecorationImage(
+                                      image: imageProvider,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                placeholder: (context, url) => 
+                                    CircularProgressIndicator(color: AppColors.primaryColor),
+                                errorWidget: (context, url, error) => 
+                                    Icon(Icons.person, size: 100, color: AppColors.primaryColor),
+                              )
+                            : Icon(
+                                Icons.person, 
+                                size: 100, 
+                                color: AppColors.primaryColor
+                              ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: Icon(Icons.edit, color: Colors.white, size: 20),
+                              onPressed: _uploadProfileImage,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // First Name
+                  CustomTextFormField(
+                    controller: _nameController,
+                    labelText: 'First Name',
+                    prefixIcon: Icons.person,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your first name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Family Name
+                  CustomTextFormField(
+                    controller: _familyNameController,
+                    labelText: 'Family Name',
+                    prefixIcon: Icons.family_restroom,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your family name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Email (Read-only)
+                  CustomTextFormField(
+                    controller: _emailController,
+                    labelText: 'Email',
+                    prefixIcon: Icons.email,
+                    
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Phone Number
+                  CustomTextFormField(
+                    controller: _phoneController,
+                    labelText: 'Phone Number',
+                    prefixIcon: Icons.phone,
+                    keyboardType: TextInputType.phone,
+                    validator: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        final phoneRegex = RegExp(r'^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$');
+                        if (!phoneRegex.hasMatch(value)) {
+                          return 'Please enter a valid phone number';
+                        }
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // City of Birth
+                  CustomTextFormField(
+                    controller: _cityController,
+                    labelText: 'City of Birth',
+                    prefixIcon: Icons.location_city,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your city of birth';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Date of Birth
+                  Row(
+                    children: [
+                      const Text('Date of Birth: ', style: TextStyle(fontSize: 16)),
+                      TextButton(
+                        onPressed: _selectDate,
+                        child: Text(
+                          DateFormat('yyyy-MM-dd').format(_dateOfBirth),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Gender Selection
+                  Row(
+                    children: [
+                      const Text('Gender: ', style: TextStyle(fontSize: 16)),
+                      DropdownButton<Gender>(
+                        value: _selectedGender,
+                        onChanged: (Gender? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _selectedGender = newValue;
+                            });
+                          }
+                        },
+                        items: Gender.values
+                            .map<DropdownMenuItem<Gender>>((Gender gender) {
+                          return DropdownMenuItem<Gender>(
+                            value: gender,
+                            child: Text(gender.name.capitalize()),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Save Profile Button
+                  ElevatedButton(
+                    onPressed: _saveProfile,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    child: const Text('Save Profile'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
 }
 
+// Extension for capitalizing first letter
 extension StringExtension on String {
   String capitalize() {
     return "${this[0].toUpperCase()}${substring(1)}";

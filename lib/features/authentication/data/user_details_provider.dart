@@ -1,8 +1,13 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:pfe1/features/authentication/domain/user_details_model.dart';
 
+// State class for managing user details
 class UserDetailsState {
   final UserDetailsModel? userDetails;
   final bool isLoading;
@@ -13,175 +18,206 @@ class UserDetailsState {
     this.isLoading = false,
     this.error,
   });
+
+  UserDetailsState copyWith({
+    UserDetailsModel? userDetails,
+    bool? isLoading,
+    String? error,
+  }) {
+    return UserDetailsState(
+      userDetails: userDetails ?? this.userDetails,
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
+    );
+  }
 }
 
+// User Details Notifier for managing user details state and operations
 class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
   final _supabase = Supabase.instance.client;
+  final _imagePicker = ImagePicker();
 
   UserDetailsNotifier() : super(UserDetailsState());
 
-  // Comprehensive method to test database connection and data retrieval
-  Future<void> testDatabaseConnection() async {
-    try {
-      // Test 1: Check Supabase connection
-      print('Testing Supabase connection...');
-      final supabaseStatus = _supabase.auth.currentUser != null;
-      print('Supabase connection status: $supabaseStatus');
-
-      // Print current user info
-      await printSupabaseUserInfo();
-    } catch (e, stackTrace) {
-      print('Database connection test failed: $e');
-      print('Stacktrace: $stackTrace');
-    }
-  }
-
-  // Method to print Supabase user information
-  Future<void> printSupabaseUserInfo() async {
-    try {
-      final currentUser = _supabase.auth.currentUser;
-      if (currentUser != null) {
-        print('🔐 Current Supabase User:');
-        print('   - ID: ${currentUser.id}');
-        print('   - Email: ${currentUser.email}');
-        print('   - Created At: ${currentUser.createdAt}');
-      } else {
-        print('❌ No current Supabase user');
-      }
-    } catch (e) {
-      print('❌ Error retrieving Supabase user info: $e');
-    }
-  }
-
-  // Enhanced method to fetch and log user details
+  // Fetch user details from Supabase
   Future<void> fetchUserDetails(String? email) async {
-    // Reset state before starting
-    state = UserDetailsState(isLoading: true);
+  state = state.copyWith(isLoading: true, error: null);
 
-    if (email == null) {
-      print('❌ Error: Email is null');
-      state = UserDetailsState(error: 'No email provided');
-      return;
-    }
+  try {
+    if (email == null) throw Exception('No email provided');
 
-    try {
-      print('🔍 Attempting to fetch user details for email: $email');
-      
-      // Comprehensive query with detailed logging
-      final response = await _supabase
-          .from('user')
-          .select('*')
-          .eq('email', email)
-          .maybeSingle();
+    final response = await _supabase
+        .from('user')
+        .select()
+        .eq('email', email)
+        .single();
 
-      print('🌐 Supabase raw response: $response');
+    if (response == null) throw Exception('User not found');
 
-      if (response != null) {
-        // Log all keys in the response
-        print('📋 Response keys: ${response.keys}');
+    final userDetails = _validateAndParseUserDetails(response, email);
 
-        // Flexible mapping with extensive null checks and logging
-        final userDetails = UserDetailsModel(
-          name: _extractValue(response, ['name', 'first_name'], ''),
-          familyName: _extractValue(response, ['family_name', 'last_name'], ''),
-          dateOfBirth: _parseDate(response['date_of_birth']),
-          phoneNumber: _extractValue(response, ['phone_number', 'phone'], ''),
-          cityOfBirth: _extractValue(response, ['city_of_birth', 'city'], ''),
-          gender: _parseGender(response['gender']),
-          email: email,
-        );
-
-        print('✅ Parsed user details: $userDetails');
-
-        state = UserDetailsState(userDetails: userDetails);
-      } else {
-        print('❓ No user details found for email: $email');
-        state = UserDetailsState(error: 'User details not found');
-      }
-    } catch (e, stackTrace) {
-      print('❌ Error fetching user details: $e');
-      print('🔍 Stacktrace: $stackTrace');
-      state = UserDetailsState(error: e.toString());
-    }
+    // Update the state with user details, including profile image URL
+    state = state.copyWith(
+      userDetails: userDetails,
+      isLoading: false,
+      error: null,
+    );
+  } catch (e) {
+    print('Error fetching user details: $e');
+    state = state.copyWith(isLoading: false, error: e.toString());
   }
+}
 
-  // Helper method to extract values with multiple possible keys
-  String _extractValue(Map<String, dynamic> map, List<String> keys, String defaultValue) {
-    for (var key in keys) {
-      if (map.containsKey(key) && map[key] != null) {
-        print('🔑 Found value for key: $key');
-        return map[key].toString();
-      }
-    }
-    print('❓ No value found for keys: $keys');
-    return defaultValue;
-  }
-
-  // Helper method to parse date with robust error handling
-  DateTime _parseDate(dynamic dateValue) {
-    try {
-      if (dateValue == null) return DateTime.now();
-      
-      // Try multiple parsing strategies
-      if (dateValue is String) {
-        return DateTime.tryParse(dateValue) ?? DateTime.now();
-      }
-      if (dateValue is DateTime) {
-        return dateValue;
-      }
-      
-      return DateTime.now();
-    } catch (e) {
-      print('❌ Date parsing error: $e');
-      return DateTime.now();
-    }
-  }
-
-  // Helper method to parse gender with more flexibility
-  Gender _parseGender(dynamic genderValue) {
-    if (genderValue == null) return Gender.male;
-    
-    final genderString = genderValue.toString().toLowerCase();
-    switch (genderString) {
-      case 'male':
-        return Gender.male;
-      case 'female':
-        return Gender.female;
-      default:
-        print('❓ Unknown gender: $genderValue. Defaulting to male.');
-        return Gender.male;
-    }
-  }
-
+  // Update user details in Supabase
   Future<void> updateUserDetails(UserDetailsModel userDetails) async {
-    state = UserDetailsState(isLoading: true);
     try {
-      final userMap = {
+      // Update user details in Supabase
+      await _supabase
+          .from('user')
+          .update({
         'name': userDetails.name,
         'family_name': userDetails.familyName,
         'date_of_birth': userDetails.dateOfBirth.toIso8601String(),
         'phone_number': userDetails.phoneNumber,
         'city_of_birth': userDetails.cityOfBirth,
         'gender': userDetails.gender.name,
-      };
-
-      print('🔄 Updating user details: $userMap');
-
-      await _supabase
-          .from('user')
-          .update(userMap)
+      })
           .eq('email', userDetails.email);
 
-      state = UserDetailsState(userDetails: userDetails);
-      
-      print('✅ User details updated successfully');
+      // Update local state
+      state = state.copyWith(userDetails: userDetails);
     } catch (e) {
-      print('❌ Error updating user details: $e');
-      state = UserDetailsState(error: e.toString());
+      print('Error updating user details: $e');
+      rethrow;
+    }
+  }
+
+  // Upload profile image
+  Future<String?> uploadProfileImage(String email) async {
+    try {
+      // Pick an image from the gallery
+      final pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 80,
+      );
+
+      if (pickedFile == null) return null;
+
+      final file = File(pickedFile.path);
+      
+      // Validate file size
+      final fileSize = await file.length();
+      if (fileSize > 5 * 1024 * 1024) {
+        throw Exception('Image size exceeds 5MB limit');
+      }
+
+      // Generate unique filename
+      final fileName = '${email}_${DateTime.now().millisecondsSinceEpoch}${path.extension(pickedFile.path)}';
+
+      // Upload to Supabase storage
+      await _supabase.storage
+          .from('user_profile_images')
+          .upload(
+            fileName, 
+            file,
+            fileOptions: FileOptions(
+              upsert: true,
+              contentType: _getContentType(pickedFile.path),
+            ),
+          );
+
+      // Get public URL
+      final imageUrl = _supabase.storage
+          .from('user_profile_images')
+          .getPublicUrl(fileName);
+
+      // Update user details with new image URL
+      await _updateProfileImageUrl(email, imageUrl);
+
+      return imageUrl;
+    } catch (e) {
+      print('Error uploading profile image: $e');
+      return null;
+    }
+  }
+
+  // Update profile image URL in user table
+  Future<void> _updateProfileImageUrl(String email, String imageUrl) async {
+    try {
+      // Update profile image URL in Supabase
+      await _supabase
+          .from('user')
+          .update({'profile_image_url': imageUrl})
+          .eq('email', email);
+
+      // Update local state with new profile image
+      if (state.userDetails != null) {
+        final updatedUserDetails = state.userDetails!.copyWith(profileImageUrl: imageUrl);
+        state = state.copyWith(userDetails: updatedUserDetails);
+      }
+    } catch (e) {
+      print('Error updating profile image URL: $e');
+      rethrow;
+    }
+  }
+
+  // Validate and parse user details from Supabase response
+  UserDetailsModel _validateAndParseUserDetails(Map<String, dynamic> response, String email) {
+    return UserDetailsModel(
+      name: _parseStringValue(response['name']),
+      familyName: _parseStringValue(response['family_name']),
+      dateOfBirth: _parseDateOfBirth(response['date_of_birth']),
+      phoneNumber: _parseStringValue(response['phone_number']),
+      cityOfBirth: _parseStringValue(response['city_of_birth']),
+      gender: _parseGender(response['gender']),
+      email: email,
+      profileImageUrl: response['profile_image_url'],
+    );
+  }
+
+  // Helper method to parse string values
+  String _parseStringValue(dynamic value, {String defaultValue = ''}) {
+    return value?.toString() ?? defaultValue;
+  }
+
+  // Helper method to parse date of birth
+  DateTime _parseDateOfBirth(dynamic dobValue) {
+    try {
+      return dobValue != null ? DateTime.parse(dobValue.toString()) : DateTime.now();
+    } catch (e) {
+      print('Invalid date of birth: $dobValue');
+      return DateTime.now();
+    }
+  }
+
+  // Helper method to parse gender
+  Gender _parseGender(dynamic genderValue) {
+    final genderString = genderValue?.toString().toLowerCase();
+    return genderString == 'female' ? Gender.female : Gender.male;
+  }
+
+  // Helper method to determine content type
+  String _getContentType(String filePath) {
+    final extension = path.extension(filePath).toLowerCase();
+    switch (extension) {
+      case '.jpg':
+      case '.jpeg':
+        return 'image/jpeg';
+      case '.png':
+        return 'image/png';
+      case '.gif':
+        return 'image/gif';
+      case '.webp':
+        return 'image/webp';
+      default:
+        return 'application/octet-stream';
     }
   }
 }
 
+// Provider for user details state management
 final userDetailsProvider = StateNotifierProvider<UserDetailsNotifier, UserDetailsState>((ref) {
   return UserDetailsNotifier();
 });

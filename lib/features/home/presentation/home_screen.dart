@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pfe1/features/authentication/data/user_details_provider.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/shared/theme/app_colors.dart';
 
@@ -13,8 +14,21 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      final authState = ref.read(authProvider);
+      if (authState.user?.email != null) {
+        ref.read(userDetailsProvider.notifier).fetchUserDetails(authState.user!.email);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final userDetailsState = ref.watch(userDetailsProvider);
+    final imageUrl = userDetailsState.userDetails?.profileImageUrl;
 
     return Scaffold(
       appBar: AppBar(
@@ -39,13 +53,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
-                child: Text(
-                  (authState.user?.email ?? 'U')[0].toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 40.0,
-                    color: AppColors.primaryColor,
-                  ),
-                ),
+                backgroundImage: imageUrl != null && imageUrl.isNotEmpty
+                    ? NetworkImage(imageUrl)
+                    : null,
+                child: imageUrl == null || imageUrl.isEmpty
+                    ? Text(
+                        (authState.user?.email ?? 'U')[0].toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 40.0,
+                          color: AppColors.primaryColor,
+                        ),
+                      )
+                    : null,
               ),
               decoration: BoxDecoration(
                 color: AppColors.primaryColor,
@@ -56,14 +75,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               title: const Text('Profile Details'),
               onTap: () {
                 context.push('/user-profile');
-                Navigator.of(context).pop(); // Close drawer
+                Navigator.of(context).pop();
               },
             ),
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Settings'),
               onTap: () {
-                // TODO: Implement settings page
                 Navigator.of(context).pop();
               },
             ),
@@ -86,11 +104,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             CircleAvatar(
               radius: 80,
               backgroundColor: AppColors.primaryColor.withOpacity(0.1),
-              child: Icon(
-                Icons.person,
-                size: 100,
-                color: AppColors.primaryColor,
-              ),
+              backgroundImage: imageUrl != null && imageUrl.isNotEmpty
+                  ? NetworkImage(imageUrl)
+                  : null,
+              child: imageUrl == null || imageUrl.isEmpty
+                  ? Icon(
+                      Icons.person,
+                      size: 100,
+                      color: AppColors.primaryColor,
+                    )
+                  : null,
             ),
             const SizedBox(height: 20),
             Text(

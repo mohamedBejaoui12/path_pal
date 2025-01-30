@@ -16,6 +16,7 @@ _$UserDetailsModelImpl _$$UserDetailsModelImplFromJson(
       cityOfBirth: json['cityOfBirth'] as String,
       gender: $enumDecode(_$GenderEnumMap, json['gender']),
       email: json['email'] as String,
+      profileImageUrl: json['profileImageUrl'] as String?,
     );
 
 Map<String, dynamic> _$$UserDetailsModelImplToJson(
@@ -28,6 +29,7 @@ Map<String, dynamic> _$$UserDetailsModelImplToJson(
       'cityOfBirth': instance.cityOfBirth,
       'gender': _$GenderEnumMap[instance.gender]!,
       'email': instance.email,
+      'profileImageUrl': instance.profileImageUrl,
     };
 
 const _$GenderEnumMap = {
