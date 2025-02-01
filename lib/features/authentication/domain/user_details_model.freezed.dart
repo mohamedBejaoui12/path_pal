@@ -27,7 +27,9 @@ mixin _$UserDetailsModel {
   String get cityOfBirth => throw _privateConstructorUsedError;
   Gender get gender => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
-  String? get profileImageUrl => throw _privateConstructorUsedError;
+  String? get profileImageUrl =>
+      throw _privateConstructorUsedError; // Keep this as is
+  String? get description => throw _privateConstructorUsedError;
 
   /// Serializes this UserDetailsModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -53,7 +55,8 @@ abstract class $UserDetailsModelCopyWith<$Res> {
       String cityOfBirth,
       Gender gender,
       String email,
-      String? profileImageUrl});
+      String? profileImageUrl,
+      String? description});
 }
 
 /// @nodoc
@@ -79,6 +82,7 @@ class _$UserDetailsModelCopyWithImpl<$Res, $Val extends UserDetailsModel>
     Object? gender = null,
     Object? email = null,
     Object? profileImageUrl = freezed,
+    Object? description = freezed,
   }) {
     return _then(_value.copyWith(
       name: null == name
@@ -113,6 +117,10 @@ class _$UserDetailsModelCopyWithImpl<$Res, $Val extends UserDetailsModel>
           ? _value.profileImageUrl
           : profileImageUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      description: freezed == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -133,7 +141,8 @@ abstract class _$$UserDetailsModelImplCopyWith<$Res>
       String cityOfBirth,
       Gender gender,
       String email,
-      String? profileImageUrl});
+      String? profileImageUrl,
+      String? description});
 }
 
 /// @nodoc
@@ -157,6 +166,7 @@ class __$$UserDetailsModelImplCopyWithImpl<$Res>
     Object? gender = null,
     Object? email = null,
     Object? profileImageUrl = freezed,
+    Object? description = freezed,
   }) {
     return _then(_$UserDetailsModelImpl(
       name: null == name
@@ -191,6 +201,10 @@ class __$$UserDetailsModelImplCopyWithImpl<$Res>
           ? _value.profileImageUrl
           : profileImageUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      description: freezed == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -206,7 +220,8 @@ class _$UserDetailsModelImpl implements _UserDetailsModel {
       required this.cityOfBirth,
       required this.gender,
       required this.email,
-      this.profileImageUrl});
+      this.profileImageUrl,
+      this.description});
 
   factory _$UserDetailsModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserDetailsModelImplFromJson(json);
@@ -227,10 +242,13 @@ class _$UserDetailsModelImpl implements _UserDetailsModel {
   final String email;
   @override
   final String? profileImageUrl;
+// Keep this as is
+  @override
+  final String? description;
 
   @override
   String toString() {
-    return 'UserDetailsModel(name: $name, familyName: $familyName, dateOfBirth: $dateOfBirth, phoneNumber: $phoneNumber, cityOfBirth: $cityOfBirth, gender: $gender, email: $email, profileImageUrl: $profileImageUrl)';
+    return 'UserDetailsModel(name: $name, familyName: $familyName, dateOfBirth: $dateOfBirth, phoneNumber: $phoneNumber, cityOfBirth: $cityOfBirth, gender: $gender, email: $email, profileImageUrl: $profileImageUrl, description: $description)';
   }
 
   @override
@@ -250,13 +268,15 @@ class _$UserDetailsModelImpl implements _UserDetailsModel {
             (identical(other.gender, gender) || other.gender == gender) &&
             (identical(other.email, email) || other.email == email) &&
             (identical(other.profileImageUrl, profileImageUrl) ||
-                other.profileImageUrl == profileImageUrl));
+                other.profileImageUrl == profileImageUrl) &&
+            (identical(other.description, description) ||
+                other.description == description));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, name, familyName, dateOfBirth,
-      phoneNumber, cityOfBirth, gender, email, profileImageUrl);
+      phoneNumber, cityOfBirth, gender, email, profileImageUrl, description);
 
   /// Create a copy of UserDetailsModel
   /// with the given fields replaced by the non-null parameter values.
@@ -284,7 +304,8 @@ abstract class _UserDetailsModel implements UserDetailsModel {
       required final String cityOfBirth,
       required final Gender gender,
       required final String email,
-      final String? profileImageUrl}) = _$UserDetailsModelImpl;
+      final String? profileImageUrl,
+      final String? description}) = _$UserDetailsModelImpl;
 
   factory _UserDetailsModel.fromJson(Map<String, dynamic> json) =
       _$UserDetailsModelImpl.fromJson;
@@ -304,7 +325,9 @@ abstract class _UserDetailsModel implements UserDetailsModel {
   @override
   String get email;
   @override
-  String? get profileImageUrl;
+  String? get profileImageUrl; // Keep this as is
+  @override
+  String? get description;
 
   /// Create a copy of UserDetailsModel
   /// with the given fields replaced by the non-null parameter values.

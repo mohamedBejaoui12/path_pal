@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pfe1/features/authentication/data/user_details_provider.dart';
+import 'package:pfe1/features/authentication/domain/user_details_model.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/shared/theme/app_colors.dart';
+
+// Theme Provider
+final themeProvider = StateProvider<bool>((ref) => false);
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -16,6 +20,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
     Future.microtask(() {
       final authState = ref.read(authProvider);
       if (authState.user?.email != null) {
@@ -26,103 +34,147 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeProvider);
     final authState = ref.watch(authProvider);
-    final userDetailsState = ref.watch(userDetailsProvider);
-    final imageUrl = userDetailsState.userDetails?.profileImageUrl;
+    final userDetails = ref.watch(userDetailsProvider).userDetails;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-        backgroundColor: AppColors.primaryColor,
+    return MaterialApp(
+          debugShowCheckedModeBanner: false, // Add this line
+      theme: _buildTheme(isDarkMode),
+      home: Scaffold(
+        appBar: _buildAppBar(context, isDarkMode),
+        drawer: _buildDrawer(context, authState, userDetails, isDarkMode),
+        body: const Center(child: Text('Main Content Area')),
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            UserAccountsDrawerHeader(
-              accountName: Text(
-                authState.user?.email ?? 'User',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+    );
+  }
+
+  ThemeData _buildTheme(bool isDarkMode) {
+    return ThemeData(
+      scaffoldBackgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+      appBarTheme: AppBarTheme(
+        backgroundColor: isDarkMode ? Colors.grey[900] : AppColors.primaryColor,
+        elevation: 0,
+        iconTheme: IconThemeData(color: isDarkMode ? Colors.white : Colors.white),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: MaterialStateProperty.all(AppColors.primaryColor),
+        trackColor: MaterialStateProperty.all(AppColors.primaryColor.withOpacity(0.5)),
+      ),
+    );
+  }
+
+  AppBar _buildAppBar(BuildContext context, bool isDarkMode) {
+    return AppBar(
+      title: Row(
+        
+        children: [
+        
+          Text(
+            'PathPal',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ],
+      ),
+      centerTitle: true,
+      actions: [
+        IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+        IconButton(icon: const Icon(Icons.add_comment_outlined), onPressed: () {}),
+      ],
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context, AuthState authState, UserDetailsModel? userDetails, bool isDarkMode) {
+    return Drawer(
+      child: Column(
+        children: [
+          _buildDrawerHeader(authState, userDetails, isDarkMode),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _buildListTile(
+                  icon: Icons.edit,
+                  title: 'Update Profile Data',
+                  onTap: () => context.push('/user-profile'),
                 ),
-              ),
-              accountEmail: Text(
-                authState.user?.email ?? 'No email',
-                style: const TextStyle(color: Colors.white70),
-              ),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                backgroundImage: imageUrl != null && imageUrl.isNotEmpty
-                    ? NetworkImage(imageUrl)
-                    : null,
-                child: imageUrl == null || imageUrl.isEmpty
-                    ? Text(
-                        (authState.user?.email ?? 'U')[0].toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 40.0,
-                          color: AppColors.primaryColor,
-                        ),
-                      )
-                    : null,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primaryColor,
-              ),
+                _buildListTile(
+                  icon: Icons.settings,
+                  title: 'Settings',
+                  onTap: () {},
+                ),
+                _buildDarkModeSwitch(isDarkMode),
+                const Divider(),
+                _buildListTile(
+                  icon: Icons.logout,
+                  title: 'Log Out',
+                  color: Colors.red,
+                  onTap: () {
+                    ref.read(authProvider.notifier).logout();
+                    context.go('/login');
+                  },
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Profile Details'),
-              onTap: () {
-                context.push('/user-profile');
-                Navigator.of(context).pop();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
-              onTap: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Logout'),
-              onTap: () {
-                ref.read(authProvider.notifier).logout();
-                context.go('/login');
-              },
-            ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  UserAccountsDrawerHeader _buildDrawerHeader(AuthState authState, UserDetailsModel? userDetails, bool isDarkMode) {
+    return UserAccountsDrawerHeader(
+      accountName: const SizedBox.shrink(), // Remove account name
+      accountEmail: Text(
+        authState.user?.email ?? 'No email',
+        style: TextStyle(
+          color: isDarkMode ? Colors.white : AppColors.primaryColor,
+          fontSize: 16,
         ),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 80,
-              backgroundColor: AppColors.primaryColor.withOpacity(0.1),
-              backgroundImage: imageUrl != null && imageUrl.isNotEmpty
-                  ? NetworkImage(imageUrl)
-                  : null,
-              child: imageUrl == null || imageUrl.isEmpty
-                  ? Icon(
-                      Icons.person,
-                      size: 100,
-                      color: AppColors.primaryColor,
-                    )
-                  : null,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Welcome, ${authState.user?.email ?? 'User'}!',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-          ],
-        ),
+      currentAccountPicture: CircleAvatar(
+        backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+        backgroundImage: userDetails?.profileImageUrl != null
+            ? NetworkImage(userDetails!.profileImageUrl!)
+            : null,
+        child: userDetails?.profileImageUrl == null
+            ? Icon(Icons.person, color: AppColors.primaryColor)
+            : null,
       ),
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildListTile({
+    required IconData icon,
+    required String title,
+    Color? color,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(title, style: TextStyle(color: color)),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+    );
+  }
+
+  Widget _buildDarkModeSwitch(bool isDarkMode) {
+    return SwitchListTile(
+      title: const Text('Dark Mode'),
+      secondary: Icon(
+        isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
+        color: isDarkMode ? Colors.white : Colors.black,
+      ),
+      value: isDarkMode,
+      onChanged: (value) => ref.read(themeProvider.notifier).state = value,
     );
   }
 }

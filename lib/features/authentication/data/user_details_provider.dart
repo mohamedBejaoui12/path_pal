@@ -81,6 +81,7 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
         'phone_number': userDetails.phoneNumber,
         'city_of_birth': userDetails.cityOfBirth,
         'gender': userDetails.gender.name,
+        'description': userDetails.description,
       })
           .eq('email', userDetails.email);
 
@@ -174,6 +175,7 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
       gender: _parseGender(response['gender']),
       email: email,
       profileImageUrl: response['profile_image_url'],
+      description: _parseStringValue(response['description']),
     );
   }
 

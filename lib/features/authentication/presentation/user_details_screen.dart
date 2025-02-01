@@ -24,6 +24,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   final _familyNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _cityController = TextEditingController();
+  final _descriptionController = TextEditingController();
   DateTime? _selectedDate;
   Gender? _selectedGender;
 
@@ -40,6 +41,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           cityOfBirth: _cityController.text.trim(),
           gender: _selectedGender!,
           email: widget.email,
+          description: _descriptionController.text.trim().isNotEmpty 
+              ? _descriptionController.text.trim() 
+              : null,
         );
 
         // Save user details and get the inserted user's ID
@@ -233,6 +237,30 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                               );
                             }).toList(),
                             validator: (value) => value == null ? 'Please select your gender' : null,
+                          ),
+                          const SizedBox(height: 20),
+                          TextField(
+                            controller: _descriptionController,
+                            decoration: InputDecoration(
+                              labelText: 'Description (Optional)',
+                              hintText: 'Tell us a bit about yourself...',
+                              prefixIcon: Icon(Icons.description_outlined, color: AppColors.primaryColor),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: AppColors.primaryColor),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: AppColors.primaryColor.withOpacity(0.5)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+                              ),
+                            ),
+                            maxLines: 3,
+                            keyboardType: TextInputType.multiline,
+                            style: TextStyle(color: AppColors.primaryColor),
                           ),
                           const SizedBox(height: 30),
                           SizedBox(

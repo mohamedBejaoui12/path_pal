@@ -22,6 +22,7 @@ class UserDetailsService {
       'city_of_birth': userDetails.cityOfBirth,
       'gender': userDetails.gender.name,
       'email': userDetails.email,
+      'description': userDetails.description,
     };
 
     if (existingUserResponse != null) {

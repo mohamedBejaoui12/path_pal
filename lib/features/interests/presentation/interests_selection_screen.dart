@@ -46,7 +46,7 @@ class _InterestsSelectionScreenState extends ConsumerState<InterestsSelectionScr
       );
 
       // Navigate to next screen or show success message
-      context.go('/user-profile');
+      context.go('/');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

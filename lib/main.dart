@@ -26,4 +26,5 @@ Future<void> main() async {
       child: MyApp(isAuthenticated: sessionMaintained),
     ),
   );
+
 }

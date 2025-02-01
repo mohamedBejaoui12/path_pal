@@ -16,6 +16,7 @@ class UserDetailsModel with _$UserDetailsModel {
     required Gender gender,
     required String email,
     String? profileImageUrl, // Keep this as is
+    String? description, // New nullable description field
   }) = _UserDetailsModel;
 
   factory UserDetailsModel.fromJson(Map<String, dynamic> json) => 

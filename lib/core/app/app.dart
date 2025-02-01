@@ -9,6 +9,7 @@ import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/features/home/presentation/home_screen.dart';
 import 'package:pfe1/features/home/presentation/user_profile_screen.dart';
 import 'package:pfe1/features/interests/presentation/interests_selection_screen.dart';
+import 'package:pfe1/shared/theme/app_colors.dart';
 
 class RouterNotifier extends ChangeNotifier {
   final WidgetRef _ref;
@@ -35,6 +36,8 @@ class MyApp extends ConsumerWidget {
       ref.read(authProvider.notifier).restoreSession();
     });
 
+    final isDarkMode = ref.watch(themeProvider);
+
     return MaterialApp.router(
       title: 'PFE App',
       debugShowCheckedModeBanner: false,
@@ -43,6 +46,33 @@ class MyApp extends ConsumerWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      darkTheme: ThemeData.dark().copyWith(
+        primaryColor: AppColors.primaryColor,
+        scaffoldBackgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+        appBarTheme: AppBarTheme(
+          backgroundColor: isDarkMode ? Colors.grey[900] : AppColors.primaryColor,
+          foregroundColor: Colors.white,
+        ),
+        textTheme: ThemeData.dark().textTheme.apply(
+          bodyColor: isDarkMode ? Colors.white : Colors.black,
+          displayColor: isDarkMode ? Colors.white : Colors.black,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          fillColor: isDarkMode ? Colors.grey[800] : Colors.white,
+          filled: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryColor,
+            foregroundColor: Colors.white,
+          ),
+        ),
+      ),
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
     );
   }
 
