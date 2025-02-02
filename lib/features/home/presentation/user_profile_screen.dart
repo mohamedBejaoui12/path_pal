@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:image_picker/image_picker.dart';
 
 import 'package:pfe1/features/authentication/data/user_details_provider.dart';
 import 'package:pfe1/features/authentication/domain/user_details_model.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/features/home/presentation/home_screen.dart';
 import 'package:pfe1/shared/theme/app_colors.dart';
-import 'package:pfe1/shared/widgets/custom_text_form_field.dart';
 
 class UserProfileScreen extends ConsumerStatefulWidget {
   const UserProfileScreen({Key? key}) : super(key: key);
@@ -140,6 +138,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
             backgroundColor: AppColors.primaryColor,
           ),
         );
+
+        // Fetch updated user details to ensure UI reflects the latest data
+        await ref.read(userDetailsProvider.notifier).fetchUserDetails(authState.user!.email);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -180,9 +181,11 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeProvider);
     final userDetailsState = ref.watch(userDetailsProvider);
-    final authState = ref.watch(authProvider);
+    ref.watch(authProvider);
 
-    if (userDetailsState.userDetails != null) {
+    // Only update controllers if user details are loaded and not already updated
+    if (userDetailsState.userDetails != null && 
+        _nameController.text != userDetailsState.userDetails!.name) {
       _updateControllers(userDetailsState.userDetails!);
     }
 
@@ -419,77 +422,47 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   }
 
   Widget _buildDatePicker() {
-    final isDarkMode = ref.watch(themeProvider);
     return InkWell(
       onTap: _selectDate,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 56,
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        decoration: BoxDecoration(
-          color: isDarkMode ? Colors.grey[900] : AppColors.primaryColor.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isDarkMode ? Colors.white24 : AppColors.primaryColor.withOpacity(0.15),
-            width: 1.2,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: 'Date of Birth',
+          prefixIcon: Icon(Icons.calendar_today, color: AppColors.primaryColor),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
-        child: Row(
-          children: [
-            Icon(Icons.calendar_month_rounded,
-                size: 22, 
-                color: isDarkMode ? Colors.white70 : AppColors.primaryColor.withOpacity(0.7)),
-            const SizedBox(width: 14),
-            Text(
-              DateFormat('MMM dd, yyyy').format(_dateOfBirth),
-              style: TextStyle(
-                color: isDarkMode ? Colors.white : AppColors.primaryColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+        child: Text(
+          DateFormat('yyyy-MM-dd').format(_dateOfBirth),
+          style: const TextStyle(fontSize: 16),
         ),
       ),
     );
   }
 
   Widget _buildGenderPicker() {
-    final isDarkMode = ref.watch(themeProvider);
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: isDarkMode ? Colors.grey[900] : AppColors.primaryColor.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDarkMode ? Colors.white24 : AppColors.primaryColor.withOpacity(0.15),
-          width: 1.2,
+    return DropdownButtonFormField<Gender>(
+      value: _selectedGender,
+      decoration: InputDecoration(
+        labelText: 'Gender',
+        prefixIcon: Icon(Icons.person_outline, color: AppColors.primaryColor),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<Gender>(
-          value: _selectedGender,
-          isExpanded: true,
-          icon: Icon(Icons.arrow_drop_down_rounded,
-              size: 28, 
-              color: isDarkMode ? Colors.white : AppColors.primaryColor),
-          style: TextStyle(
-            color: isDarkMode ? Colors.white : AppColors.primaryColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-          items: Gender.values.map((gender) {
-            return DropdownMenuItem<Gender>(
-              value: gender,
-              child: Text(gender.name.capitalize()),
-            );
-          }).toList(),
-          onChanged: (Gender? newValue) {
-            if (newValue != null) setState(() => _selectedGender = newValue);
-          },
-        ),
-      ),
+      items: Gender.values.map((Gender gender) {
+        return DropdownMenuItem<Gender>(
+          value: gender,
+          child: Text(gender == Gender.male ? 'Male' : 'Female'),
+        );
+      }).toList(),
+      onChanged: (Gender? newValue) {
+        if (newValue != null) {
+          setState(() {
+            _selectedGender = newValue;
+          });
+        }
+      },
     );
   }
 

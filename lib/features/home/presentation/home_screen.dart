@@ -84,7 +84,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       centerTitle: true,
       actions: [
         IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-        IconButton(icon: const Icon(Icons.add_comment_outlined), onPressed: () {}),
+        IconButton(icon: const Icon(Icons.add_comment_outlined), onPressed: () {
+           context.push('/create-post');
+        }),
       ],
     );
   }
