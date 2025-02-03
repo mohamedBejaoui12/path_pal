@@ -17,15 +17,17 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$PostModel {
   int? get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'user_email')
   String get userEmail => throw _privateConstructorUsedError;
+  String get userName => throw _privateConstructorUsedError;
+  String? get userProfileImage => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
-  @JsonKey(name: 'image_link')
   String? get imageUrl => throw _privateConstructorUsedError;
   List<String> get interests => throw _privateConstructorUsedError;
-  @JsonKey(name: 'created_at')
   DateTime? get createdAt => throw _privateConstructorUsedError;
+  int get likesCount => throw _privateConstructorUsedError;
+  int get commentsCount => throw _privateConstructorUsedError;
+  bool get isLikedByCurrentUser => throw _privateConstructorUsedError;
 
   /// Create a copy of PostModel
   /// with the given fields replaced by the non-null parameter values.
@@ -41,12 +43,17 @@ abstract class $PostModelCopyWith<$Res> {
   @useResult
   $Res call(
       {int? id,
-      @JsonKey(name: 'user_email') String userEmail,
+      String userEmail,
+      String userName,
+      String? userProfileImage,
       String title,
       String? description,
-      @JsonKey(name: 'image_link') String? imageUrl,
+      String? imageUrl,
       List<String> interests,
-      @JsonKey(name: 'created_at') DateTime? createdAt});
+      DateTime? createdAt,
+      int likesCount,
+      int commentsCount,
+      bool isLikedByCurrentUser});
 }
 
 /// @nodoc
@@ -66,11 +73,16 @@ class _$PostModelCopyWithImpl<$Res, $Val extends PostModel>
   $Res call({
     Object? id = freezed,
     Object? userEmail = null,
+    Object? userName = null,
+    Object? userProfileImage = freezed,
     Object? title = null,
     Object? description = freezed,
     Object? imageUrl = freezed,
     Object? interests = null,
     Object? createdAt = freezed,
+    Object? likesCount = null,
+    Object? commentsCount = null,
+    Object? isLikedByCurrentUser = null,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -81,6 +93,14 @@ class _$PostModelCopyWithImpl<$Res, $Val extends PostModel>
           ? _value.userEmail
           : userEmail // ignore: cast_nullable_to_non_nullable
               as String,
+      userName: null == userName
+          ? _value.userName
+          : userName // ignore: cast_nullable_to_non_nullable
+              as String,
+      userProfileImage: freezed == userProfileImage
+          ? _value.userProfileImage
+          : userProfileImage // ignore: cast_nullable_to_non_nullable
+              as String?,
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
@@ -101,6 +121,18 @@ class _$PostModelCopyWithImpl<$Res, $Val extends PostModel>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      likesCount: null == likesCount
+          ? _value.likesCount
+          : likesCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      commentsCount: null == commentsCount
+          ? _value.commentsCount
+          : commentsCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      isLikedByCurrentUser: null == isLikedByCurrentUser
+          ? _value.isLikedByCurrentUser
+          : isLikedByCurrentUser // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -115,12 +147,17 @@ abstract class _$$PostModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {int? id,
-      @JsonKey(name: 'user_email') String userEmail,
+      String userEmail,
+      String userName,
+      String? userProfileImage,
       String title,
       String? description,
-      @JsonKey(name: 'image_link') String? imageUrl,
+      String? imageUrl,
       List<String> interests,
-      @JsonKey(name: 'created_at') DateTime? createdAt});
+      DateTime? createdAt,
+      int likesCount,
+      int commentsCount,
+      bool isLikedByCurrentUser});
 }
 
 /// @nodoc
@@ -138,11 +175,16 @@ class __$$PostModelImplCopyWithImpl<$Res>
   $Res call({
     Object? id = freezed,
     Object? userEmail = null,
+    Object? userName = null,
+    Object? userProfileImage = freezed,
     Object? title = null,
     Object? description = freezed,
     Object? imageUrl = freezed,
     Object? interests = null,
     Object? createdAt = freezed,
+    Object? likesCount = null,
+    Object? commentsCount = null,
+    Object? isLikedByCurrentUser = null,
   }) {
     return _then(_$PostModelImpl(
       id: freezed == id
@@ -153,6 +195,14 @@ class __$$PostModelImplCopyWithImpl<$Res>
           ? _value.userEmail
           : userEmail // ignore: cast_nullable_to_non_nullable
               as String,
+      userName: null == userName
+          ? _value.userName
+          : userName // ignore: cast_nullable_to_non_nullable
+              as String,
+      userProfileImage: freezed == userProfileImage
+          ? _value.userProfileImage
+          : userProfileImage // ignore: cast_nullable_to_non_nullable
+              as String?,
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
@@ -173,6 +223,18 @@ class __$$PostModelImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      likesCount: null == likesCount
+          ? _value.likesCount
+          : likesCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      commentsCount: null == commentsCount
+          ? _value.commentsCount
+          : commentsCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      isLikedByCurrentUser: null == isLikedByCurrentUser
+          ? _value.isLikedByCurrentUser
+          : isLikedByCurrentUser // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -182,25 +244,32 @@ class __$$PostModelImplCopyWithImpl<$Res>
 class _$PostModelImpl implements _PostModel {
   const _$PostModelImpl(
       {this.id,
-      @JsonKey(name: 'user_email') required this.userEmail,
+      required this.userEmail,
+      required this.userName,
+      this.userProfileImage,
       required this.title,
       this.description,
-      @JsonKey(name: 'image_link') this.imageUrl,
+      this.imageUrl,
       final List<String> interests = const [],
-      @JsonKey(name: 'created_at') this.createdAt})
+      this.createdAt,
+      this.likesCount = 0,
+      this.commentsCount = 0,
+      this.isLikedByCurrentUser = false})
       : _interests = interests;
 
   @override
   final int? id;
   @override
-  @JsonKey(name: 'user_email')
   final String userEmail;
+  @override
+  final String userName;
+  @override
+  final String? userProfileImage;
   @override
   final String title;
   @override
   final String? description;
   @override
-  @JsonKey(name: 'image_link')
   final String? imageUrl;
   final List<String> _interests;
   @override
@@ -212,12 +281,20 @@ class _$PostModelImpl implements _PostModel {
   }
 
   @override
-  @JsonKey(name: 'created_at')
   final DateTime? createdAt;
+  @override
+  @JsonKey()
+  final int likesCount;
+  @override
+  @JsonKey()
+  final int commentsCount;
+  @override
+  @JsonKey()
+  final bool isLikedByCurrentUser;
 
   @override
   String toString() {
-    return 'PostModel(id: $id, userEmail: $userEmail, title: $title, description: $description, imageUrl: $imageUrl, interests: $interests, createdAt: $createdAt)';
+    return 'PostModel(id: $id, userEmail: $userEmail, userName: $userName, userProfileImage: $userProfileImage, title: $title, description: $description, imageUrl: $imageUrl, interests: $interests, createdAt: $createdAt, likesCount: $likesCount, commentsCount: $commentsCount, isLikedByCurrentUser: $isLikedByCurrentUser)';
   }
 
   @override
@@ -228,6 +305,10 @@ class _$PostModelImpl implements _PostModel {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.userEmail, userEmail) ||
                 other.userEmail == userEmail) &&
+            (identical(other.userName, userName) ||
+                other.userName == userName) &&
+            (identical(other.userProfileImage, userProfileImage) ||
+                other.userProfileImage == userProfileImage) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.description, description) ||
                 other.description == description) &&
@@ -236,7 +317,13 @@ class _$PostModelImpl implements _PostModel {
             const DeepCollectionEquality()
                 .equals(other._interests, _interests) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.likesCount, likesCount) ||
+                other.likesCount == likesCount) &&
+            (identical(other.commentsCount, commentsCount) ||
+                other.commentsCount == commentsCount) &&
+            (identical(other.isLikedByCurrentUser, isLikedByCurrentUser) ||
+                other.isLikedByCurrentUser == isLikedByCurrentUser));
   }
 
   @override
@@ -244,11 +331,16 @@ class _$PostModelImpl implements _PostModel {
       runtimeType,
       id,
       userEmail,
+      userName,
+      userProfileImage,
       title,
       description,
       imageUrl,
       const DeepCollectionEquality().hash(_interests),
-      createdAt);
+      createdAt,
+      likesCount,
+      commentsCount,
+      isLikedByCurrentUser);
 
   /// Create a copy of PostModel
   /// with the given fields replaced by the non-null parameter values.
@@ -261,32 +353,43 @@ class _$PostModelImpl implements _PostModel {
 
 abstract class _PostModel implements PostModel {
   const factory _PostModel(
-          {final int? id,
-          @JsonKey(name: 'user_email') required final String userEmail,
-          required final String title,
-          final String? description,
-          @JsonKey(name: 'image_link') final String? imageUrl,
-          final List<String> interests,
-          @JsonKey(name: 'created_at') final DateTime? createdAt}) =
-      _$PostModelImpl;
+      {final int? id,
+      required final String userEmail,
+      required final String userName,
+      final String? userProfileImage,
+      required final String title,
+      final String? description,
+      final String? imageUrl,
+      final List<String> interests,
+      final DateTime? createdAt,
+      final int likesCount,
+      final int commentsCount,
+      final bool isLikedByCurrentUser}) = _$PostModelImpl;
 
   @override
   int? get id;
   @override
-  @JsonKey(name: 'user_email')
   String get userEmail;
+  @override
+  String get userName;
+  @override
+  String? get userProfileImage;
   @override
   String get title;
   @override
   String? get description;
   @override
-  @JsonKey(name: 'image_link')
   String? get imageUrl;
   @override
   List<String> get interests;
   @override
-  @JsonKey(name: 'created_at')
   DateTime? get createdAt;
+  @override
+  int get likesCount;
+  @override
+  int get commentsCount;
+  @override
+  bool get isLikedByCurrentUser;
 
   /// Create a copy of PostModel
   /// with the given fields replaced by the non-null parameter values.

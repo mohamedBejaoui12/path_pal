@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pfe1/features/authentication/data/user_details_provider.dart';
 import 'package:pfe1/features/authentication/domain/user_details_model.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
+import 'package:pfe1/features/home/presentation/post_list_widget.dart';
 import 'package:pfe1/shared/theme/app_colors.dart';
 
 // Theme Provider
@@ -44,7 +45,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       home: Scaffold(
         appBar: _buildAppBar(context, isDarkMode),
         drawer: _buildDrawer(context, authState, userDetails, isDarkMode),
-        body: const Center(child: Text('Main Content Area')),
+        body: const PostListWidget(),
       ),
     );
   }
