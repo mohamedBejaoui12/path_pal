@@ -8,6 +8,7 @@ import 'package:pfe1/features/authentication/domain/user_details_model.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/features/home/presentation/home_screen.dart';
 import 'package:pfe1/shared/theme/app_colors.dart';
+import 'package:pfe1/shared/theme/theme_provider.dart';
 
 class UserProfileScreen extends ConsumerStatefulWidget {
   const UserProfileScreen({Key? key}) : super(key: key);

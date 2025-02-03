@@ -11,6 +11,7 @@ import 'package:pfe1/features/home/presentation/home_screen.dart';
 import 'package:pfe1/features/home/presentation/user_profile_screen.dart';
 import 'package:pfe1/features/interests/presentation/interests_selection_screen.dart';
 import 'package:pfe1/shared/theme/app_colors.dart';
+import 'package:pfe1/shared/theme/theme_provider.dart';
 
 class RouterNotifier extends ChangeNotifier {
   final WidgetRef _ref;
@@ -111,6 +112,7 @@ class MyApp extends ConsumerWidget {
             return UserDetailsScreen(email: email);
           },
         ),
+        
       
    GoRoute(
   path: '/select-interests',

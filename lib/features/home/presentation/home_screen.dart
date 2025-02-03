@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pfe1/features/authentication/data/user_details_provider.dart';
-import 'package:pfe1/features/authentication/domain/user_details_model.dart';
-import 'package:pfe1/features/authentication/providers/auth_provider.dart';
-import 'package:pfe1/features/home/presentation/post_list_widget.dart';
-import 'package:pfe1/shared/theme/app_colors.dart';
+import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
-// Theme Provider
-final themeProvider = StateProvider<bool>((ref) => false);
+import '../../../features/authentication/data/user_details_provider.dart';
+import '../../../features/authentication/providers/auth_provider.dart';
+import '../../../features/home/presentation/post_list_widget.dart';
+
+import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/theme_provider.dart';
+import '../data/post_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -18,6 +19,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  int _currentIndex = 0;
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = 
+    GlobalKey<RefreshIndicatorState>();
+
   @override
   void initState() {
     super.initState();
@@ -33,6 +38,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
+  // Screens for bottom navigation
+  late List<Widget> _screens;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _screens = [
+      _buildRefreshablePosts(),
+   
+    ];
+  }
+
+  // Refreshable Posts Widget
+  Widget _buildRefreshablePosts() {
+    return RefreshIndicator(
+      key: _refreshIndicatorKey,
+      onRefresh: _refreshPosts,
+      color: AppColors.primaryColor,
+      backgroundColor: Colors.white,
+      displacement: 40,
+      strokeWidth: 2.0,
+      child: const PostListWidget(),
+    );
+  }
+
+  // Refresh Posts Method
+  Future<void> _refreshPosts() async {
+    try {
+      // Fetch posts using the PostListNotifier
+      await ref.read(postListProvider.notifier).fetchPosts();
+    } catch (e) {
+      // Show error snackbar if refresh fails
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to refresh posts: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeProvider);
@@ -40,63 +86,179 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final userDetails = ref.watch(userDetailsProvider).userDetails;
 
     return MaterialApp(
-          debugShowCheckedModeBanner: false, // Add this line
+      debugShowCheckedModeBanner: false,
       theme: _buildTheme(isDarkMode),
       home: Scaffold(
         appBar: _buildAppBar(context, isDarkMode),
         drawer: _buildDrawer(context, authState, userDetails, isDarkMode),
-        body: const PostListWidget(),
+        body: _screens[_currentIndex],
+        bottomNavigationBar: _buildBottomNavigationBar(),
+        floatingActionButton: _currentIndex == 0 
+          ? FloatingActionButton(
+              onPressed: () => context.push('/create-post'),
+              child: const Icon(Icons.add),
+            )
+          : null,
       ),
     );
   }
 
   ThemeData _buildTheme(bool isDarkMode) {
     return ThemeData(
+      brightness: isDarkMode ? Brightness.dark : Brightness.light,
       scaffoldBackgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
       appBarTheme: AppBarTheme(
         backgroundColor: isDarkMode ? Colors.grey[900] : AppColors.primaryColor,
         elevation: 0,
         iconTheme: IconThemeData(color: isDarkMode ? Colors.white : Colors.white),
       ),
-      switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.all(AppColors.primaryColor),
-        trackColor: MaterialStateProperty.all(AppColors.primaryColor.withOpacity(0.5)),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
+        selectedItemColor: AppColors.primaryColor,
+        unselectedItemColor: Colors.grey,
       ),
     );
   }
 
   AppBar _buildAppBar(BuildContext context, bool isDarkMode) {
     return AppBar(
-      title: Row(
-        
-        children: [
-        
-          Text(
-            'PathPal',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              letterSpacing: 1.1,
-            ),
-          ),
-        ],
+      title: const Text(
+        'PathPal',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+          letterSpacing: 1.1,
+        ),
       ),
       centerTitle: true,
       actions: [
-        IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-        IconButton(icon: const Icon(Icons.add_comment_outlined), onPressed: () {
-           context.push('/create-post');
-        }),
+        IconButton(
+          icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
+          onPressed: () {
+            ref.read(themeProvider.notifier).toggleTheme();
+          },
+        ),
       ],
     );
   }
 
-  Widget _buildDrawer(BuildContext context, AuthState authState, UserDetailsModel? userDetails, bool isDarkMode) {
+  Widget _buildBottomNavigationBar() {
+    return SalomonBottomBar(
+      currentIndex: _currentIndex,
+      onTap: (index) => setState(() => _currentIndex = index),
+      items: [
+        /// Home
+        SalomonBottomBarItem(
+          icon: const Icon(Icons.home),
+          title: const Text("Home"),
+          selectedColor: AppColors.primaryColor,
+        ),
+
+        /// Map
+        SalomonBottomBarItem(
+          icon: const Icon(Icons.map),
+          title: const Text("Map"),
+          selectedColor: Colors.green,
+        ),
+
+        /// Todo
+        SalomonBottomBarItem(
+          icon: const Icon(Icons.checklist),
+          title: const Text("Todo"),
+          selectedColor: Colors.blue,
+        ),
+
+        /// Profile
+        SalomonBottomBarItem(
+          icon: const Icon(Icons.person),
+          title: const Text("Profile"),
+          selectedColor: Colors.pink,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context, AuthState authState, dynamic userDetails, bool isDarkMode) {
+    // Combine name and family name
+    String fullName = '';
+    if (userDetails != null) {
+      fullName = [
+        userDetails.name,
+        userDetails.familyName
+      ].where((name) => name.isNotEmpty).join(' ');
+    }
+
     return Drawer(
       child: Column(
         children: [
-          _buildDrawerHeader(authState, userDetails, isDarkMode),
+          Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.grey[850] : AppColors.primaryColor,
+            ),
+            // Increased horizontal and vertical padding for more space
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 42),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Profile Picture with increased size
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 2,
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 34, // Increased radius from 32 to 36
+                    backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                    backgroundImage: userDetails?.profileImageUrl != null
+                        ? NetworkImage(userDetails.profileImageUrl!)
+                        : null,
+                    child: userDetails?.profileImageUrl == null
+                        ? Icon(
+                            Icons.person,
+                            size: 34, 
+                            color: AppColors.primaryColor,
+                          )
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 18),
+                
+                // User Info with updated spacing and text sizes
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        fullName.isNotEmpty ? fullName : 'User',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : Colors.white,
+                          fontSize: 18, // Increased font size
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8), // More space between name and email
+                      Text(
+                        authState.user?.email ?? 'No email',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : Colors.white70,
+                          fontSize: 14, // Increased font size for better readability
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
@@ -111,7 +273,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   title: 'Settings',
                   onTap: () {},
                 ),
-                _buildDarkModeSwitch(isDarkMode),
+                
                 const Divider(),
                 _buildListTile(
                   icon: Icons.logout,
@@ -130,31 +292,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  UserAccountsDrawerHeader _buildDrawerHeader(AuthState authState, UserDetailsModel? userDetails, bool isDarkMode) {
-    return UserAccountsDrawerHeader(
-      accountName: const SizedBox.shrink(), // Remove account name
-      accountEmail: Text(
-        authState.user?.email ?? 'No email',
-        style: TextStyle(
-          color: isDarkMode ? Colors.white : AppColors.primaryColor,
-          fontSize: 16,
-        ),
-      ),
-      currentAccountPicture: CircleAvatar(
-        backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
-        backgroundImage: userDetails?.profileImageUrl != null
-            ? NetworkImage(userDetails!.profileImageUrl!)
-            : null,
-        child: userDetails?.profileImageUrl == null
-            ? Icon(Icons.person, color: AppColors.primaryColor)
-            : null,
-      ),
-      decoration: BoxDecoration(
-        color: isDarkMode ? Colors.grey[850] : Colors.white,
-      ),
-    );
-  }
-
   Widget _buildListTile({
     required IconData icon,
     required String title,
@@ -166,18 +303,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       title: Text(title, style: TextStyle(color: color)),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-    );
-  }
-
-  Widget _buildDarkModeSwitch(bool isDarkMode) {
-    return SwitchListTile(
-      title: const Text('Dark Mode'),
-      secondary: Icon(
-        isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
-        color: isDarkMode ? Colors.white : Colors.black,
-      ),
-      value: isDarkMode,
-      onChanged: (value) => ref.read(themeProvider.notifier).state = value,
     );
   }
 }
