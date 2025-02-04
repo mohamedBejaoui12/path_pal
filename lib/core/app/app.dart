@@ -98,6 +98,10 @@ class MyApp extends ConsumerWidget {
           path: '/create-post',
           builder: (context, state) => const CreatePostScreen(),
         ),
+         GoRoute(
+      path: '/home',
+      builder: (context, state) => HomeScreen(),
+    ),
         GoRoute(
           path: '/verify-email',
           builder: (context, state) {

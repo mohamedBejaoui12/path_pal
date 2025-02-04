@@ -8,6 +8,7 @@ import 'package:pfe1/shared/theme/theme_provider.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../data/post_provider.dart';
 import '../../../features/authentication/providers/auth_provider.dart';
+import 'package:pfe1/features/authentication/data/comment_provider.dart';
 
 class PostListWidget extends ConsumerStatefulWidget {
   const PostListWidget({Key? key}) : super(key: key);
@@ -40,6 +41,17 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
           'Error loading posts: ${postListState.error}',
           style: TextStyle(color: Colors.red),
         ),
+      );
+    }
+
+    void _showCommentsBottomSheet(int postId) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) => _CommentsBottomSheet(postId: postId),
       );
     }
 
@@ -257,10 +269,10 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                             color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                             size: 24,
                           ),
-                          onPressed: () {},
+                          onPressed: () => _showCommentsBottomSheet(post.id!),
                         ),
                         Text(
-                          '${post.commentsCount}',
+                          post.commentsCount > 0 ? '${post.commentsCount} comments' : 'No comments',
                           style: TextStyle(
                             color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                           ),
@@ -283,6 +295,206 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
           ),
         );
       },
+    );
+  }
+}
+
+class _CommentsBottomSheet extends ConsumerStatefulWidget {
+  final int postId;
+
+  const _CommentsBottomSheet({Key? key, required this.postId}) : super(key: key);
+
+  @override
+  CommentsBottomSheetState createState() => CommentsBottomSheetState();
+}
+
+class CommentsBottomSheetState extends ConsumerState<_CommentsBottomSheet> {
+  final TextEditingController _commentController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch comments when bottom sheet is opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(commentProvider(widget.postId).notifier).fetchComments(widget.postId);
+    });
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    // Clear comments when bottom sheet is closed
+    ref.read(commentProvider(widget.postId).notifier).clearComments();
+    super.dispose();
+  }
+
+  void _submitComment() async {
+    final commentText = _commentController.text.trim();
+    if (commentText.isEmpty) return;
+
+    final authState = ref.read(authProvider);
+    final userEmail = authState.user?.email;
+
+    if (userEmail == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to comment')),
+      );
+      return;
+    }
+
+    try {
+      await ref.read(commentProvider(widget.postId).notifier).addComment(
+        postId: widget.postId,
+        commentText: commentText,
+        userEmail: userEmail,
+      );
+      _commentController.clear();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add comment: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeProvider);
+    final commentState = ref.watch(commentProvider(widget.postId));
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.8,
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 16,
+      ),
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Header with Back Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close bottom sheet
+                },
+              ),
+              Text(
+                'Comments',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(width: 48), // Placeholder for symmetry
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Comments List
+          Expanded(
+            child: commentState.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : commentState.comments.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No comments yet',
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: commentState.comments.length,
+                        itemBuilder: (context, index) {
+                          final comment = commentState.comments[index];
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage: comment.userProfileImage.isNotEmpty
+                                  ? NetworkImage(comment.userProfileImage)
+                                  : null,
+                              child: comment.userProfileImage.isEmpty
+                                  ? const Icon(Icons.person)
+                                  : null,
+                            ),
+                            title: Text(
+                              comment.userName,
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.white : Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              comment.commentText,
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.white70 : Colors.black87,
+                              ),
+                            ),
+                            trailing: Text(
+                              DateFormat('MMM d, HH:mm').format(comment.createdAt),
+                              style: TextStyle(
+                                color: isDarkMode ? Colors.white54 : Colors.black54,
+                                fontSize: 12,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+          ),
+
+          // Comment Input
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _commentController,
+                    decoration: InputDecoration(
+                      hintText: 'Add a comment...',
+                      hintStyle: TextStyle(
+                        color: isDarkMode ? Colors.white54 : Colors.black54,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(
+                    Icons.send,
+                    color: AppColors.primaryColor,
+                  ),
+                  onPressed: _submitComment,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -16,6 +16,8 @@ class PostListState {
     this.error,
   });
 
+  get hasMore => null;
+
   PostListState copyWith({
     List<PostModel>? posts,
     bool? isLoading,

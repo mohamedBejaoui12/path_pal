@@ -19,37 +19,56 @@ class PostModel with _$PostModel {
     @Default(false) bool isLikedByCurrentUser,
   }) = _PostModel;
 
- factory PostModel.fromJson(Map<String, dynamic> json) {
-  // Safely extract user data
-  final userData = json['user'] is Map ? json['user'] : {};
+  // Helper method for default avatar
+  static String _generateDefaultProfileImage(String name) {
+    return 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random&color=fff&size=200';
+  }
 
-  // Combine name and family name
-  final name = userData['name'] ?? '';
-  final familyName = userData['family_name'] ?? '';
-  final fullName = '$name $familyName'.trim();
+  // Modify fromJson to handle more complex data structures
+  factory PostModel.fromJson(Map<String, dynamic> json) {
+    // Handle user data extraction
+    dynamic userData;
+    if (json['user'] is List && json['user'].isNotEmpty) {
+      userData = json['user'][0];
+    } else if (json['user'] is Map) {
+      userData = json['user'];
+    } else {
+      userData = {};
+    }
 
-  return PostModel(
-    id: json['id'] as int?,
-    userEmail: (json['user_email'] ?? '').toString(),
-    userName: fullName.isNotEmpty ? fullName : 'Anonymous',
-    userProfileImage: userData['profile_image_url'] ?? 
-      _generateDefaultProfileImage(fullName),
-    title: (json['title'] ?? '').toString(),
-    description: json['description'] as String?,
-    imageUrl: json['image_link'] as String?,
-    interests: (json['interests'] as List?)?.map((e) => e.toString()).toList() ?? [],
-    createdAt: json['created_at'] != null 
-      ? DateTime.tryParse(json['created_at'].toString()) 
-      : null,
-    likesCount: json['likes_count'] as int? ?? 0,
-    commentsCount: json['comments_count'] as int? ?? 0,
-    isLikedByCurrentUser: json['is_liked_by_current_user'] as bool? ?? false,
-  );
-}
+    // Extract name safely
+    final name = userData['name'] ?? '';
+    final familyName = userData['family_name'] ?? '';
+    final fullName = '$name $familyName'.trim();
 
-// Helper method for default avatar
-static String _generateDefaultProfileImage(String name) {
-  return 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random&color=fff&size=200';
-}
-  
+    // Handle likes count
+    int likesCount = 0;
+    bool isLikedByCurrentUser = false;
+    
+    if (json['post_likes'] is List) {
+      likesCount = (json['post_likes'] as List).length;
+      // Assuming current user's email is passed in the context
+      // This might need adjustment based on your authentication setup
+      // isLikedByCurrentUser = (json['post_likes'] as List)
+      //   .any((like) => like['user_email'] == currentUserEmail);
+    }
+
+    return PostModel(
+      id: json['id'] as int?,
+      userEmail: (json['user_email'] ?? '').toString(),
+      userName: fullName.isNotEmpty ? fullName : 'Anonymous',
+      userProfileImage: userData['profile_image_url'] ?? 
+        _generateDefaultProfileImage(fullName),
+      title: (json['title'] ?? '').toString(),
+      description: json['description'] as String?,
+      imageUrl: json['image_link'] ?? json['image_url'] as String?,
+      interests: (json['interests'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      createdAt: json['created_at'] != null 
+        ? DateTime.tryParse(json['created_at'].toString()) 
+        : null,
+      likesCount: likesCount,
+      commentsCount: json['comments_count'] as int? ?? 0,
+      isLikedByCurrentUser: isLikedByCurrentUser,
+    );
+  }
 }
