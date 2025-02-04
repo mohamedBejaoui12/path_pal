@@ -8,6 +8,7 @@ import 'package:pfe1/features/authentication/presentation/user_details_screen.da
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/features/home/presentation/create_post_screen.dart';
 import 'package:pfe1/features/home/presentation/home_screen.dart';
+import 'package:pfe1/features/home/presentation/profile_screen.dart';
 import 'package:pfe1/features/home/presentation/user_profile_screen.dart';
 import 'package:pfe1/features/interests/presentation/interests_selection_screen.dart';
 import 'package:pfe1/shared/theme/app_colors.dart';
@@ -109,6 +110,10 @@ class MyApp extends ConsumerWidget {
             return EmailVerificationScreen(email: email);
           },
         ),
+// GoRoute(
+//   path: '/profile',
+//   builder: (context, state) => const ProfileScreen(),
+// ),
         GoRoute(
           path: '/user-details',
           builder: (context, state) {

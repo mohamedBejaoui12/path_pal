@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pfe1/features/home/presentation/profile_widget.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
 import '../../../features/authentication/data/user_details_provider.dart';
@@ -23,6 +24,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = 
     GlobalKey<RefreshIndicatorState>();
 
+  
+
   @override
   void initState() {
     super.initState();
@@ -42,13 +45,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   late List<Widget> _screens;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _screens = [
-      _buildRefreshablePosts(),
-   
-    ];
-  }
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  _screens = [
+    _buildRefreshablePosts(),
+    Center(child: Text('Map Screen (Coming Soon)', style: TextStyle(fontSize: 18))),
+    Center(child: Text('Todo Screen (Coming Soon)', style: TextStyle(fontSize: 18))),
+    const ProfileWidget(),
+  ];
+}
 
   // Refreshable Posts Widget
   Widget _buildRefreshablePosts() {
