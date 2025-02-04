@@ -37,6 +37,17 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
     }
   }
 
+  void _showCommentsBottomSheet(int postId) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => CommentsBottomSheet(postId: postId),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeProvider);
@@ -75,20 +86,6 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
   }
 
   Widget _buildPostCard(PostModel post, bool isDarkMode) {
-    void _showCommentsBottomSheet(int postId) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (context) => CommentsBottomSheet(postId: postId),
-      );
-    }
-    
-    _CommentsBottomSheet({required int postId}) {
-    }
-
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: !isDarkMode 
@@ -199,8 +196,7 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                             fontSize: 14,
                             color: isDarkMode
                                 ? Colors.grey[300]
-                                : Colors.grey[700],
-                            height: 1.4,
+                                : Colors.black87,
                           ),
                         ),
                       ),
@@ -208,39 +204,37 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                 ),
               ),
 
-              // Image
-              if (post.imageUrl != null)
+              // Post Image
+              if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: CachedNetworkImage(
-                      imageUrl: post.imageUrl!,
-                      width: double.infinity,
-                      height: 280,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        height: 280,
-                        color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primaryColor,
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        height: 280,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.error),
-                      ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: CachedNetworkImage(
+                    imageUrl: post.imageUrl!,
+                    placeholder: (context, url) => Container(
+                      height: 200,
+                      color: Colors.grey[300],
+                      child: const Center(child: CircularProgressIndicator()),
                     ),
+                    errorWidget: (context, url, error) {
+                      print('Image load error: $error');
+                      return Container(
+                        height: 200,
+                        color: Colors.grey[300],
+                        child: const Center(
+                          child: Icon(Icons.broken_image, size: 50, color: Colors.red),
+                        ),
+                      );
+                    },
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: 200,
                   ),
                 ),
 
               // Interests
               if (post.interests.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 4,
@@ -250,77 +244,50 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                           interest,
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.primaryColor,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
                         ),
-                        backgroundColor: isDarkMode
-                            ? AppColors.primaryColor.withOpacity(0.1)
-                            : AppColors.primaryColor.withOpacity(0.15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        side: BorderSide.none,
+                        backgroundColor: isDarkMode 
+                          ? Colors.grey[700] 
+                          : Colors.grey[200],
                       );
                     }).toList(),
                   ),
                 ),
 
-              // Action Buttons
+              // Comments and Likes Section
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    IconButton(
-                      icon: Icon(
-                        post.isLikedByCurrentUser
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_outline_rounded,
-                        color: post.isLikedByCurrentUser
-                            ? Colors.red
-                            : (isDarkMode ? Colors.grey[400] : Colors.grey[600]),
-                        size: 28,
-                      ),
+                    // Like Button
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            post.isLikedByCurrentUser 
+                              ? Icons.favorite 
+                              : Icons.favorite_border,
+                            color: post.isLikedByCurrentUser 
+                              ? Colors.red 
+                              : (isDarkMode ? Colors.white : Colors.black),
+                          ),
+                          onPressed: () {
+                            ref.read(postListProvider.notifier).toggleLike(post.id!);
+                          },
+                        ),
+                        Text('${post.likesCount} Likes'),
+                      ],
+                    ),
+
+                    // Comments Button
+                    TextButton.icon(
+                      icon: const Icon(Icons.comment_outlined),
+                      label: Text('${post.commentsCount} Comments'),
                       onPressed: () {
-                        ref.read(postListProvider.notifier).toggleLike(post.id!);
+                        _showCommentsBottomSheet(post.id!);
                       },
-                    ),
-                    Text(
-                      '${post.likesCount}',
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    
-                    // Hide comment section in profile view
-                    if (!widget.isProfileView)
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              Icons.mode_comment_outlined,
-                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                              size: 24,
-                            ),
-                            onPressed: () => _showCommentsBottomSheet(post.id!),
-                          ),
-                          Text(
-                            post.commentsCount > 0 ? '${post.commentsCount} comments' : 'No comments',
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    
-                    const Spacer(),
-                    IconButton(
-                      icon: Icon(
-                        Icons.share_outlined,
-                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                        size: 24,
-                      ),
-                      onPressed: () {},
                     ),
                   ],
                 ),
