@@ -5,6 +5,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pfe1/features/authentication/domain/user_details_model.dart';
 import 'package:pfe1/shared/theme/app_colors.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
+import 'package:pfe1/features/home/domain/post_model.dart';
+import 'package:pfe1/features/home/data/post_provider.dart';
+import 'package:pfe1/features/home/presentation/post_list_widget.dart';
 
 class ProfileWidget extends ConsumerStatefulWidget {
   const ProfileWidget({Key? key}) : super(key: key);
@@ -15,16 +18,17 @@ class ProfileWidget extends ConsumerStatefulWidget {
 
 class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
   late Future<UserDetailsModel?> _userDetailsFuture;
+  late Future<List<PostModel>> _userPostsFuture;
 
   @override
   void initState() {
     super.initState();
     _userDetailsFuture = _fetchUserDetails();
+    _userPostsFuture = _fetchUserPosts();
   }
 
   Future<UserDetailsModel?> _fetchUserDetails() async {
     try {
-      // Get the current user's email from AuthProvider
       final authState = ref.read(authProvider);
       final user = authState.user;
       
@@ -32,14 +36,12 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
         return null;
       }
 
-      // Fetch user details from the 'user' table
       final response = await Supabase.instance.client
           .from('user')
           .select('*')
           .eq('email', user.email as Object)
           .single();
 
-      // Convert the response to UserDetailsModel
       return UserDetailsModel(
         name: response['name'] ?? '',
         familyName: response['family_name'] ?? '',
@@ -58,6 +60,68 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
       return null;
     }
   }
+
+  Future<List<PostModel>> _fetchUserPosts() async {
+  try {
+    final authState = ref.read(authProvider);
+    final user = authState.user;
+    
+    if (user == null) {
+      return [];
+    }
+
+    // Fetch user details to get profile image
+    final userDetailsResponse = await Supabase.instance.client
+        .from('user')
+        .select('profile_image_url')
+        .eq('email', user.email as Object)
+        .single();
+
+    final userProfileImage = userDetailsResponse['profile_image_url'];
+  
+    try {
+      final response = await Supabase.instance.client
+          .from('user_post')
+          .select('*')
+          .eq('user_email', user.email as Object)
+          .order('created_at', ascending: false);
+      
+      return response.map<PostModel>((post) {
+        // Correct image link formatting
+        String? correctImageLink = post['image_link'];
+        if (correctImageLink != null && !correctImageLink.contains('.')) {
+          // Add the missing dot before jpg
+          correctImageLink = correctImageLink.replaceAll('jpg', '.jpg');
+        }
+
+        print('Corrected Image Link: $correctImageLink'); // Debug print
+
+        return PostModel(
+          id: post['id'],
+          userEmail: post['user_email'] ?? user.email,
+          userName: post['user_name'] ?? user.email!.split('@').first,
+          userProfileImage: userProfileImage ?? 
+            'https://ui-avatars.com/api/?name=${Uri.encodeComponent(user.email!.split('@').first)}&background=random&color=fff&size=200',
+          title: post['title'] ?? 'Untitled Post',
+          description: post['description'],
+          imageUrl: correctImageLink, // Use corrected image link
+          interests: List<String>.from(post['interests'] ?? []),
+          createdAt: post['created_at'] != null 
+            ? DateTime.parse(post['created_at']) 
+            : DateTime.now(),
+          likesCount: post['likes_count'] ?? 0,
+          commentsCount: post['comments_count'] ?? 0,
+        );
+      }).toList();
+    } catch (e) {
+      print('Detailed error fetching user posts: $e');
+      return [];
+    }
+  } catch (e) {
+    print('Error in user post fetch process: $e');
+    return [];
+  }
+}
 
   Widget _buildProfileHeader(UserDetailsModel user) {
     return Stack(
@@ -97,137 +161,90 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
     );
   }
 
-  Widget _buildProfileSection(String title, Widget content) {
+  Widget _buildUserPosts(List<PostModel> posts) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+        const Padding(
+          padding: EdgeInsets.all(16.0),
           child: Text(
-            title,
-            style: const TextStyle(
+            'Your Posts',
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        content,
-        const Divider(height: 40),
+        posts.isEmpty
+          ? const Center(child: Text('No posts yet'))
+          : ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: posts.length,
+              itemBuilder: (context, index) {
+                return PostListWidget(
+                  post: posts[index],
+                  isProfileView: true,
+                );
+              },
+            ),
       ],
-    );
-  }
-
-  Widget _buildDetailItem(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.primaryColor),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<UserDetailsModel?>(
-      future: _userDetailsFuture,
+    return FutureBuilder<List<dynamic>>(
+      future: Future.wait([_userDetailsFuture, _userPostsFuture]),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError || !snapshot.hasData) {
-          return Center(
-            child: Text(
-              'Error loading profile',
-              style: TextStyle(color: Colors.red),
-            ),
+          return const Center(
+            child: Text('Error loading profile'),
           );
         }
 
-        final user = snapshot.data!;
+        final userDetails = snapshot.data![0] as UserDetailsModel?;
+        final userPosts = snapshot.data![1] as List<PostModel>;
+
+        if (userDetails == null) {
+          return const Center(
+            child: Text('User not found'),
+          );
+        }
 
         return SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildProfileHeader(user),
+              _buildProfileHeader(userDetails),
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${user.name} ${user.familyName}',
+                      '${userDetails.name} ${userDetails.familyName}',
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    if (user.description != null)
+                    if (userDetails.description != null)
                       Text(
-                        user.description!,
+                        userDetails.description!,
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.grey[600],
                         ),
                       ),
-                    const Divider(height: 40),
-                    _buildProfileSection(
-                      'About',
-                      Column(
-                        children: [
-                          _buildDetailItem(
-                            Icons.cake_outlined,
-                            'Date of Birth',
-                            DateFormat('MMMM dd, yyyy').format(user.dateOfBirth),
-                          ),
-                          _buildDetailItem(
-                            Icons.location_city_outlined,
-                            'City of Birth',
-                            user.cityOfBirth,
-                          ),
-                          _buildDetailItem(
-                            Icons.transgender_outlined,
-                            'Gender',
-                            user.gender.name.toUpperCase(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _buildProfileSection(
-                      'Contact Info',
-                      _buildDetailItem(
-                        Icons.phone_outlined,
-                        'Phone Number',
-                        user.phoneNumber,
-                      ),
-                    ),
                   ],
                 ),
               ),
+              _buildUserPosts(userPosts),
             ],
           ),
         );
