@@ -1,13 +1,96 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:pfe1/shared/theme/app_colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pfe1/features/authentication/domain/user_details_model.dart';
-import 'package:pfe1/shared/theme/app_colors.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/features/home/domain/post_model.dart';
 import 'package:pfe1/features/home/data/post_provider.dart';
 import 'package:pfe1/features/home/presentation/post_list_widget.dart';
+
+String _generateDefaultProfileImage(String name) {
+  return 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random&color=fff&size=200';
+}
+
+final userProfileProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, userEmail) async {
+  final supabase = Supabase.instance.client;
+
+  // Fetch user details
+  final userResponse = await supabase
+      .from('user')
+      .select('*')
+      .eq('email', userEmail)
+      .single();
+
+  // Fetch user posts with full user details
+  final postsResponse = await supabase
+      .from('user_post')
+      .select('''
+        *,
+        user:user_email(name, family_name, profile_image_url)
+      ''')
+      .eq('user_email', userEmail)
+      .order('created_at', ascending: false);
+
+  // Convert posts to PostModel
+  final posts = (postsResponse as List).map<PostModel>((json) {
+    // Safely extract user data
+    final userData = (json['user'] is List && json['user'].isNotEmpty) 
+      ? json['user'][0] 
+      : {};
+
+    // Extract name safely
+    final name = userData['name'] ?? userResponse['name'] ?? '';
+    final familyName = userData['family_name'] ?? userResponse['family_name'] ?? '';
+    final fullName = '$name $familyName'.trim();
+
+    // Get profile image URL with fallback
+    final profileImageUrl = userData['profile_image_url'] ?? 
+      userResponse['profile_image_url'] ?? 
+      _generateDefaultProfileImage(fullName);
+
+    // Fetch post likes
+    final postLikes = json['post_likes'] as List? ?? [];
+    final isLikedByCurrentUser = postLikes.any(
+      (like) => like['user_email'] == userEmail
+    );
+
+    return PostModel(
+      id: json['id'],
+      userEmail: json['user_email'] ?? userEmail,
+      userName: fullName.isNotEmpty ? fullName : 'Anonymous',
+      userProfileImage: profileImageUrl,
+      title: json['title'] ?? 'Untitled Post',
+      description: json['description'],
+      imageUrl: json['image_link'] ?? json['image_url'],
+      interests: List<String>.from(json['interests'] ?? []),
+      createdAt: json['created_at'] != null 
+        ? DateTime.parse(json['created_at']) 
+        : DateTime.now(),
+      likesCount: postLikes.length,
+      commentsCount: json['comments_count'] ?? 0,
+      isLikedByCurrentUser: isLikedByCurrentUser,
+    );
+  }).toList();
+
+  return {
+    'user_details': UserDetailsModel(
+      name: userResponse['name'] ?? '',
+      familyName: userResponse['family_name'] ?? '',
+      email: userEmail,
+      dateOfBirth: userResponse['date_of_birth'] != null 
+        ? DateTime.parse(userResponse['date_of_birth']) 
+        : DateTime.now(),
+      phoneNumber: userResponse['phone_number'] ?? '',
+      cityOfBirth: userResponse['city_of_birth'] ?? '',
+      gender: userResponse['gender'] == 'female' ? Gender.female : Gender.male,
+      profileImageUrl: userResponse['profile_image_url'],
+      description: userResponse['description'],
+    ),
+    'user_posts': posts,
+  };
+});
 
 class ProfileWidget extends ConsumerStatefulWidget {
   const ProfileWidget({Key? key}) : super(key: key);
@@ -17,100 +100,44 @@ class ProfileWidget extends ConsumerStatefulWidget {
 }
 
 class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
-  late Future<UserDetailsModel?> _userDetailsFuture;
-  late Future<List<PostModel>> _userPostsFuture;
-
   @override
-  void initState() {
-    super.initState();
-    _userDetailsFuture = _fetchUserDetails();
-    _userPostsFuture = _fetchUserPosts();
-  }
+  Widget build(BuildContext context) {
+    final authState = ref.read(authProvider);
+    final userEmail = authState.user?.email;
 
-  Future<UserDetailsModel?> _fetchUserDetails() async {
-    try {
-      final authState = ref.read(authProvider);
-      final user = authState.user;
-      
-      if (user == null) {
-        return null;
-      }
-
-      final response = await Supabase.instance.client
-          .from('user')
-          .select('*')
-          .eq('email', user.email as Object)
-          .single();
-
-      return UserDetailsModel(
-        name: response['name'] ?? '',
-        familyName: response['family_name'] ?? '',
-        email: user.email!,
-        dateOfBirth: response['date_of_birth'] != null 
-          ? DateTime.parse(response['date_of_birth']) 
-          : DateTime.now(),
-        phoneNumber: response['phone_number'] ?? '',
-        cityOfBirth: response['city_of_birth'] ?? '',
-        gender: response['gender'] == 'female' ? Gender.female : Gender.male,
-        profileImageUrl: response['profile_image_url'],
-        description: response['description'],
+    if (userEmail == null) {
+      return const Center(
+        child: Text('User not authenticated'),
       );
-    } catch (e) {
-      print('Error fetching user details: $e');
-      return null;
     }
-  }
 
-  Future<List<PostModel>> _fetchUserPosts() async {
-    try {
-      final authState = ref.read(authProvider);
-      final user = authState.user;
-      
-      if (user == null) {
-        return [];
-      }
+    return Consumer(
+      builder: (context, ref, child) {
+        final userProfileAsyncValue = ref.watch(userProfileProvider(userEmail));
 
-      final userDetailsResponse = await Supabase.instance.client
-          .from('user')
-          .select('profile_image_url')
-          .eq('email', user.email as Object)
-          .single();
+        return userProfileAsyncValue.when(
+          data: (data) {
+            final userDetails = data['user_details'] as UserDetailsModel;
+            final userPosts = data['user_posts'] as List<PostModel>;
 
-      final userProfileImage = userDetailsResponse['profile_image_url'];
-  
-      final response = await Supabase.instance.client
-          .from('user_post')
-          .select('*')
-          .eq('user_email', user.email as Object)
-          .order('created_at', ascending: false);
-      
-      return response.map<PostModel>((post) {
-        String? correctImageLink = post['image_link'];
-        if (correctImageLink != null && !correctImageLink.contains('.')) {
-          correctImageLink = correctImageLink.replaceAll('jpg', '.jpg');
-        }
-
-        return PostModel(
-          id: post['id'],
-          userEmail: post['user_email'] ?? user.email,
-          userName: post['user_name'] ?? user.email!.split('@').first,
-          userProfileImage: userProfileImage ?? 
-            'https://ui-avatars.com/api/?name=${Uri.encodeComponent(user.email!.split('@').first)}&background=random&color=fff&size=200',
-          title: post['title'] ?? 'Untitled Post',
-          description: post['description'],
-          imageUrl: correctImageLink,
-          interests: List<String>.from(post['interests'] ?? []),
-          createdAt: post['created_at'] != null 
-            ? DateTime.parse(post['created_at']) 
-            : DateTime.now(),
-          likesCount: post['likes_count'] ?? 0,
-          commentsCount: post['comments_count'] ?? 0,
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildProfileHeader(userDetails),
+                  _buildUserDetails(userDetails),
+                  _buildUserPosts(userPosts),
+                ],
+              ),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(
+            child: Text('Error loading profile: $e'),
+          ),
         );
-      }).toList();
-    } catch (e) {
-      print('Error fetching user posts: $e');
-      return [];
-    }
+      },
+    );
   }
 
   Widget _buildProfileHeader(UserDetailsModel user) {
@@ -248,44 +275,6 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
               },
             ),
       ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<dynamic>>(
-      future: Future.wait([_userDetailsFuture, _userPostsFuture]),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError || !snapshot.hasData) {
-          return const Center(
-            child: Text('Error loading profile'),
-          );
-        }
-
-        final userDetails = snapshot.data![0] as UserDetailsModel?;
-        final userPosts = snapshot.data![1] as List<PostModel>;
-
-        if (userDetails == null) {
-          return const Center(
-            child: Text('User not found'),
-          );
-        }
-
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildProfileHeader(userDetails),
-              _buildUserDetails(userDetails),
-              _buildUserPosts(userPosts),
-            ],
-          ),
-        );
-      },
     );
   }
 }

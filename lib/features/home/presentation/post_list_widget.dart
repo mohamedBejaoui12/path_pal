@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:pfe1/features/home/domain/post_model.dart';
 import 'package:pfe1/features/home/presentation/comments_bottom_sheet.dart';
 import 'package:pfe1/features/home/presentation/home_screen.dart';
+import 'package:pfe1/features/home/presentation/profile_widget.dart';
+import 'package:pfe1/features/home/presentation/user_profile_screen.dart';
 import 'package:pfe1/shared/theme/theme_provider.dart';
 import 'package:pfe1/shared/theme/app_colors.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
@@ -48,6 +50,294 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
     );
   }
 
+  void _showPostOptionsMenu(BuildContext context, PostModel post) {
+    final isDarkMode = ref.watch(themeProvider);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(
+                  Icons.edit, 
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+                title: Text(
+                  'Edit Post', 
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showEditPostDialog(post);
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.delete, 
+                  color: Colors.red,
+                ),
+                title: const Text(
+                  'Delete Post', 
+                  style: TextStyle(color: Colors.red),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _confirmDeletePost(post);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _confirmDeletePost(PostModel post) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning_rounded, 
+              color: Colors.orange[700],
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'Confirm Deletion', 
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Are you sure you want to permanently delete this post?',
+              style: TextStyle(
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'This action cannot be undone.',
+              style: TextStyle(
+                color: Colors.red[300],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey[700],
+            ),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              
+              // Check if this is from a profile view
+              if (widget.isProfileView) {
+                ref.read(postListProvider.notifier).deletePost(
+                  post.id!, 
+                  onPostDeleted: () {
+                    // Trigger a refresh of the profile view
+                    ref.invalidate(userProfileProvider);
+                  }
+                );
+              } else {
+                ref.read(postListProvider.notifier).deletePost(post.id!);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[600],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Delete Post'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditPostDialog(PostModel post) {
+    final titleController = TextEditingController(text: post.title);
+    final descriptionController = TextEditingController(text: post.description);
+    final imageUrlController = TextEditingController(text: post.imageUrl);
+    final interestsController = TextEditingController(
+      text: post.interests.join(', ')
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.edit_rounded, 
+              color: Colors.blue[700],
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'Edit Post', 
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: imageUrlController,
+                decoration: InputDecoration(
+                  labelText: 'Image URL (Optional)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: interestsController,
+                decoration: InputDecoration(
+                  labelText: 'Interests (comma-separated)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey[700],
+            ),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              
+              // Check if this is from a profile view
+              if (widget.isProfileView) {
+                ref.read(postListProvider.notifier).updatePost(
+                  postId: post.id!,
+                  title: titleController.text,
+                  description: descriptionController.text,
+                  imageUrl: imageUrlController.text.isNotEmpty 
+                    ? imageUrlController.text 
+                    : null,
+                  interests: interestsController.text.isNotEmpty
+                    ? interestsController.text
+                        .split(',')
+                        .map((e) => e.trim())
+                        .toList()
+                    : null,
+                  onPostUpdated: () {
+                    // Trigger a refresh of the profile view
+                    ref.invalidate(userProfileProvider);
+                  }
+                );
+              } else {
+                ref.read(postListProvider.notifier).updatePost(
+                  postId: post.id!,
+                  title: titleController.text,
+                  description: descriptionController.text,
+                  imageUrl: imageUrlController.text.isNotEmpty 
+                    ? imageUrlController.text 
+                    : null,
+                  interests: interestsController.text.isNotEmpty
+                    ? interestsController.text
+                        .split(',')
+                        .map((e) => e.trim())
+                        .toList()
+                    : null,
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue[600],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Update Post'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToUserProfile(String userEmail) {
+    final authState = ref.read(authProvider);
+    final currentUserEmail = authState.user?.email;
+
+    if (userEmail != currentUserEmail) {
+      // Only navigate for other users
+      Navigator.push(
+        context, 
+        MaterialPageRoute(
+          builder: (context) => UserProfileScreen(
+            userEmail: userEmail, 
+            isOtherUserProfile: true, 
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeProvider);
@@ -86,6 +376,10 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
   }
 
   Widget _buildPostCard(PostModel post, bool isDarkMode) {
+    final authState = ref.read(authProvider);
+    final currentUserEmail = authState.user?.email;
+    final isCurrentUser = post.userEmail == currentUserEmail;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: !isDarkMode 
@@ -109,69 +403,48 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // User Header
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.primaryColor,
-                          width: 2,
+              ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: post.userProfileImage != null
+                      ? NetworkImage(post.userProfileImage!)
+                      : null,
+                  child: post.userProfileImage == null
+                      ? const Icon(Icons.person)
+                      : null,
+                ),
+                title: isCurrentUser 
+                  ? Text(
+                      post.userName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                    )
+                  : GestureDetector(
+                      onTap: () => _navigateToUserProfile(post.userEmail),
+                      child: Text(
+                        post.userName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : Colors.black,
                         ),
                       ),
-                      child: CircleAvatar(
-                        radius: 24,
-                        backgroundImage: post.userProfileImage != null
-                            ? NetworkImage(post.userProfileImage!)
-                            : null,
-                        child: post.userProfileImage == null
-                            ? const Icon(Icons.person, size: 24)
-                            : null,
-                      ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            post.userName,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                              color: isDarkMode
-                                  ? Colors.white
-                                  : Colors.grey[800],
-                            ),
-                          ),
-                          Text(
-                            post.createdAt != null
-                                ? DateFormat('MMM d, yyyy · h:mm a')
-                                    .format(post.createdAt!)
-                                : 'Unknown Date',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDarkMode
-                                  ? Colors.grey[400]
-                                  : Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.more_vert,
-                        color: isDarkMode ? Colors.grey[400] : Colors.grey,
-                      ),
-                      onPressed: () {},
-                    ),
-                  ],
+                subtitle: Text(
+                  post.createdAt != null 
+                    ? DateFormat('dd MMM yyyy').format(post.createdAt!) 
+                    : 'Unknown Date',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                  ),
                 ),
+                trailing: post.userEmail == currentUserEmail
+                    ? IconButton(
+                        icon: Icon(Icons.more_vert, color: isDarkMode ? Colors.white : Colors.black),
+                        onPressed: () => _showPostOptionsMenu(context, post),
+                      )
+                    : null,
               ),
-
               // Post Content
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),

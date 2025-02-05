@@ -270,8 +270,8 @@ void didChangeDependencies() {
               children: [
                 _buildListTile(
                   icon: Icons.edit,
-                  title: 'Update Profile Data',
-                  onTap: () => context.push('/user-profile'),
+                  title: 'Update Profile ',
+                  onTap: () => context.push('/update-profile'),
                 ),
                 _buildListTile(
                   icon: Icons.settings,

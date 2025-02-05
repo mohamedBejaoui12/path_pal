@@ -8,8 +8,9 @@ import 'package:pfe1/features/authentication/presentation/user_details_screen.da
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/features/home/presentation/create_post_screen.dart';
 import 'package:pfe1/features/home/presentation/home_screen.dart';
-import 'package:pfe1/features/home/presentation/profile_screen.dart';
+
 import 'package:pfe1/features/home/presentation/user_profile_screen.dart';
+import 'package:pfe1/features/home/presentation/user_update_screen.dart';
 import 'package:pfe1/features/interests/presentation/interests_selection_screen.dart';
 import 'package:pfe1/shared/theme/app_colors.dart';
 import 'package:pfe1/shared/theme/theme_provider.dart';
@@ -121,6 +122,10 @@ class MyApp extends ConsumerWidget {
             return UserDetailsScreen(email: email);
           },
         ),
+        GoRoute(
+  path: '/update-profile',
+  builder: (context, state) => const UserUpdateScreen(),
+),
         
       
    GoRoute(
@@ -132,7 +137,28 @@ class MyApp extends ConsumerWidget {
 ),
 GoRoute(
   path: '/user-profile',
-  builder: (context, state) => const UserProfileScreen(),
+  builder: (context, state) {
+    // Extract userEmail and isOtherUserProfile from extra
+    final Map<String, dynamic>? params = state.extra as Map<String, dynamic>?;
+    
+    // Require userEmail, default isOtherUserProfile to true
+    final String? userEmail = params?['userEmail'];
+    final bool isOtherUserProfile = params?['isOtherUserProfile'] ?? true;
+
+    if (userEmail == null) {
+      // Fallback or error handling
+      return const Scaffold(
+        body: Center(
+          child: Text('User email is required'),
+        ),
+      );
+    }
+
+    return UserProfileScreen(
+      userEmail: userEmail,
+      isOtherUserProfile: isOtherUserProfile,
+    );
+  },
 ),
       ],
       // Minimal redirect logic
