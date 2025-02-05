@@ -62,24 +62,22 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
   }
 
   Future<List<PostModel>> _fetchUserPosts() async {
-  try {
-    final authState = ref.read(authProvider);
-    final user = authState.user;
-    
-    if (user == null) {
-      return [];
-    }
-
-    // Fetch user details to get profile image
-    final userDetailsResponse = await Supabase.instance.client
-        .from('user')
-        .select('profile_image_url')
-        .eq('email', user.email as Object)
-        .single();
-
-    final userProfileImage = userDetailsResponse['profile_image_url'];
-  
     try {
+      final authState = ref.read(authProvider);
+      final user = authState.user;
+      
+      if (user == null) {
+        return [];
+      }
+
+      final userDetailsResponse = await Supabase.instance.client
+          .from('user')
+          .select('profile_image_url')
+          .eq('email', user.email as Object)
+          .single();
+
+      final userProfileImage = userDetailsResponse['profile_image_url'];
+  
       final response = await Supabase.instance.client
           .from('user_post')
           .select('*')
@@ -87,14 +85,10 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
           .order('created_at', ascending: false);
       
       return response.map<PostModel>((post) {
-        // Correct image link formatting
         String? correctImageLink = post['image_link'];
         if (correctImageLink != null && !correctImageLink.contains('.')) {
-          // Add the missing dot before jpg
           correctImageLink = correctImageLink.replaceAll('jpg', '.jpg');
         }
-
-        print('Corrected Image Link: $correctImageLink'); // Debug print
 
         return PostModel(
           id: post['id'],
@@ -104,7 +98,7 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
             'https://ui-avatars.com/api/?name=${Uri.encodeComponent(user.email!.split('@').first)}&background=random&color=fff&size=200',
           title: post['title'] ?? 'Untitled Post',
           description: post['description'],
-          imageUrl: correctImageLink, // Use corrected image link
+          imageUrl: correctImageLink,
           interests: List<String>.from(post['interests'] ?? []),
           createdAt: post['created_at'] != null 
             ? DateTime.parse(post['created_at']) 
@@ -114,14 +108,10 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
         );
       }).toList();
     } catch (e) {
-      print('Detailed error fetching user posts: $e');
+      print('Error fetching user posts: $e');
       return [];
     }
-  } catch (e) {
-    print('Error in user post fetch process: $e');
-    return [];
   }
-}
 
   Widget _buildProfileHeader(UserDetailsModel user) {
     return Stack(
@@ -158,6 +148,75 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildUserDetails(UserDetailsModel user) {
+    final dateFormatter = DateFormat('dd MMMM yyyy');
+    
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${user.name} ${user.familyName}',
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (user.description != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                user.description!,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+          if (user.phoneNumber.isNotEmpty)
+            _buildDetailRow(
+              icon: Icons.phone,
+              text: user.phoneNumber,
+            ),
+          _buildDetailRow(
+            icon: Icons.cake,
+            text: 'Born ${dateFormatter.format(user.dateOfBirth)}',
+          ),
+          if (user.cityOfBirth.isNotEmpty)
+            _buildDetailRow(
+              icon: Icons.location_city,
+              text: 'From ${user.cityOfBirth}',
+            ),
+          _buildDetailRow(
+            icon: user.gender == Gender.female ? Icons.female : Icons.male,
+            text: '${user.gender.toString().split('.').last}',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow({required IconData icon, required String text}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: AppColors.primaryColor),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -221,29 +280,7 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildProfileHeader(userDetails),
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${userDetails.name} ${userDetails.familyName}',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (userDetails.description != null)
-                      Text(
-                        userDetails.description!,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+              _buildUserDetails(userDetails),
               _buildUserPosts(userPosts),
             ],
           ),
