@@ -44,13 +44,27 @@ class PostModel with _$PostModel {
     // Handle likes count
     int likesCount = 0;
     bool isLikedByCurrentUser = false;
-    
+
+    // Check if post_likes exists and is a list
     if (json['post_likes'] is List) {
-      likesCount = (json['post_likes'] as List).length;
-      // Assuming current user's email is passed in the context
-      // This might need adjustment based on your authentication setup
-      // isLikedByCurrentUser = (json['post_likes'] as List)
-      //   .any((like) => like['user_email'] == currentUserEmail);
+      final postLikes = json['post_likes'] as List;
+      likesCount = postLikes.length;
+
+      // Determine if liked by current user
+      // This assumes current user's email is passed or available in the context
+      final currentUserEmail = json['current_user_email'];
+      if (currentUserEmail != null) {
+        isLikedByCurrentUser = postLikes.any(
+          (like) => like['user_email'] == currentUserEmail
+        );
+      } else {
+        // Fallback to explicit flag if available
+        isLikedByCurrentUser = json['is_liked_by_current_user'] ?? false;
+      }
+    } else {
+      // Fallback for cases where post_likes might not be a list
+      likesCount = json['likes_count'] ?? 0;
+      isLikedByCurrentUser = json['is_liked_by_current_user'] ?? false;
     }
 
     return PostModel(

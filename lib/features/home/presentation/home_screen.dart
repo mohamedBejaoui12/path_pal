@@ -47,11 +47,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
 void didChangeDependencies() {
   super.didChangeDependencies();
+  
+  // Get the current user's email
+  final authState = ref.read(authProvider);
+  final currentUserEmail = authState.user?.email;
+
   _screens = [
     _buildRefreshablePosts(),
     Center(child: Text('Map Screen (Coming Soon)', style: TextStyle(fontSize: 18))),
     Center(child: Text('Todo Screen (Coming Soon)', style: TextStyle(fontSize: 18))),
-    const ProfileWidget(),
+    // Pass the current user's email to ProfileWidget
+    ProfileWidget(userEmail: currentUserEmail ?? ''),
   ];
 }
 

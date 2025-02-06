@@ -16,11 +16,13 @@ import 'package:pfe1/features/authentication/data/comment_provider.dart';
 class PostListWidget extends ConsumerStatefulWidget {
   final PostModel? post;
   final bool isProfileView;
+  final VoidCallback? onLikeToggle;
 
   const PostListWidget({
     Key? key, 
     this.post, 
     this.isProfileView = false,
+    this.onLikeToggle,
   }) : super(key: key);
 
   @override
@@ -547,7 +549,13 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                               : (isDarkMode ? Colors.white : Colors.black),
                           ),
                           onPressed: () {
-                            ref.read(postListProvider.notifier).toggleLike(post.id!);
+                            // If onLikeToggle is provided, use it first
+                            if (widget.onLikeToggle != null) {
+                              widget.onLikeToggle!();
+                            } else {
+                              // Fallback to the default provider method
+                              ref.read(postListProvider.notifier).toggleLike(post.id!);
+                            }
                           },
                         ),
                         Text('${post.likesCount} Likes'),

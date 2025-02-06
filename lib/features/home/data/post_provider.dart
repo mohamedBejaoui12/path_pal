@@ -68,11 +68,15 @@ class PostListNotifier extends StateNotifier<PostListState> {
         json['user_profile_image'] = userData['profile_image_url'] ??
             _generateDefaultProfileImage(userData['name'] ?? 'A');
 
-        // Check if post is liked by current user
-        final likes = json['post_likes'] as List?;
-        json['is_liked_by_current_user'] =
-            likes != null && likes.any((like) => like['user_email'] == userEmail);
-        json['likes_count'] = likes?.length ?? 0;
+        // Explicitly check likes for current user
+        final likes = json['post_likes'] as List? ?? [];
+        final isLikedByCurrentUser = likes.any(
+          (like) => like['user_email'] == userEmail
+        );
+
+        // Update JSON with explicit like information
+        json['is_liked_by_current_user'] = isLikedByCurrentUser;
+        json['likes_count'] = likes.length;
 
         return PostModel.fromJson(json);
       }).toList();
@@ -119,43 +123,51 @@ class PostListNotifier extends StateNotifier<PostListState> {
       // Determine if the post is currently liked
       final isCurrentlyLiked = currentPost.isLikedByCurrentUser;
 
-      // Try to find existing like
-      final existingLikeResponse = await _supabase
-          .from('post_likes')
-          .select('id')
-          .eq('post_id', postId)
-          .eq('user_email', userEmail)
-          .maybeSingle();
-
-      if (existingLikeResponse != null) {
-        // Unlike: remove the like
-        await _supabase
+      // Perform like/unlike operation with error handling
+      try {
+        // Try to find existing like
+        final existingLikeResponse = await _supabase
             .from('post_likes')
-            .delete()
+            .select('id')
             .eq('post_id', postId)
-            .eq('user_email', userEmail);
-      } else {
-        // Like: add a new like
-        await _supabase
-            .from('post_likes')
-            .insert({
-              'post_id': postId,
-              'user_email': userEmail,
-            });
+            .eq('user_email', userEmail)
+            .maybeSingle();
+
+        if (existingLikeResponse != null) {
+          // Unlike: remove the like
+          await _supabase
+              .from('post_likes')
+              .delete()
+              .eq('post_id', postId)
+              .eq('user_email', userEmail);
+        } else {
+          // Like: add a new like
+          await _supabase
+              .from('post_likes')
+              .insert({
+                'post_id': postId,
+                'user_email': userEmail,
+              });
+        }
+      } on PostgrestException catch (postgrestError) {
+        // Handle Supabase-specific errors
+        debugPrint('Supabase Error during like toggle: ${postgrestError.message}');
+        throw Exception('Failed to update like status: ${postgrestError.message}');
       }
 
-      // Update the post locally
+      // Update the post locally with optimistic update
       currentPosts[postIndex] = currentPost.copyWith(
         isLikedByCurrentUser: !isCurrentlyLiked,
-        likesCount: isCurrentlyLiked
-            ? currentPost.likesCount - 1
-            : currentPost.likesCount + 1,
+        likesCount: isCurrentlyLiked 
+          ? currentPost.likesCount - 1 
+          : currentPost.likesCount + 1,
       );
 
       // Update the state with the modified posts
       state = state.copyWith(posts: currentPosts);
     } catch (e) {
-      debugPrint('Error toggling like: $e');
+      // Log the error and rethrow to allow UI to handle
+      debugPrint('Comprehensive Error toggling like: $e');
       rethrow;
     }
   }
