@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pfe1/features/home/presentation/profile_widget.dart';
+import 'package:pfe1/features/todos/presentation/todos_screen.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
 import '../../../features/authentication/data/user_details_provider.dart';
@@ -54,8 +55,8 @@ void didChangeDependencies() {
 
   _screens = [
     _buildRefreshablePosts(),
+    TodosScreen(),  
     Center(child: Text('Map Screen (Coming Soon)', style: TextStyle(fontSize: 18))),
-    Center(child: Text('Todo Screen (Coming Soon)', style: TextStyle(fontSize: 18))),
     // Pass the current user's email to ProfileWidget
     ProfileWidget(userEmail: currentUserEmail ?? ''),
   ];
@@ -166,18 +167,18 @@ void didChangeDependencies() {
           selectedColor: AppColors.primaryColor,
         ),
 
-        /// Map
-        SalomonBottomBarItem(
-          icon: const Icon(Icons.map),
-          title: const Text("Map"),
-          selectedColor: Colors.green,
-        ),
-
         /// Todo
         SalomonBottomBarItem(
           icon: const Icon(Icons.checklist),
           title: const Text("Todo"),
           selectedColor: Colors.blue,
+        ),
+
+        /// Map
+        SalomonBottomBarItem(
+          icon: const Icon(Icons.map),
+          title: const Text("Map"),
+          selectedColor: Colors.green,
         ),
 
         /// Profile

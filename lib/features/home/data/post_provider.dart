@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:path/path.dart' as path_util;
 
 import '../domain/post_model.dart';
 import '../../authentication/providers/auth_provider.dart';
@@ -97,6 +100,23 @@ class PostListNotifier extends StateNotifier<PostListState> {
   // Add this helper method
   String _generateDefaultProfileImage(String name) {
     return 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random&color=fff&size=200';
+  }
+
+  String _getContentType(String filePath) {
+    final extension = path_util.extension(filePath).toLowerCase();
+    switch (extension) {
+      case '.jpg':
+      case '.jpeg':
+        return 'image/jpeg';
+      case '.png':
+        return 'image/png';
+      case '.gif':
+        return 'image/gif';
+      case '.webp':
+        return 'image/webp';
+      default:
+        return 'application/octet-stream';
+    }
   }
 
   Future<void> toggleLike(int postId) async {
@@ -247,7 +267,44 @@ class PostListNotifier extends StateNotifier<PostListState> {
       final updateData = <String, dynamic>{};
       if (title != null) updateData['title'] = title;
       if (description != null) updateData['description'] = description;
-      if (imageUrl != null) updateData['image_link'] = imageUrl;
+      
+      // Handle local file upload
+      if (imageUrl != null) {
+        final file = File(imageUrl);
+        if (file.existsSync()) {
+          // Validate file size
+          final fileSize = await file.length();
+          if (fileSize > 10 * 1024 * 1024) {
+            throw Exception('Image size exceeds 10MB limit');
+          }
+
+          // Generate unique filename
+          final fileName = '${userEmail}_post_${postId}_${DateTime.now().millisecondsSinceEpoch}${path_util.extension(imageUrl)}';
+
+          // Upload to Supabase storage
+          await _supabase.storage
+              .from('post_images')
+              .upload(
+                fileName, 
+                file,
+                fileOptions: FileOptions(
+                  upsert: true,
+                  contentType: _getContentType(imageUrl),
+                ),
+              );
+
+          // Get public URL
+          final uploadedImageUrl = _supabase.storage
+              .from('post_images')
+              .getPublicUrl(fileName);
+          
+          updateData['image_link'] = uploadedImageUrl;
+        } else if (imageUrl.startsWith('http')) {
+          // If it's already a URL, use it directly
+          updateData['image_link'] = imageUrl;
+        }
+      }
+      
       if (interests != null) updateData['interests'] = interests;
 
       // Update the post in Supabase
@@ -262,7 +319,7 @@ class PostListNotifier extends StateNotifier<PostListState> {
           return post.copyWith(
             title: title ?? post.title,
             description: description ?? post.description,
-            imageUrl: imageUrl ?? post.imageUrl,
+            imageUrl: updateData['image_link'] ?? post.imageUrl,
             interests: interests ?? post.interests,
           );
         }
@@ -275,6 +332,7 @@ class PostListNotifier extends StateNotifier<PostListState> {
       onPostUpdated?.call();
     } catch (e) {
       debugPrint('Error updating post: $e');
+      state = state.copyWith(error: e.toString());
       rethrow;
     }
   }

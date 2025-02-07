@@ -12,6 +12,7 @@ import 'package:pfe1/shared/theme/app_colors.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/features/home/data/post_provider.dart';
 import 'package:pfe1/features/authentication/data/comment_provider.dart';
+import 'package:image_picker/image_picker.dart';
 
 class PostListWidget extends ConsumerStatefulWidget {
   final PostModel? post;
@@ -186,138 +187,163 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
   void _showEditPostDialog(PostModel post) {
     final titleController = TextEditingController(text: post.title);
     final descriptionController = TextEditingController(text: post.description);
-    final imageUrlController = TextEditingController(text: post.imageUrl);
-    final interestsController = TextEditingController(
-      text: post.interests.join(', ')
-    );
+    final interestsController = TextEditingController(text: post.interests.join(', '));
+    
+    // Image picker variables
+    XFile? pickedImage;
+    String? existingImageUrl = post.imageUrl;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.edit_rounded, 
-              color: Colors.blue[700],
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'Edit Post', 
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
             children: [
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+              Icon(
+                Icons.edit_rounded, 
+                color: Colors.blue[700],
               ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: descriptionController,
-                decoration: InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: imageUrlController,
-                decoration: InputDecoration(
-                  labelText: 'Image URL (Optional)',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: interestsController,
-                decoration: InputDecoration(
-                  labelText: 'Interests (comma-separated)',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              const SizedBox(width: 10),
+              const Text(
+                'Edit Post', 
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.grey[700],
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Title',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: descriptionController,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 10),
+                // Image selection section
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        pickedImage != null 
+                          ? 'Image Selected: ${pickedImage!.name}' 
+                          : existingImageUrl != null 
+                            ? 'Current Image Exists' 
+                            : 'No Image Selected',
+                        style: TextStyle(
+                          color: pickedImage != null || existingImageUrl != null 
+                            ? Colors.green 
+                            : Colors.grey,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.image_outlined),
+                      onPressed: () async {
+                        final ImagePicker picker = ImagePicker();
+                        final XFile? image = await picker.pickImage(
+                          source: ImageSource.gallery,
+                          maxWidth: 1000,
+                          maxHeight: 1000,
+                          imageQuality: 80,
+                        );
+                        
+                        setState(() {
+                          if (image != null) {
+                            pickedImage = image;
+                            existingImageUrl = null; // Clear existing URL
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: interestsController,
+                  decoration: InputDecoration(
+                    labelText: 'Interests (comma-separated)',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            child: const Text('Cancel'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              
-              // Check if this is from a profile view
-              if (widget.isProfileView) {
-                ref.read(postListProvider.notifier).updatePost(
-                  postId: post.id!,
-                  title: titleController.text,
-                  description: descriptionController.text,
-                  imageUrl: imageUrlController.text.isNotEmpty 
-                    ? imageUrlController.text 
-                    : null,
-                  interests: interestsController.text.isNotEmpty
-                    ? interestsController.text
-                        .split(',')
-                        .map((e) => e.trim())
-                        .toList()
-                    : null,
-                  onPostUpdated: () {
-                    // Trigger a refresh of the profile view
-                    ref.invalidate(userProfileProvider);
-                  }
-                );
-              } else {
-                ref.read(postListProvider.notifier).updatePost(
-                  postId: post.id!,
-                  title: titleController.text,
-                  description: descriptionController.text,
-                  imageUrl: imageUrlController.text.isNotEmpty 
-                    ? imageUrlController.text 
-                    : null,
-                  interests: interestsController.text.isNotEmpty
-                    ? interestsController.text
-                        .split(',')
-                        .map((e) => e.trim())
-                        .toList()
-                    : null,
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue[600],
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey[700],
               ),
+              child: const Text('Cancel'),
             ),
-            child: const Text('Update Post'),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                
+                // Check if this is from a profile view
+                if (widget.isProfileView) {
+                  ref.read(postListProvider.notifier).updatePost(
+                    postId: post.id!,
+                    title: titleController.text,
+                    description: descriptionController.text,
+                    imageUrl: pickedImage != null 
+                      ? pickedImage!.path 
+                      : existingImageUrl,
+                    interests: interestsController.text.isNotEmpty
+                      ? interestsController.text
+                          .split(',')
+                          .map((e) => e.trim())
+                          .toList()
+                      : null,
+                    onPostUpdated: () {
+                      // Trigger a refresh of the profile view
+                      ref.invalidate(userProfileProvider);
+                    }
+                  );
+                } else {
+                  ref.read(postListProvider.notifier).updatePost(
+                    postId: post.id!,
+                    title: titleController.text,
+                    description: descriptionController.text,
+                    imageUrl: pickedImage != null 
+                      ? pickedImage!.path 
+                      : existingImageUrl,
+                    interests: interestsController.text.isNotEmpty
+                      ? interestsController.text
+                          .split(',')
+                          .map((e) => e.trim())
+                          .toList()
+                      : null,
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
       ),
     );
   }
