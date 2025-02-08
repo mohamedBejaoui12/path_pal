@@ -33,9 +33,14 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Todos'),
+        title: Text('My Todos',style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),),
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Colors.white,  // Set tab text color to white
+          unselectedLabelColor: Colors.white70,  // Slightly faded white for unselected tabs
           tabs: [
             Tab(text: 'Food'),
             Tab(text: 'Places'),
@@ -53,7 +58,9 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddTodoBottomSheet(context),
-        child: Icon(Icons.add),
+        backgroundColor: Color(0xFF862C24),
+       
+        child: Icon(Icons.add,color: Colors.white,),
       ),
     );
   }

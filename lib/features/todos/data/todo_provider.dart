@@ -40,6 +40,7 @@ class TodosNotifier extends StateNotifier<Map<TodoCategory, List<Todo>>> {
   Future<void> addTodo(Todo todo) async {
     await _service.addTodo(todo);
   }
+  
 
   Future<void> updateTodo(Todo todo) async {
     await _service.updateTodo(todo);
@@ -54,4 +55,11 @@ class TodosNotifier extends StateNotifier<Map<TodoCategory, List<Todo>>> {
     _subscription?.cancel();
     super.dispose();
   }
+
+    void updateTodoOrder(TodoCategory category, List<Todo> reorderedTodos) {
+    // Update the state for the specific category
+    state = {
+      ...state,
+      category: reorderedTodos,
+    };}
 }
