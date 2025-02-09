@@ -6,6 +6,9 @@ import 'package:pfe1/features/authentication/presentation/login_screen.dart';
 import 'package:pfe1/features/authentication/presentation/signup_screen.dart';
 import 'package:pfe1/features/authentication/presentation/user_details_screen.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
+import 'package:pfe1/features/chat/presentation/chat_list_screen.dart';
+import 'package:pfe1/features/chat/presentation/chat_room_screen.dart';
+import 'package:pfe1/features/chat/presentation/user_search_screen.dart';
 import 'package:pfe1/features/home/presentation/create_post_screen.dart';
 import 'package:pfe1/features/home/presentation/home_screen.dart';
 
@@ -17,10 +20,16 @@ import 'package:pfe1/shared/theme/theme_provider.dart';
 
 class RouterNotifier extends ChangeNotifier {
   final WidgetRef _ref;
+  AuthStatus? _previousStatus;
 
   RouterNotifier(this._ref) {
-    _ref.listen(authProvider, (_, __) {
-      notifyListeners();
+    _ref.listen(authProvider, (previous, next) {
+      // Only notify listeners if the authentication status has significantly changed
+      if (previous?.status != next.status && 
+          (next.status == AuthStatus.authenticated || 
+           next.status == AuthStatus.unauthenticated)) {
+        notifyListeners();
+      }
     });
   }
 }
@@ -160,6 +169,21 @@ GoRoute(
     );
   },
 ),
+        GoRoute(
+          path: '/chat/list',
+          builder: (context, state) => const ChatListScreen(),
+        ),
+        GoRoute(
+          path: '/chat/search',
+          builder: (context, state) => const UserSearchScreen(),
+        ),
+        GoRoute(
+          path: '/chat/room/:roomId',
+          builder: (context, state) {
+            final roomId = state.pathParameters['roomId']!;
+            return ChatRoomScreen(chatRoomId: roomId);
+          },
+        ),
       ],
       // Minimal redirect logic
       redirect: (BuildContext context, GoRouterState state) {

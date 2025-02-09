@@ -151,6 +151,13 @@ void didChangeDependencies() {
             ref.read(themeProvider.notifier).toggleTheme();
           },
         ),
+        IconButton(
+          icon: const Icon(Icons.chat_bubble_outline_rounded),
+          onPressed: () {
+            // Navigate to chat list screen
+            context.push('/chat/list');
+          },
+        ),
       ],
     );
   }

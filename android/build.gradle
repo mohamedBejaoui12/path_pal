@@ -1,3 +1,17 @@
+// File: android/build.gradle
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.0'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10'
+        // Add any other classpaths if needed
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -15,4 +29,17 @@ subprojects {
 
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
+}
+
+// Force emoji_picker_flutter to compile Kotlin code with jvmTarget set to "1.8"
+gradle.projectsEvaluated {
+    subprojects {
+        if (project.name.contains("emoji_picker_flutter")) {
+            tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                kotlinOptions {
+                    jvmTarget = "1.8"
+                }
+            }
+        }
+    }
 }
