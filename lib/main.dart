@@ -16,6 +16,7 @@ Future<void> main() async {
     anonKey: AppConfig.supabaseAnonKey,
     debug: false, 
   );
+  
 
   // Initialize persistent session
   final authService = AuthService();

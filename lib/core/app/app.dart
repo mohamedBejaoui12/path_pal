@@ -184,6 +184,7 @@ GoRoute(
             return ChatRoomScreen(chatRoomId: roomId);
           },
         ),
+       
       ],
       // Minimal redirect logic
       redirect: (BuildContext context, GoRouterState state) {

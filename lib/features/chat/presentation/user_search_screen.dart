@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,11 +16,24 @@ class UserSearchScreen extends ConsumerStatefulWidget {
 }
 
 class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
-  final TextEditingController _searchController = TextEditingController();
+  final _searchController = TextEditingController();
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Add listener to trigger search as user types
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    // Use a debounce to avoid too many API calls
+    ref.read(userSearchProvider.notifier).updateQuery(_searchController.text);
+  }
+
+  @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -67,8 +81,9 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Search Users'),
+        title: Text('Search Users', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.primaryColor,
+        elevation: 0,
       ),
       body: Column(
         children: [
@@ -78,77 +93,133 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search by name or email',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: Icon(Icons.search, color: AppColors.primaryColor),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: AppColors.primaryColor),
                 ),
-                suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        ref.read(userSearchProvider.notifier).clearSearch();
-                      },
-                    )
-                  : null,
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+                ),
               ),
-              onChanged: (value) {
-                ref.read(userSearchProvider.notifier).searchUsers(value);
-              },
             ),
           ),
-          if (searchState.isLoading)
-            Center(child: CircularProgressIndicator()),
-          
-          if (searchState.error != null)
-            Center(
-              child: Text(
-                'Error: ${searchState.error}',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-          
           Expanded(
-            child: searchState.users.isEmpty
-                ? Center(
-                    child: Text(
-                      searchState.isLoading 
-                        ? 'Searching...' 
-                        : 'Search for users',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: searchState.users.length,
-                    itemBuilder: (context, index) {
-                      final user = searchState.users[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: user['profile_picture'] != null
-                              ? NetworkImage(user['profile_picture'])
-                              : null,
-                          child: user['profile_picture'] == null 
-                              ? Icon(Icons.person) 
-                              : null,
-                        ),
-                        title: Text(user['full_name'] ?? user['email']),
-                        subtitle: Text(user['email']),
-                        onTap: _isLoading 
-                          ? null 
-                          : () => _initiateChat(user),
-                        trailing: _isLoading 
-                          ? CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                AppColors.primaryColor
-                              ),
-                            )
-                          : null,
-                      );
-                    },
-                  ),
+            child: searchState.isLoading
+              ? Center(child: CircularProgressIndicator())
+              : searchState.users.isEmpty
+                ? _buildNoResultsWidget()
+                : _buildUserList(searchState.users),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildNoResultsWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.person_search,
+            size: 100,
+            color: Colors.grey[400],
+          ),
+          SizedBox(height: 16),
+          Text(
+            'No users found',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserList(List<Map<String, dynamic>> users) {
+    return ListView.builder(
+      itemCount: users.length,
+      itemBuilder: (context, index) {
+        final user = users[index];
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryColor.withOpacity(0.1),
+                    AppColors.primaryColor.withOpacity(0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: ListTile(
+                contentPadding: EdgeInsets.all(12),
+                leading: _buildUserAvatar(user),
+                title: Text(
+                  '${user['full_name'] ?? user['email']}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+                subtitle: Text(
+                  user['email'],
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                trailing: _isLoading 
+                  ? CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primaryColor
+                      ),
+                    )
+                  : Icon(
+                      Icons.chat_bubble_outline,
+                      color: AppColors.primaryColor,
+                    ),
+                onTap: _isLoading 
+                  ? null 
+                  : () => _initiateChat(user),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildUserAvatar(Map<String, dynamic> user) {
+    final profileImageUrl = user['profile_image_url'] ?? '';
+
+    return profileImageUrl.isNotEmpty
+      ? CircleAvatar(
+          radius: 30,
+          backgroundImage: CachedNetworkImageProvider(profileImageUrl),
+        )
+      : CircleAvatar(
+          radius: 30,
+          backgroundColor: AppColors.primaryColor.withOpacity(0.2),
+          child: Icon(
+            Icons.person,
+            color: AppColors.primaryColor,
+            size: 30,
+          ),
+        );
   }
 }

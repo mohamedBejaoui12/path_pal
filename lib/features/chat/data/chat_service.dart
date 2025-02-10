@@ -3,7 +3,10 @@ import '../domain/chat_message_model.dart';
 import '../domain/chat_room_model.dart';
 
 class ChatService {
-  final _supabase = Supabase.instance.client;
+  final SupabaseClient _supabase;
+
+
+  ChatService(this._supabase);
 
   // Create or get existing chat room between two users
   Future<ChatRoom> createOrGetChatRoom(String currentUserEmail, String otherUserEmail) async {
@@ -52,46 +55,40 @@ class ChatService {
   }
 
   // Send a message in a chat room
-  Future<ChatMessage> sendMessage({
-    required String chatRoomId, 
-    required String senderEmail, 
-    required String message
-  }) async {
+  Future<ChatMessage?> sendMessage(String chatRoomId, String senderEmail, String message) async {
     try {
-      final timestamp = DateTime.now();
-
-      // Insert message
-      final messageData = await _supabase
+      // Insert the message
+      final messageResponse = await _supabase
           .from('chat_messages')
           .insert({
             'chat_room_id': chatRoomId,
             'sender_email': senderEmail,
             'message': message,
-            'timestamp': timestamp.toIso8601String(),
+            'timestamp': DateTime.now().toIso8601String(),
           })
           .select()
           .single();
 
-      // Update last message in chat room
+      // Update the last message in the chat room
       await _supabase
           .from('chat_rooms')
           .update({
             'last_message': message,
-            'last_message_timestamp': timestamp.toIso8601String(),
+            'last_message_timestamp': DateTime.now().toIso8601String(),
           })
           .eq('id', chatRoomId);
 
-      // Ensure the returned data matches the ChatMessage model
+      // Convert the response to a ChatMessage
       return ChatMessage(
-        id: messageData['id'],
-        chatRoomId: messageData['chat_room_id'],
-        senderEmail: messageData['sender_email'],
-        message: messageData['message'],
-        timestamp: timestamp,
+        id: messageResponse['id'],
+        chatRoomId: chatRoomId,
+        senderEmail: senderEmail,
+        message: message,
+        timestamp: DateTime.now(),
       );
     } catch (e) {
       print('Error sending message: $e');
-      rethrow;
+      return null;
     }
   }
 
@@ -146,12 +143,12 @@ class ChatService {
     }
   }
 
-  // Fetch user details for a specific email
+  // Fetch user details by email with profile image
   Future<Map<String, dynamic>?> getUserDetailsByEmail(String email) async {
     try {
       final response = await _supabase
           .from('user')
-          .select('name, family_name, email, description')
+          .select('name, family_name, email, description, profile_image_url')
           .eq('email', email)
           .single();
       
@@ -159,6 +156,7 @@ class ChatService {
         'full_name': '${response['name']} ${response['family_name']}',
         'email': response['email'],
         'description': response['description'] ?? '',
+        'profile_image_url': response['profile_image_url'] ?? '',
       };
     } catch (e) {
       print('Error fetching user details: $e');
@@ -214,28 +212,26 @@ class ChatService {
       return [];
     }
   }
+  
+ 
 
   // Search users to start a chat
-  Future<List<Map<String, dynamic>>> searchUsers(String query, String currentUserEmail) async {
+  Future<List<Map<String, dynamic>>> searchUsers(String query, String? currentUserEmail) async {
     try {
-      // If query is empty, return empty list
-      if (query.trim().isEmpty) return [];
-
-      final users = await _supabase
+      // Search by name, family name, or email
+      final response = await _supabase
           .from('user')
-          .select('email, name, family_name, description')
+          .select('name, family_name, email, description, profile_image_url')
           .or(
-            'email.ilike.%${query.trim()}%, name.ilike.%${query.trim()}%, family_name.ilike.%${query.trim()}%'
+            'name.ilike.%$query%, family_name.ilike.%$query%, email.ilike.%$query%'
           )
-          .neq('email', currentUserEmail)
-          .limit(10);
+          .neq('email', currentUserEmail ?? '');
 
-      // Transform results to match expected format
-      return users.map((user) => {
-        'email': user['email'],
+      return response.map<Map<String, dynamic>>((user) => {
         'full_name': '${user['name']} ${user['family_name']}',
-        'profile_picture': null, // Add profile picture if available
-        'description': user['description']
+        'email': user['email'],
+        'description': user['description'] ?? '',
+        'profile_image_url': user['profile_image_url'] ?? '',
       }).toList();
     } catch (e) {
       print('Error searching users: $e');

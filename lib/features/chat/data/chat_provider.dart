@@ -1,12 +1,22 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../domain/chat_message_model.dart';
 import '../domain/chat_room_model.dart';
 import './chat_service.dart';
 import '../../authentication/providers/auth_provider.dart';
 
+// Supabase Client Provider
+final supabaseProvider = Provider<SupabaseClient>((ref) {
+  return Supabase.instance.client;
+});
+
 // Chat Service Provider
-final chatServiceProvider = Provider<ChatService>((ref) => ChatService());
+final chatServiceProvider = Provider<ChatService>((ref) {
+  final supabase = ref.watch(supabaseProvider);
+  return ChatService(supabase);
+});
 
 // Current Chat Room Provider
 final currentChatRoomProvider = StateNotifierProvider<CurrentChatRoomNotifier, ChatRoom?>((ref) {
@@ -14,11 +24,17 @@ final currentChatRoomProvider = StateNotifierProvider<CurrentChatRoomNotifier, C
 });
 
 // Chat Messages Provider
-final chatMessagesProvider = StreamProvider.family<List<ChatMessage>, String>((ref, chatRoomId) {
+final chatMessagesProvider = StreamProvider.family<List<Map<String, dynamic>>, String>((ref, chatRoomId) {
   final chatService = ref.watch(chatServiceProvider);
-  return chatService.watchChatMessages(chatRoomId).handleError((error) {
-    debugPrint('Error fetching chat messages: $error');
-  });
+  return chatService.watchChatMessages(chatRoomId).map((messages) => 
+    messages.map((message) => {
+      'id': message.id,
+      'chat_room_id': message.chatRoomId,
+      'sender_email': message.senderEmail,
+      'message': message.message,
+      'timestamp': message.timestamp.toIso8601String(),
+    }).toList()
+  );
 });
 
 // User Chat Rooms Provider with detailed user information
@@ -86,33 +102,38 @@ class CurrentChatRoomNotifier extends StateNotifier<ChatRoom?> {
 // User Search Notifier with improved state management
 class UserSearchNotifier extends StateNotifier<UserSearchState> {
   final ChatService _chatService;
-  final String _currentUserEmail;
+  final String? _currentUserEmail;
 
   UserSearchNotifier(this._chatService, this._currentUserEmail) 
-      : super(UserSearchState());
+    : super(UserSearchState());
 
-  Future<void> searchUsers(String query) async {
-    // If query is empty, reset state
+  void updateQuery(String query) {
     if (query.isEmpty) {
       state = UserSearchState();
       return;
     }
 
-    // Set loading state
+    // Trigger search immediately when query changes
+    searchUsers(query);
+  }
+
+  Future<void> searchUsers(String query) async {
+    if (query.isEmpty) {
+      state = UserSearchState();
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      // Perform search
-      final users = await _chatService.searchUsers(query, _currentUserEmail);
+      final users = await _chatService.searchUsers(query, _currentUserEmail!);
       
-      // Update state with results
       state = UserSearchState(
         users: users,
         isLoading: false,
       );
     } catch (e) {
-      // Handle any errors during search
-      state = state.copyWith(
+      state = UserSearchState(
         users: [],
         isLoading: false,
         error: e.toString(),
