@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
+import 'package:pfe1/features/chat/data/chat_provider.dart';
+import 'package:pfe1/features/chat/presentation/chat_room_screen.dart';
 import 'package:pfe1/features/home/domain/post_model.dart';
 import 'package:pfe1/features/home/presentation/profile_widget.dart'; // Import the userProfileProvider
 import 'package:pfe1/features/home/presentation/post_list_widget.dart';
@@ -44,10 +46,11 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     final userProfileAsyncValue = ref.watch(userProfileProvider(widget.userEmail));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('User Profile'),
-        backgroundColor: isDarkMode ? Colors.grey[900] : AppColors.primaryColor,
-      ),
+      appBar: _buildAppBar(context, userProfileAsyncValue.when(
+        data: (data) => data['user_details'],
+        loading: () => {},
+        error: (error, stack) => {},
+      ), isDarkMode),
       body: userProfileAsyncValue.when(
         data: (data) {
           final userDetails = data['user_details'];
@@ -152,6 +155,75 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
           child: Text('Error loading profile: $error'),
         ),
       ),
+    );
+  }
+
+  AppBar _buildAppBar(BuildContext context, dynamic userDetails, bool isDarkMode) {
+    return AppBar(
+      title: const Text('User Profile'),
+      backgroundColor: isDarkMode ? Colors.grey[900] : AppColors.primaryColor,
+      actions: [
+        IconButton(
+          icon: Icon(Icons.message_outlined),
+          onPressed: () async {
+            final currentUserEmail = ref.read(authProvider).user?.email;
+            if (currentUserEmail == null) return;
+
+            // Determine email based on input type
+            String? otherUserEmail;
+            if (userDetails is Map) {
+              // If it's a Map, try to get email from different possible keys
+              otherUserEmail = userDetails['email'] ?? 
+                              userDetails['user_email'] ?? 
+                              userDetails['email_address'];
+            } else if (userDetails != null) {
+              // If it's a UserDetailsModel-like object, use its email property
+              otherUserEmail = userDetails.email;
+            }
+
+            if (otherUserEmail == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Unable to retrieve user email'))
+              );
+              return;
+            }
+
+            final chatService = ref.read(chatServiceProvider);
+            try {
+              // Create or get existing chat room
+              final chatRoom = await chatService.createOrGetChatRoom(
+                currentUserEmail, 
+                otherUserEmail
+              );
+
+              // Prepare other user details for chat room
+              final otherUserMap = userDetails is Map 
+                ? Map<String, dynamic>.from(userDetails)
+                : <String, dynamic>{
+                    'email': otherUserEmail,
+                    'name': userDetails.name ?? '',
+                    'family_name': userDetails.familyName ?? '',
+                    'profile_image_url': userDetails.profileImageUrl,
+                  };
+
+              // Navigate to chat room
+              Navigator.push(
+                context, 
+                MaterialPageRoute(
+                  builder: (context) => ChatRoomScreen(
+                    chatRoomId: chatRoom.id.toString(), 
+                    otherUser: otherUserMap
+                  )
+                )
+              );
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error creating chat room: $e'))
+              );
+            }
+          },
+        ),
+      ],
     );
   }
 
