@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:pfe1/features/home/presentation/user_profile_screen.dart';
 
 import '../data/chat_provider.dart';
 import '../../authentication/providers/auth_provider.dart';
@@ -99,43 +100,72 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     // Use _otherUserDetails if available, otherwise fallback to widget.otherUser
     final otherUser = _otherUserDetails ?? widget.otherUser ?? <String, dynamic>{};
     final profileImageUrl = otherUser['profile_image_url'] ?? '';
-    final userName = otherUser['full_name'] ?? otherUser['email'] ?? 'Chat';
+    final userName = otherUser['full_name'] ?? otherUser['name'] ?? otherUser['email'] ?? 'Chat';
+    final userEmail = otherUser['email'] ?? otherUser['user_email'] ?? '';
 
     return AppBar(
       backgroundColor: AppColors.primaryColor,
-      title: Row(
-        children: [
-          profileImageUrl.isNotEmpty
-            ? CircleAvatar(
-                radius: 20,
-                backgroundImage: CachedNetworkImageProvider(profileImageUrl),
-              )
-            : CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.white.withOpacity(0.3),
-                child: Icon(Icons.person, color: Colors.white),
-              ),
-          SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                userName,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+      title: GestureDetector(
+        onTap: userEmail.isNotEmpty 
+          ? () {
+              Navigator.push(
+                context, 
+                MaterialPageRoute(
+                  builder: (context) => UserProfileScreen(
+                    userEmail: userEmail,
+                  )
+                )
+              );
+            } 
+          : null,
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: userEmail.isNotEmpty 
+                ? () {
+                    Navigator.push(
+                      context, 
+                      MaterialPageRoute(
+                        builder: (context) => UserProfileScreen(
+                          userEmail: userEmail,
+                        )
+                      )
+                    );
+                  } 
+                : null,
+              child: profileImageUrl.isNotEmpty
+                ? CircleAvatar(
+                    radius: 20,
+                    backgroundImage: CachedNetworkImageProvider(profileImageUrl),
+                  )
+                : CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white.withOpacity(0.3),
+                    child: Icon(Icons.person, color: Colors.white),
+                  ),
+            ),
+            SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  userName,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              Text(
-                'Online',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withOpacity(0.8),
+                Text(
+                  'Online',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
       actions: [
         IconButton(

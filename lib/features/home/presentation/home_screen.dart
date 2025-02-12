@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pfe1/features/business/presentation/add_business_screen.dart';
 import 'package:pfe1/features/home/presentation/profile_widget.dart';
 import 'package:pfe1/features/todos/presentation/todos_screen.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
@@ -292,6 +293,17 @@ void didChangeDependencies() {
                   title: 'Settings',
                   onTap: () {},
                 ),
+                ListTile(
+  leading: const Icon(Icons.business),
+  title: const Text('Add Business'),
+  onTap: () {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const AddBusinessScreen(),
+      ),
+    );
+  },
+),
                 
                 const Divider(),
                 _buildListTile(

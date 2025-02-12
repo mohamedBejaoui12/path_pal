@@ -17,7 +17,6 @@ Future<void> main() async {
     debug: false, 
   );
   
-
   // Initialize persistent session
   final authService = AuthService();
   final sessionMaintained = await authService.maintainSession();
