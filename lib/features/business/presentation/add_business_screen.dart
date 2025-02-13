@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
 import '../data/business_provider.dart';
 import '../../../shared/theme/app_colors.dart';
+
+enum LocationInputMethod {
+  manual,
+  automatic
+}
 
 class AddBusinessScreen extends ConsumerStatefulWidget {
   const AddBusinessScreen({Key? key}) : super(key: key);
@@ -19,7 +26,10 @@ class _AddBusinessScreenState extends ConsumerState<AddBusinessScreen> {
   final _emailController = TextEditingController();
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
+  
   File? _imageFile;
+  LocationInputMethod _locationMethod = LocationInputMethod.manual;
+  bool _isLoadingLocation = false;
 
   @override
   void dispose() {
@@ -28,6 +38,47 @@ class _AddBusinessScreenState extends ConsumerState<AddBusinessScreen> {
     _latitudeController.dispose();
     _longitudeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLoadingLocation = true;
+    });
+
+    try {
+      // Request location permissions
+      var status = await Permission.location.request();
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location permissions are required')),
+        );
+        setState(() {
+          _isLoadingLocation = false;
+          _locationMethod = LocationInputMethod.manual;
+        });
+        return;
+      }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // Update text controllers
+      setState(() {
+        _latitudeController.text = position.latitude.toString();
+        _longitudeController.text = position.longitude.toString();
+        _isLoadingLocation = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error getting location: $e')),
+      );
+      setState(() {
+        _isLoadingLocation = false;
+        _locationMethod = LocationInputMethod.manual;
+      });
+    }
   }
 
   Future<void> _pickImage() async {
@@ -85,8 +136,6 @@ class _AddBusinessScreenState extends ConsumerState<AddBusinessScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final createBusinessState = ref.watch(createBusinessProvider);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Your Business'),
@@ -100,8 +149,11 @@ class _AddBusinessScreenState extends ConsumerState<AddBusinessScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Image Picker (existing implementation)
               _buildBusinessImagePicker(),
               const SizedBox(height: 20),
+
+              // Business Name and Email Fields (existing implementation)
               _buildTextField(
                 controller: _businessNameController,
                 label: 'Business Name',
@@ -117,45 +169,102 @@ class _AddBusinessScreenState extends ConsumerState<AddBusinessScreen> {
                 validator: _validateEmail,
               ),
               const SizedBox(height: 16),
+
+              // Location Input Method Selector
               Row(
                 children: [
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _latitudeController,
-                      label: 'Latitude',
-                      icon: Icons.location_on,
-                      keyboardType: TextInputType.number,
-                      validator: (value) => value!.isEmpty ? 'Enter latitude' : null,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _longitudeController,
-                      label: 'Longitude',
-                      icon: Icons.location_on,
-                      keyboardType: TextInputType.number,
-                      validator: (value) => value!.isEmpty ? 'Enter longitude' : null,
-                    ),
+                  const Text('Location Input Method:'),
+                  const SizedBox(width: 10),
+                  DropdownButton<LocationInputMethod>(
+                    value: _locationMethod,
+                    items: LocationInputMethod.values.map((method) {
+                      return DropdownMenuItem(
+                        value: method,
+                        child: Text(method == LocationInputMethod.manual 
+                          ? 'Manual' 
+                          : 'Automatic'),
+                      );
+                    }).toList(),
+                    onChanged: (method) {
+                      setState(() {
+                        _locationMethod = method!;
+                        if (method == LocationInputMethod.automatic) {
+                          _getCurrentLocation();
+                        }
+                      });
+                    },
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+
+              // Latitude and Longitude Fields
+              _locationMethod == LocationInputMethod.manual
+                  ? Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextField(
+                            controller: _latitudeController,
+                            label: 'Latitude',
+                            icon: Icons.location_on,
+                            keyboardType: TextInputType.number,
+                            validator: (value) => value!.isEmpty ? 'Enter latitude' : null,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildTextField(
+                            controller: _longitudeController,
+                            label: 'Longitude',
+                            icon: Icons.location_on,
+                            keyboardType: TextInputType.number,
+                            validator: (value) => value!.isEmpty ? 'Enter longitude' : null,
+                          ),
+                        ),
+                      ],
+                    )
+                  : _isLoadingLocation
+                      ? const Center(child: CircularProgressIndicator())
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _latitudeController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Latitude',
+                                  border: OutlineInputBorder(),
+                                ),
+                                readOnly: true,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: TextField(
+                                controller: _longitudeController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Longitude',
+                                  border: OutlineInputBorder(),
+                                ),
+                                readOnly: true,
+                              ),
+                            ),
+                          ],
+                        ),
               const SizedBox(height: 24),
+
+              // Submit Button (existing implementation)
               ElevatedButton(
-                onPressed: createBusinessState.isLoading ? null : _submitBusiness,
+                onPressed: _submitBusiness,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: AppColors.primaryColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: createBusinessState.isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Create Business',
-                        style: TextStyle(fontSize: 16,color: Colors.white),
-                      ),
+                child: const Text(
+                  'Create Business',
+                  style: TextStyle(fontSize: 16),
+                ),
               ),
             ],
           ),
