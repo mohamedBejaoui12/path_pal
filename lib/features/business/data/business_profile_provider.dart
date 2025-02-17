@@ -46,6 +46,11 @@ class BusinessDetailsNotifier extends StateNotifier<AsyncValue<BusinessModel?>> 
       state = AsyncValue.error(e, stackTrace);
     }
   }
+
+  Future<void> refreshBusinessDetails() async {
+    state = const AsyncValue.loading();
+    await fetchBusinessDetails();
+  }
 }
 
 final businessProfileProvider = Provider<BusinessProfileProvider>((ref) {
@@ -93,4 +98,30 @@ class BusinessProfileProvider {
       return null;
     }
   }
+  // Add this method to BusinessProfileProvider class
+Future<BusinessModel?> updateBusinessProfile({
+  required int businessId,
+  String? businessName,
+  String? email,
+  String? imageUrl,
+  double? latitude,
+  double? longitude,
+}) async {
+  try {
+    final service = ref.read(businessProfileServiceProvider);
+    final updatedBusiness = await service.updateBusinessProfile(
+      businessId: businessId,
+      businessName: businessName,
+      email: email,
+      imageUrl: imageUrl,
+      latitude: latitude,
+      longitude: longitude,
+    );
+    
+    return updatedBusiness;
+  } catch (e) {
+    debugPrint('Error updating business profile: $e');
+    return null;
+  }
+}
 }

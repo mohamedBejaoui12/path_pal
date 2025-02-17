@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:pfe1/features/business/presentation/update_business_profile_screen.dart';
 
 import '../data/business_profile_provider.dart';
 import '../../../shared/theme/app_colors.dart';
@@ -20,6 +21,24 @@ class BusinessProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Business Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () async {
+              final result = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => UpdateBusinessProfileScreen(businessId: businessId),
+                ),
+              );
+
+              // If update was successful, refresh the business details
+              if (result == true) {
+                ref.read(businessDetailsProvider(businessId).notifier)
+                  .refreshBusinessDetails();
+              }
+            },
+          ),
+        ],
       ),
       body: businessDetailsAsync.when(
         data: (business) => SingleChildScrollView(
