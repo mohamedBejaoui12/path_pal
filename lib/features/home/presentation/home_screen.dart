@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pfe1/features/business/data/business_profile_provider.dart';
 import 'package:pfe1/features/business/presentation/add_business_screen.dart';
 import 'package:pfe1/features/home/presentation/profile_widget.dart';
 import 'package:pfe1/features/todos/presentation/todos_screen.dart';
@@ -210,7 +211,8 @@ void didChangeDependencies() {
     }
 
     return Drawer(
-      child: Column(
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
           Container(
             decoration: BoxDecoration(
@@ -279,48 +281,90 @@ void didChangeDependencies() {
               ],
             ),
           ),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _buildListTile(
-                  icon: Icons.edit,
-                  title: 'Update Profile ',
-                  onTap: () => context.push('/update-profile'),
-                ),
-                _buildListTile(
-                  icon: Icons.settings,
-                  title: 'Settings',
-                  onTap: () {},
-                ),
-                ListTile(
-  leading: const Icon(Icons.business),
-  title: const Text('Add Business'),
-  onTap: () {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const AddBusinessScreen(),
-      ),
-    );
-  },
-),
-                
-                const Divider(),
-                _buildListTile(
-                  icon: Icons.logout,
-                  title: 'Log Out',
-                  color: Colors.red,
-                  onTap: () {
-                    ref.read(authProvider.notifier).logout();
-                    context.go('/login');
-                  },
-                ),
-              ],
-            ),
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: const Text('Update Profile '),
+            onTap: () => context.push('/update-profile'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: const Icon(Icons.business),
+            title: const Text('Manage Business'),
+            onTap: () {
+              // Ensure we're not on the last route
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+              
+              // Use a post-frame callback to navigate after current frame
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _navigateToBusiness(context);
+              });
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Log Out'),
+            onTap: () {
+              ref.read(authProvider.notifier).logout();
+              context.go('/login');
+            },
           ),
         ],
       ),
     );
+  }
+
+  void _navigateToBusiness(BuildContext context) async {
+    final businessProvider = ref.read(businessProfileProvider);
+    final authState = ref.read(authProvider);
+    
+    // Use null-aware operator to handle potential null email
+    final userEmail = authState.user?.email;
+    
+    if (userEmail == null) {
+      // User not logged in
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in first')),
+      );
+      return;
+    }
+
+    try {
+      // Get the user's first business (if any)
+      final userBusiness = await businessProvider.getFirstUserBusiness(userEmail);
+      
+      if (userBusiness != null) {
+        // User has a business, navigate to business profile
+        context.push('/business-profile/${userBusiness.id}');
+      } else {
+        // Check if user can create a business
+        final canCreateBusiness = await businessProvider.canCreateBusiness(userEmail);
+        
+        if (canCreateBusiness) {
+          // No business exists, navigate to add business screen
+          context.push('/add-business');
+        } else {
+          // User has reached maximum business limit
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You can only create one business'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Error checking business status
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error accessing business: $e')),
+      );
+    }
   }
 
   Widget _buildListTile({

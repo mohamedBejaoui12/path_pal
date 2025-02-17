@@ -6,6 +6,8 @@ import 'package:pfe1/features/authentication/presentation/login_screen.dart';
 import 'package:pfe1/features/authentication/presentation/signup_screen.dart';
 import 'package:pfe1/features/authentication/presentation/user_details_screen.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
+import 'package:pfe1/features/business/presentation/business_profile_screen.dart';
+import 'package:pfe1/features/business/presentation/add_business_screen.dart';
 import 'package:pfe1/features/chat/presentation/chat_list_screen.dart';
 import 'package:pfe1/features/chat/presentation/chat_room_screen.dart';
 import 'package:pfe1/features/chat/presentation/user_search_screen.dart';
@@ -135,7 +137,7 @@ class MyApp extends ConsumerWidget {
   path: '/update-profile',
   builder: (context, state) => const UserUpdateScreen(),
 ),
-        
+
       
    GoRoute(
   path: '/select-interests',
@@ -184,6 +186,17 @@ GoRoute(
             return ChatRoomScreen(chatRoomId: roomId);
           },
         ),
+GoRoute(
+  path: '/business-profile/:businessId',
+  builder: (context, state) {
+    final businessId = int.parse(state.pathParameters['businessId']!);
+    return BusinessProfileScreen(businessId: businessId);
+  },
+),
+GoRoute(
+  path: '/add-business',
+  builder: (context, state) => const AddBusinessScreen(),
+),
        
       ],
       // Minimal redirect logic
