@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pfe1/features/business/presentation/update_business_profile_screen.dart';
+import 'package:pfe1/features/business/presentation/create_business_post_screen.dart';
 
 import '../data/business_profile_provider.dart';
 import '../../../shared/theme/app_colors.dart';
@@ -22,6 +23,25 @@ class BusinessProfileScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Business Profile'),
         actions: [
+         IconButton(
+  icon: const Icon(Icons.post_add),
+  tooltip: 'Create Business Post',
+  onPressed: () async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CreateBusinessPostScreen(businessId: businessId),
+      ),
+    );
+
+    // If post was created successfully, you might want to refresh something
+    if (result == true) {
+      // Optionally refresh the business details or posts
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Business post created successfully!')),
+      );
+    }
+  },
+),
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () async {
