@@ -10,6 +10,7 @@ import '../data/business_profile_provider.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../domain/business_post_model.dart';
 import '../data/business_post_service.dart';
+import '../data/business_post_comment_service.dart';
 import '../../authentication/providers/auth_provider.dart';
 
 // Provider for business post interactions
@@ -37,7 +38,7 @@ class BusinessPostInteractionNotifier extends StateNotifier<bool> {
           .select()
           .eq('post_id', postId)
           .eq('user_email', userEmail)
-          .single();
+          .maybeSingle();
 
       if (likeResponse == null) {
         // Add like
@@ -81,19 +82,11 @@ final businessPostsProvider = FutureProvider.family<List<BusinessPostModel>, int
     // Convert to BusinessPostModel and enrich with likes information
     final enrichedPosts = await Future.wait(
       postsResponse.map<Future<BusinessPostModel>>((json) async {
-        // Fetch likes for this post
+        // Fetch likes count for this post
         final likesResponse = await supabase
             .from('business_post_likes')
             .select('*')
             .eq('post_id', json['id']);
-        
-        // Debug print to understand the response
-        debugPrint('Likes Response Type: ${likesResponse.runtimeType}');
-        debugPrint('Likes Response: $likesResponse');
-        debugPrint('Likes Response Length: ${likesResponse.length}');
-        
-        // Manually count likes
-        final likesCount = likesResponse.length;
         
         // Check if current user has liked the post
         final userLikeResponse = userEmail != null
@@ -105,23 +98,19 @@ final businessPostsProvider = FutureProvider.family<List<BusinessPostModel>, int
               .maybeSingle()
           : null;
 
-        // Debug print user like
-        debugPrint('User Like Response: $userLikeResponse');
-
         // Create the business post model
         final businessPost = BusinessPostModel.fromJson(json);
         
         return businessPost.copyWith(
-          likesCount: likesCount,
+          likesCount: likesResponse.length,
           isLikedByCurrentUser: userLikeResponse != null,
         );
       }).toList()
     );
 
     return enrichedPosts;
-  } catch (e, stackTrace) {
+  } catch (e) {
     debugPrint('Error fetching business posts: $e');
-    debugPrint('Stacktrace: $stackTrace');
     return [];
   }
 });
@@ -155,7 +144,10 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> w
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => CommentsBottomSheet(postId: postId),
+      builder: (context) => CommentsBottomSheet(
+        postId: postId, 
+        commentType: CommentType.businessPost,
+      ),
     );
   }
 
