@@ -11,6 +11,7 @@ import '../../../shared/theme/app_colors.dart';
 import '../domain/business_post_model.dart';
 import '../data/business_post_service.dart';
 import '../data/business_post_comment_service.dart';
+import '../data/business_post_provider.dart';
 import '../../authentication/providers/auth_provider.dart';
 
 // Provider for business post interactions
@@ -306,9 +307,107 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> w
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              post.title,
-                                              style: Theme.of(context).textTheme.titleMedium,
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    post.title,
+                                                    style: Theme.of(context).textTheme.titleMedium,
+                                                  ),
+                                                ),
+                                                // Three-dot menu for post owned by current user
+                                                if (authState.user?.email == post.userEmail)
+                                                  PopupMenuButton<String>(
+                                                    icon: const Icon(Icons.more_vert),
+                                                    onSelected: (value) async {
+                                                      switch (value) {
+                                                        case 'update':
+                                                          // Navigate to update post screen
+                                                          final result = await Navigator.of(context).push(
+                                                            MaterialPageRoute(
+                                                              builder: (context) => CreateBusinessPostScreen(
+                                                                businessId: widget.businessId,
+                                                                existingPost: post,  // Pass the current post
+                                                              ),
+                                                            ),
+                                                          );
+
+                                                          // If post was updated successfully, refresh the posts
+                                                          if (result == true) {
+                                                            ref.invalidate(businessPostsProvider(widget.businessId));
+                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                              const SnackBar(content: Text('Business post updated successfully!')),
+                                                            );
+                                                          }
+                                                          break;
+                                                        case 'delete':
+                                                          // Show confirmation dialog
+                                                          final confirmDelete = await showDialog<bool>(
+                                                            context: context,
+                                                            builder: (context) => AlertDialog(
+                                                              title: const Text('Delete Post'),
+                                                              content: const Text('Are you sure you want to delete this post?'),
+                                                              actions: [
+                                                                TextButton(
+                                                                  onPressed: () => Navigator.of(context).pop(false),
+                                                                  child: const Text('Cancel'),
+                                                                ),
+                                                                TextButton(
+                                                                  onPressed: () => Navigator.of(context).pop(true),
+                                                                  child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          );
+
+                                                          // Perform deletion if confirmed
+                                                          if (confirmDelete == true && post.id != null) {
+                                                            try {
+                                                              await ref.read(createBusinessPostProvider.notifier)
+                                                                .deleteBusinessPost(postId: post.id!);
+                                                              
+                                                              // Refresh posts
+                                                              ref.invalidate(businessPostsProvider(widget.businessId));
+                                                              
+                                                              // Show success message
+                                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                                const SnackBar(content: Text('Business post deleted successfully!')),
+                                                              );
+                                                            } catch (e) {
+                                                              // Show error message
+                                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                                SnackBar(content: Text('Failed to delete post: $e')),
+                                                              );
+                                                            }
+                                                          }
+                                                          break;
+                                                      }
+                                                    },
+                                                    itemBuilder: (context) => [
+                                                      const PopupMenuItem(
+                                                        value: 'update',
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(Icons.edit),
+                                                            SizedBox(width: 8),
+                                                            Text('Update'),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      const PopupMenuItem(
+                                                        value: 'delete',
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(Icons.delete, color: Colors.red),
+                                                            SizedBox(width: 8),
+                                                            Text('Delete', style: TextStyle(color: Colors.red)),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                              ],
                                             ),
                                             if (post.description != null)
                                               Padding(

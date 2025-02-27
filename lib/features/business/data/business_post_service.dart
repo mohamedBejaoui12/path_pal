@@ -89,6 +89,126 @@ class BusinessPostService {
       rethrow;
     }
   }
+  Future<List<BusinessPostModel>> fetchAllBusinessPosts() async {
+  try {
+    final response = await _supabase
+        .from('business_posts')
+        .select('*')
+        .order('created_at', ascending: false);
+    
+    return response.map<BusinessPostModel>((json) => BusinessPostModel.fromJson(json)).toList();
+  } catch (e) {
+    debugPrint('Error fetching business posts: $e');
+    return [];
+  }
+}
+
+  Future<BusinessPostModel> updateBusinessPost({
+    required int postId,
+    required String userEmail,
+    String? title,
+    String? description,
+    String? imageUrl,
+    List<InterestModel>? interests,
+  }) async {
+    try {
+      // Validate inputs
+      if (postId <= 0) {
+        throw Exception('Invalid post ID');
+      }
+      if (userEmail.isEmpty) {
+        throw Exception('User email cannot be empty');
+      }
+
+      // Prepare the update data
+      final updateData = <String, dynamic>{};
+
+      // Add fields to update if they are not null
+      if (title != null && title.isNotEmpty) {
+        updateData['title'] = title;
+      }
+      if (description != null) {
+        updateData['description'] = description;
+      }
+      if (imageUrl != null) {
+        updateData['image_url'] = imageUrl;
+      }
+      if (interests != null && interests.isNotEmpty) {
+        final validInterests = await fetchAllInterests();
+        final interestNames = interests
+            .where((interest) => 
+              validInterests.any((ai) => ai.id == interest.id))
+            .map((i) => i.name)
+            .toList();
+        
+        if (interestNames.isNotEmpty) {
+          updateData['interests'] = interestNames;
+        }
+      }
+
+      // Verify the post belongs to the user
+      final existingPost = await _supabase
+          .from('business_posts')
+          .select()
+          .eq('id', postId)
+          .eq('user_email', userEmail)
+          .single();
+
+      if (existingPost == null) {
+        throw Exception('Post not found or you do not have permission to update');
+      }
+
+      // Perform the update
+      final response = await _supabase
+          .from('business_posts')
+          .update(updateData)
+          .eq('id', postId)
+          .select()
+          .single();
+
+      return BusinessPostModel.fromJson(response);
+    } catch (e) {
+      debugPrint('Error updating business post: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteBusinessPost({
+    required int postId,
+    required String userEmail,
+  }) async {
+    try {
+      // Validate inputs
+      if (postId <= 0) {
+        throw Exception('Invalid post ID');
+      }
+      if (userEmail.isEmpty) {
+        throw Exception('User email cannot be empty');
+      }
+
+      // Verify the post belongs to the user before deleting
+      final existingPost = await _supabase
+          .from('business_posts')
+          .select()
+          .eq('id', postId)
+          .eq('user_email', userEmail)
+          .single();
+
+      if (existingPost == null) {
+        throw Exception('Post not found or you do not have permission to delete');
+      }
+
+      // Delete the post
+      await _supabase
+          .from('business_posts')
+          .delete()
+          .eq('id', postId);
+
+    } catch (e) {
+      debugPrint('Error deleting business post: $e');
+      rethrow;
+    }
+  }
 }
 
 final businessPostServiceProvider = Provider<BusinessPostService>((ref) {

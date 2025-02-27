@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pfe1/features/business/data/business_profile_provider.dart';
+import 'package:pfe1/features/business/domain/business_post_model.dart';
 import 'dart:io';
 
 import '../presentation/business_profile_screen.dart';  // Import the business profile screen
@@ -12,8 +13,13 @@ import '../../../../shared/theme/theme_provider.dart';
 
 class CreateBusinessPostScreen extends ConsumerStatefulWidget {
   final int? businessId;  // Optional business ID parameter
+  final BusinessPostModel? existingPost;  // Optional existing post for editing
 
-  const CreateBusinessPostScreen({Key? key, this.businessId}) : super(key: key);
+  const CreateBusinessPostScreen({
+    Key? key, 
+    this.businessId, 
+    this.existingPost
+  }) : super(key: key);
 
   @override
   _CreateBusinessPostScreenState createState() => _CreateBusinessPostScreenState();
@@ -25,12 +31,31 @@ class _CreateBusinessPostScreenState extends ConsumerState<CreateBusinessPostScr
   final _descriptionController = TextEditingController();
   File? _imageFile;
   List<InterestModel> _selectedInterests = [];
-  bool _isLoading = false;  // Add loading state
+  bool _isLoading = false;
+  String? _existingImageUrl;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _fetchInterests();
+  void initState() {
+    super.initState();
+    
+    // If editing an existing post, pre-fill the form
+    if (widget.existingPost != null) {
+      _titleController.text = widget.existingPost!.title;
+      _descriptionController.text = widget.existingPost!.description ?? '';
+      _existingImageUrl = widget.existingPost!.imageUrl;
+      
+      // Fetch interests to pre-select existing interests
+      ref.read(interestProvider.future).then((allInterests) {
+        // Convert existing interests to InterestModel
+        final existingInterestNames = widget.existingPost!.interests;
+        final matchedInterests = allInterests.where((interest) => 
+          existingInterestNames.contains(interest.name)).toList();
+        
+        setState(() {
+          _selectedInterests = matchedInterests;
+        });
+      });
+    }
   }
 
   void _fetchInterests() {
@@ -55,22 +80,35 @@ class _CreateBusinessPostScreenState extends ConsumerState<CreateBusinessPostScr
   void _submitPost() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Set loading state to true
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final businessPost = await ref.read(createBusinessPostProvider.notifier).createBusinessPost(
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        imageFile: _imageFile,
-        interests: _selectedInterests,
-      );
+      BusinessPostModel? businessPost;
+      
+      // Check if we're creating a new post or updating an existing one
+      if (widget.existingPost == null) {
+        // Create new post
+        businessPost = await ref.read(createBusinessPostProvider.notifier).createBusinessPost(
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          imageFile: _imageFile,
+          interests: _selectedInterests,
+        );
+      } else {
+        // Update existing post
+        businessPost = await ref.read(createBusinessPostProvider.notifier).updateBusinessPost(
+          postId: widget.existingPost!.id!,
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          imageFile: _imageFile,
+          interests: _selectedInterests,
+        );
+      }
 
       if (businessPost != null) {
         // Navigate back to BusinessProfileScreen
-        // If businessId was passed, use it, otherwise try to get it from the current business
         final businessId = widget.businessId ?? 
           (await ref.read(currentUserBusinessProvider).value)?.id;
         
@@ -87,10 +125,9 @@ class _CreateBusinessPostScreenState extends ConsumerState<CreateBusinessPostScr
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create business post: $e')),
+        SnackBar(content: Text('Failed to ${widget.existingPost == null ? 'create' : 'update'} business post: $e')),
       );
     } finally {
-      // Set loading state back to false
       setState(() {
         _isLoading = false;
       });
@@ -103,10 +140,12 @@ class _CreateBusinessPostScreenState extends ConsumerState<CreateBusinessPostScr
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Business Post'),
+        title: Text(widget.existingPost == null 
+          ? 'Create Business Post' 
+          : 'Update Business Post'),
       ),
       body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())  // Show loading indicator
+        ? const Center(child: CircularProgressIndicator())
         : Form(
         key: _formKey,
         child: ListView(
@@ -146,7 +185,9 @@ class _CreateBusinessPostScreenState extends ConsumerState<CreateBusinessPostScr
                 : 'Change Image'),
             ),
             if (_imageFile != null) 
-              Image.file(_imageFile!, height: 200, fit: BoxFit.cover),
+              Image.file(_imageFile!, height: 200, fit: BoxFit.cover)
+            else if (_existingImageUrl != null)
+              Image.network(_existingImageUrl!, height: 200, fit: BoxFit.cover),
             const SizedBox(height: 16),
             const Text('Select Interests:'),
             interestsAsync.when(
@@ -174,8 +215,10 @@ class _CreateBusinessPostScreenState extends ConsumerState<CreateBusinessPostScr
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _isLoading ? null : _submitPost,  // Disable button when loading
-              child: const Text('Create Post'),
+              onPressed: _isLoading ? null : _submitPost,
+              child: Text(widget.existingPost == null 
+                ? 'Create Post' 
+                : 'Update Post'),
             ),
           ],
         ),

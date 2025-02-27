@@ -17,6 +17,11 @@ final businessProfileServiceProvider = Provider<BusinessProfileService>((ref) {
   return BusinessProfileService();
 });
 
+final businessPostsProvider = FutureProvider<List<BusinessPostModel>>((ref) async {
+  final service = ref.read(businessPostServiceProvider);
+  return await service.fetchAllBusinessPosts(); // Implement this method in your service
+});
+
 // Declare BusinessProfileProvider before using it
 final businessProfileProvider = Provider<BusinessProfileProvider>((ref) {
   return BusinessProfileProvider(ref);
@@ -117,6 +122,91 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
       
       state = AsyncValue.error(e, stackTrace);
       return null;
+    }
+  }
+
+  // Add methods for updating and deleting business posts
+  Future<BusinessPostModel?> updateBusinessPost({
+    required int postId,
+    required String title,
+    String? description,
+    File? imageFile,
+    List<InterestModel>? interests,
+  }) async {
+    state = const AsyncValue.loading();
+
+    try {
+      // Get current user and business
+      final authState = ref.read(authProvider);
+      final userEmail = authState.user?.email;
+      
+      if (userEmail == null) {
+        throw Exception('User must be authenticated');
+      }
+
+      // Upload image if exists
+      String? imageUrl;
+      if (imageFile != null) {
+        final businessService = ref.read(businessServiceProvider);
+        final imageBytes = await imageFile.readAsBytes();
+        imageUrl = await businessService.uploadBusinessProfileImage(
+          imageBytes, 
+          imageFile.path
+        );
+      }
+
+      // Update business post
+      final businessPostService = ref.read(businessPostServiceProvider);
+      final businessPost = await businessPostService.updateBusinessPost(
+        postId: postId,
+        userEmail: userEmail,
+        title: title,
+        description: description,
+        imageUrl: imageUrl,
+        interests: interests,
+      );
+
+      state = AsyncValue.data(businessPost);
+      return businessPost;
+    } catch (e, stackTrace) {
+      // Log the full error for debugging
+      print('Error in updateBusinessPost: $e');
+      print('Stacktrace: $stackTrace');
+      
+      state = AsyncValue.error(e, stackTrace);
+      return null;
+    }
+  }
+
+  Future<void> deleteBusinessPost({
+    required int postId,
+  }) async {
+    state = const AsyncValue.loading();
+
+    try {
+      // Get current user and business
+      final authState = ref.read(authProvider);
+      final userEmail = authState.user?.email;
+      
+      if (userEmail == null) {
+        throw Exception('User must be authenticated');
+      }
+
+      // Delete business post
+      final businessPostService = ref.read(businessPostServiceProvider);
+      await businessPostService.deleteBusinessPost(
+        postId: postId,
+        userEmail: userEmail,
+      );
+
+      // Reset state after successful deletion
+      state = const AsyncValue.data(null);
+    } catch (e, stackTrace) {
+      // Log the full error for debugging
+      print('Error in deleteBusinessPost: $e');
+      print('Stacktrace: $stackTrace');
+      
+      state = AsyncValue.error(e, stackTrace);
     }
   }
 }
