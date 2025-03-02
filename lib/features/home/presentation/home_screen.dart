@@ -38,7 +38,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Future.microtask(() {
       final authState = ref.read(authProvider);
       if (authState.user?.email != null) {
-        ref.read(userDetailsProvider.notifier).fetchUserDetails(authState.user!.email);
+        ref
+            .read(userDetailsProvider.notifier)
+            .fetchUserDetails(authState.user!.email);
       }
     });
   }
@@ -86,8 +88,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
         centerTitle: true,
-        bottom: const TabBar(
-          tabs: [
+        bottom: TabBar(
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
+          tabs: const [
             Tab(text: 'User Posts'),
             Tab(text: 'Business Posts'),
           ],
@@ -144,7 +149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return TabBarView(
         children: [
           _buildRefreshablePosts(), // User posts with refresh capability.
-          BusinessPostsWidget(),    // Business posts.
+          BusinessPostsWidget(), // Business posts.
         ],
       );
     } else if (_currentIndex == 1) {
@@ -180,18 +185,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           title: const Text("Home"),
           selectedColor: AppColors.primaryColor,
         ),
+
         /// Todo
         SalomonBottomBarItem(
           icon: const Icon(Icons.checklist),
           title: const Text("Todo"),
           selectedColor: Colors.blue,
         ),
+
         /// Map
         SalomonBottomBarItem(
           icon: const Icon(Icons.map),
           title: const Text("Map"),
           selectedColor: Colors.green,
         ),
+
         /// Profile
         SalomonBottomBarItem(
           icon: const Icon(Icons.person),
@@ -203,7 +211,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   /// Builds the drawer with user information and menu options.
-  Widget _buildDrawer(BuildContext context, AuthState authState, dynamic userDetails, bool isDarkMode) {
+  Widget _buildDrawer(BuildContext context, AuthState authState,
+      dynamic userDetails, bool isDarkMode) {
     // Combine first and last names.
     String fullName = '';
     if (userDetails != null) {
@@ -236,7 +245,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   child: CircleAvatar(
                     radius: 34,
-                    backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                    backgroundColor:
+                        isDarkMode ? Colors.grey[800] : Colors.white,
                     backgroundImage: userDetails?.profileImageUrl != null
                         ? NetworkImage(userDetails.profileImageUrl!)
                         : null,
@@ -334,11 +344,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     try {
-      final userBusiness = await businessProvider.getFirstUserBusiness(userEmail);
+      final userBusiness =
+          await businessProvider.getFirstUserBusiness(userEmail);
       if (userBusiness != null) {
         context.push('/business-profile/${userBusiness.id}');
       } else {
-        final canCreateBusiness = await businessProvider.canCreateBusiness(userEmail);
+        final canCreateBusiness =
+            await businessProvider.canCreateBusiness(userEmail);
         if (canCreateBusiness) {
           context.push('/add-business');
         } else {
@@ -365,7 +377,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBarTheme: AppBarTheme(
         backgroundColor: isDarkMode ? Colors.grey[900] : AppColors.primaryColor,
         elevation: 0,
-        iconTheme: IconThemeData(color: isDarkMode ? Colors.white : Colors.white),
+        iconTheme:
+            IconThemeData(color: isDarkMode ? Colors.white : Colors.white),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,

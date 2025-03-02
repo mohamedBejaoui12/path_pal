@@ -5,27 +5,26 @@ import 'package:pfe1/features/business/data/business_profile_provider.dart';
 import 'package:pfe1/features/business/domain/business_post_model.dart';
 import 'dart:io';
 
-import '../presentation/business_profile_screen.dart';  // Import the business profile screen
+import '../presentation/business_profile_screen.dart'; // Import the business profile screen
 import '../../authentication/providers/auth_provider.dart';
 import '../../interests/domain/interest_model.dart';
 import '../data/business_post_provider.dart';
 import '../../../../shared/theme/theme_provider.dart';
 
 class CreateBusinessPostScreen extends ConsumerStatefulWidget {
-  final int? businessId;  // Optional business ID parameter
-  final BusinessPostModel? existingPost;  // Optional existing post for editing
+  final int? businessId; // Optional business ID parameter
+  final BusinessPostModel? existingPost; // Optional existing post for editing
 
-  const CreateBusinessPostScreen({
-    Key? key, 
-    this.businessId, 
-    this.existingPost
-  }) : super(key: key);
+  const CreateBusinessPostScreen({Key? key, this.businessId, this.existingPost})
+      : super(key: key);
 
   @override
-  _CreateBusinessPostScreenState createState() => _CreateBusinessPostScreenState();
+  _CreateBusinessPostScreenState createState() =>
+      _CreateBusinessPostScreenState();
 }
 
-class _CreateBusinessPostScreenState extends ConsumerState<CreateBusinessPostScreen> {
+class _CreateBusinessPostScreenState
+    extends ConsumerState<CreateBusinessPostScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -37,20 +36,21 @@ class _CreateBusinessPostScreenState extends ConsumerState<CreateBusinessPostScr
   @override
   void initState() {
     super.initState();
-    
+
     // If editing an existing post, pre-fill the form
     if (widget.existingPost != null) {
       _titleController.text = widget.existingPost!.title;
       _descriptionController.text = widget.existingPost!.description ?? '';
       _existingImageUrl = widget.existingPost!.imageUrl;
-      
+
       // Fetch interests to pre-select existing interests
       ref.read(interestProvider.future).then((allInterests) {
         // Convert existing interests to InterestModel
         final existingInterestNames = widget.existingPost!.interests;
-        final matchedInterests = allInterests.where((interest) => 
-          existingInterestNames.contains(interest.name)).toList();
-        
+        final matchedInterests = allInterests
+            .where((interest) => existingInterestNames.contains(interest.name))
+            .toList();
+
         setState(() {
           _selectedInterests = matchedInterests;
         });
@@ -69,7 +69,8 @@ class _CreateBusinessPostScreenState extends ConsumerState<CreateBusinessPostScr
   }
 
   void _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
@@ -86,36 +87,41 @@ class _CreateBusinessPostScreenState extends ConsumerState<CreateBusinessPostScr
 
     try {
       BusinessPostModel? businessPost;
-      
+
       // Check if we're creating a new post or updating an existing one
       if (widget.existingPost == null) {
         // Create new post
-        businessPost = await ref.read(createBusinessPostProvider.notifier).createBusinessPost(
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          imageFile: _imageFile,
-          interests: _selectedInterests,
-        );
+        businessPost = await ref
+            .read(createBusinessPostProvider.notifier)
+            .createBusinessPost(
+              title: _titleController.text.trim(),
+              description: _descriptionController.text.trim(),
+              imageFile: _imageFile,
+              interests: _selectedInterests,
+            );
       } else {
         // Update existing post
-        businessPost = await ref.read(createBusinessPostProvider.notifier).updateBusinessPost(
-          postId: widget.existingPost!.id!,
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          imageFile: _imageFile,
-          interests: _selectedInterests,
-        );
+        businessPost = await ref
+            .read(createBusinessPostProvider.notifier)
+            .updateBusinessPost(
+              postId: widget.existingPost!.id!,
+              title: _titleController.text.trim(),
+              description: _descriptionController.text.trim(),
+              imageFile: _imageFile,
+              interests: _selectedInterests,
+            );
       }
 
       if (businessPost != null) {
         // Navigate back to BusinessProfileScreen
-        final businessId = widget.businessId ?? 
-          (await ref.read(currentUserBusinessProvider).value)?.id;
-        
+        final businessId = widget.businessId ??
+            (await ref.read(currentUserBusinessProvider).value)?.id;
+
         if (businessId != null) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) => BusinessProfileScreen(businessId: businessId),
+              builder: (context) =>
+                  BusinessProfileScreen(businessId: businessId),
             ),
           );
         } else {
@@ -125,7 +131,9 @@ class _CreateBusinessPostScreenState extends ConsumerState<CreateBusinessPostScr
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to ${widget.existingPost == null ? 'create' : 'update'} business post: $e')),
+        SnackBar(
+            content: Text(
+                'Failed to ${widget.existingPost == null ? 'create' : 'update'} business post: $e')),
       );
     } finally {
       setState(() {
@@ -140,89 +148,92 @@ class _CreateBusinessPostScreenState extends ConsumerState<CreateBusinessPostScr
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.existingPost == null 
-          ? 'Create Business Post' 
-          : 'Update Business Post'),
+        title: Text(widget.existingPost == null
+            ? 'Create Business Post'
+            : 'Update Business Post'),
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextFormField(
-              controller: _titleController,
-              decoration: InputDecoration(
-                labelText: 'Post Title',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a title';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: InputDecoration(
-                labelText: 'Description (Optional)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _pickImage,
-              child: Text(_imageFile == null 
-                ? 'Pick Image (Optional)' 
-                : 'Change Image'),
-            ),
-            if (_imageFile != null) 
-              Image.file(_imageFile!, height: 200, fit: BoxFit.cover)
-            else if (_existingImageUrl != null)
-              Image.network(_existingImageUrl!, height: 200, fit: BoxFit.cover),
-            const SizedBox(height: 16),
-            const Text('Select Interests:'),
-            interestsAsync.when(
-              data: (interests) => Wrap(
-                spacing: 8,
-                children: interests.map((interest) {
-                  final isSelected = _selectedInterests.contains(interest);
-                  return ChoiceChip(
-                    label: Text(interest.name),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedInterests.add(interest);
-                        } else {
-                          _selectedInterests.remove(interest);
-                        }
-                      });
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Post Title',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a title';
+                      }
+                      return null;
                     },
-                  );
-                }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(
+                      labelText: 'Description (Optional)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _pickImage,
+                    child: Text(_imageFile == null
+                        ? 'Pick Image (Optional)'
+                        : 'Change Image'),
+                  ),
+                  if (_imageFile != null)
+                    Image.file(_imageFile!, height: 200, fit: BoxFit.cover)
+                  else if (_existingImageUrl != null)
+                    Image.network(_existingImageUrl!,
+                        height: 200, fit: BoxFit.cover),
+                  const SizedBox(height: 16),
+                  const Text('Select Interests:'),
+                  interestsAsync.when(
+                    data: (interests) => Wrap(
+                      spacing: 8,
+                      children: interests.map((interest) {
+                        final isSelected =
+                            _selectedInterests.contains(interest);
+                        return ChoiceChip(
+                          label: Text(interest.name),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedInterests.add(interest);
+                              } else {
+                                _selectedInterests.remove(interest);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    loading: () => const CircularProgressIndicator(),
+                    error: (error, _) =>
+                        Text('Error loading interests: $error'),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _submitPost,
+                    child: Text(widget.existingPost == null
+                        ? 'Create Post'
+                        : 'Update Post'),
+                  ),
+                ],
               ),
-              loading: () => const CircularProgressIndicator(),
-              error: (error, _) => Text('Error loading interests: $error'),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _submitPost,
-              child: Text(widget.existingPost == null 
-                ? 'Create Post' 
-                : 'Update Post'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
