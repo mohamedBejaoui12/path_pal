@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pfe1/features/business/domain/business_post_model.dart'; // Adjust the import as necessary
 
 class BusinessPostDetailWidget extends StatelessWidget {
   final int postId; // Ensure this is non-nullable

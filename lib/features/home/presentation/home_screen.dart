@@ -3,11 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pfe1/features/business/data/business_profile_provider.dart';
 import 'package:pfe1/features/business/presentation/add_business_screen.dart';
+import 'package:pfe1/features/chat/data/chat_service.dart';
+import 'package:pfe1/features/chat/presentation/notification_screen.dart';
 import 'package:pfe1/features/home/presentation/business_posts_widget.dart';
 import 'package:pfe1/features/home/presentation/profile_widget.dart';
+import 'package:pfe1/features/search/presentation/search_screen.dart';
 import 'package:pfe1/features/todos/presentation/todos_screen.dart';
+import 'package:pfe1/features/map/presentation/map_screen.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
-import 'package:pfe1/features/home/presentation/post_list_widget.dart'; // For user posts
+import 'package:pfe1/features/home/presentation/post_list_widget.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import '../../../features/authentication/data/user_details_provider.dart';
 import '../../../features/authentication/providers/auth_provider.dart';
 import '../../../shared/theme/app_colors.dart';
@@ -76,6 +81,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// When _currentIndex == 0, it adds a TabBar (for Home) to the bottom.
   PreferredSizeWidget _buildAppBar() {
     final isDarkMode = ref.watch(themeProvider);
+    final userEmail = ref.watch(authProvider).user?.email;
+    final chatService = ChatService(supabase.Supabase.instance.client);
+    
     if (_currentIndex == 0) {
       return AppBar(
         title: const Text(
@@ -98,12 +106,73 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         actions: [
+          // Add search icon
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SearchScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
             onPressed: () {
               ref.read(themeProvider.notifier).toggleTheme();
             },
           ),
+          // Notification icon with badge
+          userEmail != null
+              ? StreamBuilder<int>(
+                  stream: chatService.watchUnreadNotificationCount(userEmail),
+                  builder: (context, snapshot) {
+                    final hasUnread = snapshot.hasData && snapshot.data! > 0;
+                    
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.notifications_outlined),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const NotificationScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        if (hasUnread)
+                          Positioned(
+                            top: 10,
+                            right: 10,
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                )
+              : IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationScreen(),
+                      ),
+                    );
+                  },
+                ),
           IconButton(
             icon: const Icon(Icons.chat_bubble_outline_rounded),
             onPressed: () {
@@ -131,6 +200,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ref.read(themeProvider.notifier).toggleTheme();
             },
           ),
+          // Notification icon with badge
+          userEmail != null
+              ? StreamBuilder<int>(
+                  stream: chatService.watchUnreadNotificationCount(userEmail),
+                  builder: (context, snapshot) {
+                    final hasUnread = snapshot.hasData && snapshot.data! > 0;
+                    
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.notifications_outlined),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const NotificationScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        if (hasUnread)
+                          Positioned(
+                            top: 10,
+                            right: 10,
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                )
+              : IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationScreen(),
+                      ),
+                    );
+                  },
+                ),
           IconButton(
             icon: const Icon(Icons.chat_bubble_outline_rounded),
             onPressed: () {
@@ -155,12 +273,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     } else if (_currentIndex == 1) {
       return TodosScreen();
     } else if (_currentIndex == 2) {
-      return Center(
-        child: Text(
-          'Map Screen (Coming Soon)',
-          style: TextStyle(fontSize: 18),
-        ),
-      );
+      // Replace the placeholder with the actual MapScreen
+      return const MapScreen();
     } else if (_currentIndex == 3) {
       final authState = ref.watch(authProvider);
       final currentUserEmail = authState.user?.email ?? '';
@@ -221,7 +335,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         userDetails.familyName,
       ].where((name) => name.isNotEmpty).join(' ');
     }
-
+    // Rest of the method remains unchanged
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,

@@ -7,6 +7,7 @@ import '../data/chat_provider.dart';
 import '../data/chat_service.dart';
 import '../../authentication/providers/auth_provider.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/theme_provider.dart';
 
 class UserSearchScreen extends ConsumerStatefulWidget {
   const UserSearchScreen({Key? key}) : super(key: key);
@@ -51,9 +52,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
 
       // Create or get existing chat room
       final chatRoom = await chatService.createOrGetChatRoom(
-        authState.user!.email!, 
-        user['email']
-      );
+          authState.user!.email!, user['email']);
 
       // Check if widget is still mounted before navigating
       if (!mounted) return;
@@ -78,12 +77,17 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
   @override
   Widget build(BuildContext context) {
     final searchState = ref.watch(userSearchProvider);
+    final isDarkMode = ref.watch(themeProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Search Users', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.primaryColor,
-        elevation: 0,
+        title: Text('Search Users',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            )),
+        backgroundColor: isDarkMode ? Colors.grey[850] : AppColors.primaryColor,
+        elevation: 2,
       ),
       body: Column(
         children: [
@@ -93,31 +97,57 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search by name or email',
-                prefixIcon: Icon(Icons.search, color: AppColors.primaryColor),
+                hintStyle: TextStyle(
+                  color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                ),
+                prefixIcon: Icon(Icons.search,
+                    color:
+                        isDarkMode ? Colors.white70 : AppColors.primaryColor),
+                filled: true,
+                fillColor: isDarkMode ? Colors.grey[800] : Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: AppColors.primaryColor),
+                  borderSide: BorderSide(
+                    color:
+                        isDarkMode ? Colors.grey[700]! : AppColors.primaryColor,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+                  borderSide: BorderSide(
+                      color: isDarkMode ? Colors.white : AppColors.primaryColor,
+                      width: 2),
                 ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                    color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                  ),
+                ),
+              ),
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black87,
               ),
             ),
           ),
           Expanded(
             child: searchState.isLoading
-              ? Center(child: CircularProgressIndicator())
-              : searchState.users.isEmpty
-                ? _buildNoResultsWidget()
-                : _buildUserList(searchState.users),
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color:
+                          isDarkMode ? Colors.white70 : AppColors.primaryColor,
+                    ),
+                  )
+                : searchState.users.isEmpty
+                    ? _buildNoResultsWidget(isDarkMode)
+                    : _buildUserList(searchState.users, isDarkMode),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildNoResultsWidget() {
+  Widget _buildNoResultsWidget(bool isDarkMode) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -125,13 +155,13 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
           Icon(
             Icons.person_search,
             size: 100,
-            color: Colors.grey[400],
+            color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
           ),
           SizedBox(height: 16),
           Text(
             'No users found',
             style: TextStyle(
-              color: Colors.grey[600],
+              color: isDarkMode ? Colors.white70 : Colors.grey[600],
               fontSize: 18,
               fontWeight: FontWeight.w500,
             ),
@@ -141,7 +171,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
     );
   }
 
-  Widget _buildUserList(List<Map<String, dynamic>> users) {
+  Widget _buildUserList(List<Map<String, dynamic>> users, bool isDarkMode) {
     return ListView.builder(
       itemCount: users.length,
       itemBuilder: (context, index) {
@@ -150,16 +180,22 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Card(
             elevation: 4,
+            color: isDarkMode ? Colors.grey[800] : Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
             ),
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    AppColors.primaryColor.withOpacity(0.1),
-                    AppColors.primaryColor.withOpacity(0.05),
-                  ],
+                  colors: isDarkMode
+                      ? [
+                          Colors.grey[850]!,
+                          Colors.grey[800]!,
+                        ]
+                      : [
+                          AppColors.primaryColor.withOpacity(0.1),
+                          AppColors.primaryColor.withOpacity(0.05),
+                        ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -173,29 +209,28 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
-                    color: Colors.black87,
+                    color: isDarkMode ? Colors.white : Colors.black87,
                   ),
                 ),
                 subtitle: Text(
                   user['email'],
                   style: TextStyle(
-                    color: Colors.grey[600],
+                    color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                     fontStyle: FontStyle.italic,
                   ),
                 ),
-                trailing: _isLoading 
-                  ? CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.primaryColor
+                trailing: _isLoading
+                    ? CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(isDarkMode
+                            ? Colors.white70
+                            : AppColors.primaryColor),
+                      )
+                    : Icon(
+                        Icons.chat_bubble_outline,
+                        color:
+                            isDarkMode ? Colors.white : AppColors.primaryColor,
                       ),
-                    )
-                  : Icon(
-                      Icons.chat_bubble_outline,
-                      color: AppColors.primaryColor,
-                    ),
-                onTap: _isLoading 
-                  ? null 
-                  : () => _initiateChat(user),
+                onTap: _isLoading ? null : () => _initiateChat(user),
               ),
             ),
           ),
@@ -208,18 +243,18 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
     final profileImageUrl = user['profile_image_url'] ?? '';
 
     return profileImageUrl.isNotEmpty
-      ? CircleAvatar(
-          radius: 30,
-          backgroundImage: CachedNetworkImageProvider(profileImageUrl),
-        )
-      : CircleAvatar(
-          radius: 30,
-          backgroundColor: AppColors.primaryColor.withOpacity(0.2),
-          child: Icon(
-            Icons.person,
-            color: AppColors.primaryColor,
-            size: 30,
-          ),
-        );
+        ? CircleAvatar(
+            radius: 30,
+            backgroundImage: CachedNetworkImageProvider(profileImageUrl),
+          )
+        : CircleAvatar(
+            radius: 30,
+            backgroundColor: AppColors.primaryColor.withOpacity(0.2),
+            child: Icon(
+              Icons.person,
+              color: AppColors.primaryColor,
+              size: 30,
+            ),
+          );
   }
 }

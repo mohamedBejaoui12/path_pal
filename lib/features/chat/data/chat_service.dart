@@ -5,7 +5,6 @@ import '../domain/chat_room_model.dart';
 class ChatService {
   final SupabaseClient _supabase;
 
-
   ChatService(this._supabase);
 
   // Create or get existing chat room between two users
@@ -78,6 +77,9 @@ class ChatService {
           })
           .eq('id', chatRoomId);
 
+      // Create notification for the recipient
+      await _createNotification(chatRoomId, senderEmail, message);
+
       // Convert the response to a ChatMessage
       return ChatMessage(
         id: messageResponse['id'],
@@ -92,15 +94,151 @@ class ChatService {
     }
   }
 
+  // Create notification for the recipient
+  Future<void> _createNotification(String chatRoomId, String senderEmail, String message) async {
+    try {
+      // Get the chat room to determine the recipient
+      final chatRoom = await _supabase
+          .from('chat_rooms')
+          .select('user1_email, user2_email')
+          .eq('id', chatRoomId)
+          .single();
+
+      // Determine the recipient (the other user)
+      final recipientEmail = chatRoom['user1_email'] == senderEmail
+          ? chatRoom['user2_email']
+          : chatRoom['user1_email'];
+
+      // Create the notification
+      await _supabase.from('notifications').insert({
+        'recipient_email': recipientEmail,
+        'sender_email': senderEmail,
+        'chat_room_id': chatRoomId,
+        'message': message,
+        'is_read': false,
+      });
+    } catch (e) {
+      print('Error creating notification: $e');
+    }
+  }
+
+  // Get notifications for a user
+  Future<List<Map<String, dynamic>>> getUserNotifications(String userEmail) async {
+    try {
+      final notifications = await _supabase
+          .from('notifications')
+          .select('*, chat_rooms!inner(*)')
+          .eq('recipient_email', userEmail)
+          .order('created_at', ascending: false);
+
+      // Process notifications to include sender details
+      final processedNotifications = <Map<String, dynamic>>[];
+      
+      for (var notification in notifications) {
+        try {
+          // Get sender details
+          final senderDetails = await getUserDetailsByEmail(notification['sender_email']);
+          
+          if (senderDetails != null) {
+            processedNotifications.add({
+              'id': notification['id'],
+              'chat_room_id': notification['chat_room_id'],
+              'message': notification['message'],
+              'created_at': DateTime.parse(notification['created_at']),
+              'is_read': notification['is_read'],
+              'sender': senderDetails,
+            });
+          }
+        } catch (e) {
+          print('Error processing notification: $e');
+        }
+      }
+      
+      return processedNotifications;
+    } catch (e) {
+      print('Error fetching notifications: $e');
+      return [];
+    }
+  }
+
+  // Mark notification as read
+  Future<bool> markNotificationAsRead(String notificationId) async {
+    try {
+      await _supabase
+          .from('notifications')
+          .update({'is_read': true})
+          .eq('id', notificationId);
+      return true;
+    } catch (e) {
+      print('Error marking notification as read: $e');
+      return false;
+    }
+  }
+
+  // Mark all notifications as read for a user
+  Future<bool> markAllNotificationsAsRead(String userEmail) async {
+    try {
+      await _supabase
+          .from('notifications')
+          .update({'is_read': true})
+          .eq('recipient_email', userEmail);
+      return true;
+    } catch (e) {
+      print('Error marking all notifications as read: $e');
+      return false;
+    }
+  }
+  // Get unread notification count
+  Future<int> getUnreadNotificationCount(String userEmail) async {
+    try {
+      final response = await _supabase
+          .from('notifications')
+          .select()
+          .eq('recipient_email', userEmail)
+          .eq('is_read', false);
+      
+      // Return the length of the response list
+      return response.length;
+    } catch (e) {
+      print('Error getting unread notification count: $e');
+      return 0;
+    }
+  }
+
+  // Stream of unread notification count
+  Stream<int> watchUnreadNotificationCount(String userEmail) {
+    return _supabase
+        .from('notifications')
+        .stream(primaryKey: ['id'])
+        .asBroadcastStream()
+        .map((data) {
+          // Filter the data in Dart after receiving it
+          final filteredData = data.where((item) => 
+            item['recipient_email'] == userEmail && 
+            item['is_read'] == false
+          ).toList();
+          return filteredData.length;
+        });
+  }
+
   // Get messages for a specific chat room
   Stream<List<ChatMessage>> watchChatMessages(String chatRoomId) {
     return _supabase
         .from('chat_messages')
         .stream(primaryKey: ['id'])
-        .eq('chat_room_id', chatRoomId)
-        .order('timestamp', ascending: true)
+        .asBroadcastStream()
         .map((data) {
-          return data.map<ChatMessage>((json) {
+          // Filter the data in Dart after receiving it
+          final filteredData = data
+              .where((item) => item['chat_room_id'] == chatRoomId)
+              .toList();
+          
+          // Sort the data by timestamp
+          filteredData.sort((a, b) => 
+            DateTime.parse(a['timestamp']).compareTo(DateTime.parse(b['timestamp']))
+          );
+          
+          return filteredData.map<ChatMessage>((json) {
             return ChatMessage(
               id: json['id'],
               chatRoomId: json['chat_room_id'],

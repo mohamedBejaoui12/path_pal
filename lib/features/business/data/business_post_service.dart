@@ -19,12 +19,13 @@ class BusinessPostService {
       return [];
     }
   }
+
   Future<BusinessPostModel> createBusinessPost({
     required int businessId,
     required String userEmail,
     required String businessName,
-    required String title, 
-    String? description, 
+    required String title,
+    String? description,
     String? imageUrl,
     required List<InterestModel> interests,
   }) async {
@@ -42,11 +43,13 @@ class BusinessPostService {
 
       // Verify interests exist in the database
       final allInterests = await fetchAllInterests();
-      final validInterests = interests.where((interest) => 
-        allInterests.any((ai) => ai.id == interest.id)).toList();
+      final validInterests = interests
+          .where((interest) => allInterests.any((ai) => ai.id == interest.id))
+          .toList();
 
       if (validInterests.isEmpty) {
-        throw Exception('No valid interests selected. Please select at least one interest.');
+        throw Exception(
+            'No valid interests selected. Please select at least one interest.');
       }
 
       // Prepare interests as list of names
@@ -85,20 +88,21 @@ class BusinessPostService {
     }
   }
   // Add this method to the BusinessPostService class
-  
-  Future<List<BusinessPostModel>> fetchBusinessPostsByBusinessId(int businessId) async {
+
+  Future<List<BusinessPostModel>> fetchBusinessPostsByBusinessId(
+      int businessId) async {
     try {
       // Get current user's email directly from Supabase
       final currentUser = Supabase.instance.client.auth.currentUser;
       final userEmail = currentUser?.email;
-  
+
       // Fetch business posts for the specific business
       final postsResponse = await _supabase
           .from('business_posts')
           .select('*, businesses:business_id(*)')
           .eq('business_id', businessId)
           .order('created_at', ascending: false);
-  
+
       // Debug: Print the first post response to see structure
       if (postsResponse.isNotEmpty) {
         debugPrint('First post response: ${postsResponse[0]}');
@@ -106,7 +110,7 @@ class BusinessPostService {
           debugPrint('Business data: ${postsResponse[0]['businesses']}');
         }
       }
-      
+
       // Prepare the final list of business posts
       final List<BusinessPostModel> businessPosts = [];
       for (var postJson in postsResponse) {
@@ -115,7 +119,7 @@ class BusinessPostService {
             .from('business_post_likes')
             .select('*')
             .eq('post_id', postJson['id']);
-            
+
         // Check if current user liked the post
         bool isLikedByCurrentUser = false;
         if (userEmail != null) {
@@ -127,7 +131,7 @@ class BusinessPostService {
               .maybeSingle();
           isLikedByCurrentUser = userLikeResponse != null;
         }
-        
+
         // Get business profile image from the joined business data
         String? businessProfileImage;
         if (postJson['businesses'] != null &&
@@ -136,7 +140,7 @@ class BusinessPostService {
           businessProfileImage = postJson['businesses']['image_url'];
           debugPrint('Using business profile image URL: $businessProfileImage');
         }
-  
+
         final businessPost = BusinessPostModel.fromJson({
           ...postJson,
           'business_profile_image': businessProfileImage,
@@ -151,65 +155,83 @@ class BusinessPostService {
       return [];
     }
   }
+
   Future<List<BusinessPostModel>> fetchAllBusinessPosts() async {
     try {
-      // Get current user's email
-      final currentUser = Supabase.instance.client.auth.currentUser;
-      final userEmail = currentUser?.email;
-      // Fetch all business posts with business details
-      final postsResponse = await _supabase
-          .from('business_posts')
-          .select('*, businesses:business_id(*)')
-          .order('created_at', ascending: false);
-      // Debug: Print the first post response to see structure
-      if (postsResponse.isNotEmpty) {
-        debugPrint('First post response: ${postsResponse[0]}');
-        if (postsResponse[0]['businesses'] != null) {
-          debugPrint('Business data: ${postsResponse[0]['businesses']}');
+      // Modify the query to include business data for profile images
+      final response = await _supabase.from('business_posts').select('''
+            *,
+            business_post_likes(count),
+            business_post_comments(count),
+            businesses:business_id(image_url)
+          ''').order('created_at', ascending: false);
+
+      debugPrint('Raw business posts response: ${response.length} posts');
+
+      // Get current user email for checking if post is liked
+      final currentUserEmail = _supabase.auth.currentUser?.email;
+
+      // Process the response
+      return Future.wait((response as List).map((json) async {
+        // Get likes count
+        final likesCount = json['business_post_likes']?[0]?['count'] ?? 0;
+
+        // Get comments count
+        final commentsCount = json['business_post_comments']?[0]?['count'] ?? 0;
+
+        // Get business profile image from the joined businesses table
+        String? businessProfileImage;
+        if (json['businesses'] != null &&
+            json['businesses']['image_url'] != null) {
+          businessProfileImage = json['businesses']['image_url'];
+          // Clean the URL to ensure it's valid
+          if (businessProfileImage != null) {
+            businessProfileImage = businessProfileImage.trim();
+          }
+          debugPrint('Business profile image from DB: $businessProfileImage');
         }
-      }
-      // Prepare the final list of business posts
-      final List<BusinessPostModel> businessPosts = [];
-      for (var postJson in postsResponse) {
-        // Count likes for this post
-        final likesCountResponse = await _supabase
-            .from('business_post_likes')
-            .select('*')
-            .eq('post_id', postJson['id']);
-        // Check if current user liked the post
+
+        // Check if current user has liked the post
         bool isLikedByCurrentUser = false;
-        if (userEmail != null) {
-          final userLikeResponse = await _supabase
+        if (currentUserEmail != null) {
+          final likeResponse = await _supabase
               .from('business_post_likes')
               .select()
-              .eq('post_id', postJson['id'])
-              .eq('user_email', userEmail)
+              .eq('post_id', json['id'])
+              .eq('user_email', currentUserEmail)
               .maybeSingle();
-          isLikedByCurrentUser = userLikeResponse != null;
+          isLikedByCurrentUser = likeResponse != null;
         }
-        // Get business profile image from the joined business data
-        String? businessProfileImage;
-        if (postJson['businesses'] != null &&
-            postJson['businesses']['image_url'] != null) {
-          // Use the URL directly from the database without any manipulation
-          businessProfileImage = postJson['businesses']['image_url'];
-          debugPrint('Using business profile image URL: $businessProfileImage');
+
+        // Map interests
+        List<String> interests = [];
+        if (json['interests'] != null) {
+          interests = List<String>.from(json['interests']);
         }
-  
-        final businessPost = BusinessPostModel.fromJson({
-          ...postJson,
-          'business_profile_image': businessProfileImage,
-          'likesCount': likesCountResponse.length,
-          'isLikedByCurrentUser': isLikedByCurrentUser,
-        });
-        businessPosts.add(businessPost);
-      }
-      return businessPosts;
-    } catch (e) {
+
+        return BusinessPostModel(
+          id: json['id'],
+          businessId: json['business_id'],
+          userEmail: json['user_email'],
+          businessName: json['business_name'],
+          businessProfileImage: businessProfileImage,
+          title: json['title'],
+          description: json['description'],
+          imageUrl: json['image_url'],
+          createdAt: DateTime.parse(json['created_at']),
+          interests: interests,
+          likesCount: likesCount,
+          commentsCount: commentsCount,
+          isLikedByCurrentUser: isLikedByCurrentUser,
+        );
+      }).toList());
+    } catch (e, stackTrace) {
       debugPrint('Error fetching business posts: $e');
+      debugPrint('Stack trace: $stackTrace');
       return [];
     }
   }
+
   Future<BusinessPostModel> updateBusinessPost({
     required int postId,
     required String userEmail,
@@ -226,10 +248,10 @@ class BusinessPostService {
       if (userEmail.isEmpty) {
         throw Exception('User email cannot be empty');
       }
-  
+
       // Prepare the update data
       final updateData = <String, dynamic>{};
-  
+
       // Add fields to update if they are not null
       if (title != null && title.isNotEmpty) {
         updateData['title'] = title;
@@ -247,12 +269,12 @@ class BusinessPostService {
                 (interest) => validInterests.any((ai) => ai.id == interest.id))
             .map((i) => i.name)
             .toList();
-  
+
         if (interestNames.isNotEmpty) {
           updateData['interests'] = interestNames;
         }
       }
-  
+
       // Verify the post belongs to the user
       final existingPost = await _supabase
           .from('business_posts')
@@ -260,12 +282,12 @@ class BusinessPostService {
           .eq('id', postId)
           .eq('user_email', userEmail)
           .single();
-  
+
       if (existingPost == null) {
         throw Exception(
             'Post not found or you do not have permission to update');
       }
-  
+
       // Perform the update
       final response = await _supabase
           .from('business_posts')
@@ -273,13 +295,14 @@ class BusinessPostService {
           .eq('id', postId)
           .select()
           .single();
-  
+
       return BusinessPostModel.fromJson(response);
     } catch (e) {
       debugPrint('Error updating business post: $e');
       rethrow;
     }
   }
+
   Future<void> deleteBusinessPost({
     required int postId,
     required String userEmail,
@@ -292,7 +315,7 @@ class BusinessPostService {
       if (userEmail.isEmpty) {
         throw Exception('User email cannot be empty');
       }
-  
+
       // Verify the post belongs to the user before deleting
       final existingPost = await _supabase
           .from('business_posts')
@@ -300,12 +323,12 @@ class BusinessPostService {
           .eq('id', postId)
           .eq('user_email', userEmail)
           .single();
-  
+
       if (existingPost == null) {
         throw Exception(
             'Post not found or you do not have permission to delete');
       }
-  
+
       // Delete the post
       await _supabase.from('business_posts').delete().eq('id', postId);
     } catch (e) {

@@ -27,21 +27,24 @@ class BusinessPostCommentState {
   }
 }
 
-class BusinessPostCommentNotifier extends StateNotifier<BusinessPostCommentState> {
+class BusinessPostCommentNotifier
+    extends StateNotifier<BusinessPostCommentState> {
   final Ref ref;
   final BusinessPostCommentService _commentService;
-  
+
   // Cache to store comments for different business posts
   final Map<int, List<CommentModel>> _commentCache = {};
 
-  BusinessPostCommentNotifier(this.ref, this._commentService) : super(BusinessPostCommentState());
+  BusinessPostCommentNotifier(this.ref, this._commentService)
+      : super(BusinessPostCommentState());
 
   Future<void> fetchComments(int businessPostId) async {
     try {
       state = state.copyWith(isLoading: true);
-      
+
       // Check cache first
-      if (_commentCache.containsKey(businessPostId) && _commentCache[businessPostId]!.isNotEmpty) {
+      if (_commentCache.containsKey(businessPostId) &&
+          _commentCache[businessPostId]!.isNotEmpty) {
         state = state.copyWith(
           comments: _commentCache[businessPostId]!,
           isLoading: false,
@@ -50,12 +53,12 @@ class BusinessPostCommentNotifier extends StateNotifier<BusinessPostCommentState
       }
 
       final comments = await _commentService.fetchComments(businessPostId);
-      
+
       // Update cache
       _commentCache[businessPostId] = comments;
 
       state = state.copyWith(
-        comments: comments, 
+        comments: comments,
         isLoading: false,
       );
     } catch (e) {
@@ -67,7 +70,7 @@ class BusinessPostCommentNotifier extends StateNotifier<BusinessPostCommentState
   }
 
   Future<void> addComment({
-    required int businessPostId, 
+    required int businessPostId,
     required String commentText,
   }) async {
     try {
@@ -81,11 +84,11 @@ class BusinessPostCommentNotifier extends StateNotifier<BusinessPostCommentState
       state = state.copyWith(isLoading: true);
 
       final newComment = await _commentService.addComment(
-        businessPostId: businessPostId, 
-        commentText: commentText, 
-        userEmail: userEmail,  
+        businessPostId: businessPostId,
+        commentText: commentText,
+        userEmail: userEmail,
       );
-      
+
       // Update cache
       if (!_commentCache.containsKey(businessPostId)) {
         _commentCache[businessPostId] = [];
@@ -102,7 +105,7 @@ class BusinessPostCommentNotifier extends StateNotifier<BusinessPostCommentState
         error: e.toString(),
         isLoading: false,
       );
-      rethrow;  
+      rethrow;
     }
   }
 
@@ -112,7 +115,10 @@ class BusinessPostCommentNotifier extends StateNotifier<BusinessPostCommentState
   }
 }
 
-final businessPostCommentProvider = StateNotifierProvider.family<BusinessPostCommentNotifier, BusinessPostCommentState, int>((ref, businessPostId) {
+final businessPostCommentProvider = StateNotifierProvider.family<
+    BusinessPostCommentNotifier,
+    BusinessPostCommentState,
+    int>((ref, businessPostId) {
   final commentService = ref.read(businessPostCommentServiceProvider);
   return BusinessPostCommentNotifier(ref, commentService);
 });

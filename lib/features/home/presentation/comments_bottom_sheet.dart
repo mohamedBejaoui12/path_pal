@@ -5,6 +5,7 @@ import 'package:pfe1/features/authentication/data/comment_provider.dart';
 import 'package:pfe1/features/business/data/business_comment_provider.dart';
 
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/theme_provider.dart';
 import '../../../features/authentication/providers/auth_provider.dart';
 import '../domain/comment_model.dart';
 
@@ -17,11 +18,9 @@ class CommentsBottomSheet extends ConsumerStatefulWidget {
   final int postId;
   final CommentType commentType;
 
-  const CommentsBottomSheet({
-    Key? key, 
-    required this.postId, 
-    this.commentType = CommentType.userPost
-  }) : super(key: key);
+  const CommentsBottomSheet(
+      {Key? key, required this.postId, this.commentType = CommentType.userPost})
+      : super(key: key);
 
   @override
   _CommentsBottomSheetState createState() => _CommentsBottomSheetState();
@@ -43,10 +42,14 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   void _fetchComments() {
     switch (widget.commentType) {
       case CommentType.userPost:
-        ref.read(commentProvider(widget.postId).notifier).fetchComments(widget.postId);
+        ref
+            .read(commentProvider(widget.postId).notifier)
+            .fetchComments(widget.postId);
         break;
       case CommentType.businessPost:
-        ref.read(businessPostCommentProvider(widget.postId).notifier).fetchComments(widget.postId);
+        ref
+            .read(businessPostCommentProvider(widget.postId).notifier)
+            .fetchComments(widget.postId);
         break;
     }
   }
@@ -69,16 +72,18 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
           switch (widget.commentType) {
             case CommentType.userPost:
               ref.read(commentProvider(widget.postId).notifier).addComment(
-                postId: widget.postId,
-                commentText: commentText,
-                userEmail: userEmail,
-              );
+                    postId: widget.postId,
+                    commentText: commentText,
+                    userEmail: userEmail,
+                  );
               break;
             case CommentType.businessPost:
-              ref.read(businessPostCommentProvider(widget.postId).notifier).addComment(
-                businessPostId: widget.postId,
-                commentText: commentText,
-              );
+              ref
+                  .read(businessPostCommentProvider(widget.postId).notifier)
+                  .addComment(
+                    businessPostId: widget.postId,
+                    commentText: commentText,
+                  );
               break;
           }
           _commentController.clear();
@@ -134,19 +139,36 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
         break;
     }
 
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
+    final isDarkMode = ref.watch(themeProvider);
     return DraggableScrollableSheet(
-      initialChildSize: 0.7,
-      minChildSize: 0.3,
-      maxChildSize: 0.95,
+      initialChildSize: 1.0, // Take full available space in the container
+      minChildSize: 1.0, // Don't allow shrinking
+      maxChildSize: 1.0, // Don't allow expanding
       builder: (context, scrollController) => Container(
         decoration: BoxDecoration(
           color: isDarkMode ? Colors.grey[900] : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              spreadRadius: 1,
+            ),
+          ],
         ),
         child: Column(
           children: [
+            // Drag handle
+            Container(
+              margin: const EdgeInsets.only(top: 8, bottom: 4),
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey[600] : Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+
             // Comments Header
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -155,17 +177,28 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                 children: [
                   Text(
                     'Comments',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.black,
-                        ),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black,
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    '(${comments.length})',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: Colors.grey,
-                        ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${comments.length}',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -175,33 +208,75 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
             Divider(
               color: isDarkMode ? Colors.white24 : Colors.grey.shade300,
               height: 1,
+              thickness: 1,
             ),
 
             // Comments List
             Expanded(
               child: isLoading
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryColor,
-                    ),
-                  )
-                : comments.isEmpty
                   ? Center(
-                      child: Text(
-                        'No comments yet',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: isDarkMode ? Colors.white70 : Colors.black54,
-                            ),
+                      child: CircularProgressIndicator(
+                        color: isDarkMode
+                            ? Colors.white70
+                            : AppColors.primaryColor,
                       ),
                     )
-                  : ListView.builder(
-                      controller: scrollController,
-                      itemCount: comments.length,
-                      itemBuilder: (context, index) {
-                        final comment = comments[index];
-                        return _CommentTile(comment: comment);
-                      },
-                    ),
+                  : comments.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline,
+                                size: 50,
+                                color: isDarkMode
+                                    ? Colors.grey[600]
+                                    : Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No comments yet',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : Colors.black54,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Be the first to comment!',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isDarkMode
+                                      ? Colors.grey[500]
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          controller: scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: comments.length,
+                          separatorBuilder: (context, index) => Divider(
+                            color: isDarkMode
+                                ? Colors.grey[800]
+                                : Colors.grey[200],
+                            height: 1,
+                            indent: 70,
+                            endIndent: 16,
+                          ),
+                          itemBuilder: (context, index) {
+                            final comment = comments[index];
+                            return _CommentTile(
+                              comment: comment,
+                              isDarkMode: isDarkMode,
+                            );
+                          },
+                        ),
             ),
 
             // Comment Input
@@ -219,64 +294,96 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 
 class _CommentTile extends StatelessWidget {
   final CommentModel comment;
+  final bool isDarkMode;
 
-  const _CommentTile({Key? key, required this.comment}) : super(key: key);
+  const _CommentTile({
+    Key? key,
+    required this.comment,
+    required this.isDarkMode,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final formattedDate = DateFormat('MMM d, HH:mm').format(comment.createdAt);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Profile Picture
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-            backgroundImage: comment.userProfileImage.isNotEmpty
-              ? NetworkImage(comment.userProfileImage)
-              : null,
-            child: comment.userProfileImage.isEmpty
-              ? Text(
-                  comment.userName.isNotEmpty 
-                    ? comment.userName[0].toUpperCase() 
-                    : '?',
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white : Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                )
-              : null,
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+              backgroundImage: comment.userProfileImage.isNotEmpty
+                  ? NetworkImage(comment.userProfileImage)
+                  : null,
+              child: comment.userProfileImage.isEmpty
+                  ? Text(
+                      comment.userName.isNotEmpty
+                          ? comment.userName[0].toUpperCase()
+                          : '?',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  comment.userName.isNotEmpty ? comment.userName : 'Anonymous',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                Row(
+                  children: [
+                    Text(
+                      comment.userName.isNotEmpty
+                          ? comment.userName
+                          : 'Anonymous',
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white70 : Colors.black87,
+                        fontSize: 15,
+                        color: isDarkMode ? Colors.white : Colors.black87,
                       ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  comment.commentText,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: isDarkMode ? Colors.white54 : Colors.black54,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  formattedDate,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      formattedDate,
+                      style: TextStyle(
                         color: Colors.grey,
-                        fontSize: 10,
+                        fontSize: 12,
                       ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.grey[850] : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    comment.commentText,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -301,42 +408,96 @@ class _CommentInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    return Container(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 12,
+        bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 12 : 24,
+      ),
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                hintText: 'Write a comment...',
-                hintStyle: TextStyle(
-                  color: isDarkMode ? Colors.white54 : Colors.black54,
-                ),
-                filled: true,
-                fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
-              maxLines: null,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => onSubmit(),
+              child: TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: 'Write a comment...',
+                  hintStyle: TextStyle(
+                    color: isDarkMode ? Colors.grey[400] : Colors.grey[500],
+                  ),
+                  filled: true,
+                  fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.emoji_emotions_outlined,
+                    color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ),
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
+                maxLines: null,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => onSubmit(),
+              ),
             ),
           ),
           const SizedBox(width: 12),
-          IconButton(
-            icon: Icon(
-              Icons.send,
-              color: AppColors.primaryColor,
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primaryColor,
+                  AppColors.primaryColor.withOpacity(0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryColor.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            onPressed: onSubmit,
-          ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.send_rounded,
+                color: Colors.white,
+              ),
+              onPressed: onSubmit,
+            ),
+          ), // Added closing bracket here
         ],
       ),
     );
@@ -344,11 +505,8 @@ class _CommentInputField extends StatelessWidget {
 }
 
 // Function to show comments bottom sheet
-void showCommentsBottomSheet(
-  BuildContext context, 
-  int postId, 
-  {CommentType commentType = CommentType.userPost}
-) {
+void showCommentsBottomSheet(BuildContext context, int postId,
+    {CommentType commentType = CommentType.userPost}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,

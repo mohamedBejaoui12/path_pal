@@ -7,6 +7,7 @@ import 'package:pfe1/features/home/presentation/user_profile_screen.dart';
 import '../data/chat_provider.dart';
 import '../../authentication/providers/auth_provider.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/theme_provider.dart';
 import '../data/chat_service.dart';
 
 class ChatRoomScreen extends ConsumerStatefulWidget {
@@ -14,8 +15,8 @@ class ChatRoomScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? otherUser;
 
   const ChatRoomScreen({
-    Key? key, 
-    required this.chatRoomId, 
+    Key? key,
+    required this.chatRoomId,
     this.otherUser,
   }) : super(key: key);
 
@@ -33,7 +34,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   void initState() {
     super.initState();
     _currentUserEmail = ref.read(authProvider).user?.email ?? '';
-    
+
     // Fetch user details if not provided
     if (widget.otherUser == null) {
       _fetchOtherUserDetails();
@@ -45,7 +46,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       // Determine the other user's email from the chat room
       final chatService = ref.read(chatServiceProvider);
       final chatRoomsAsync = await ref.read(userChatRoomsProvider.future);
-      
+
       // Find the chat room or return if not found
       final chatRoom = chatRoomsAsync.firstWhere(
         (room) => room['chat_room_id'] == widget.chatRoomId,
@@ -55,16 +56,17 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       // Check if chatRoom is empty
       if (chatRoom.isEmpty) return;
 
-      final otherUserEmail = chatRoom['user1_email'] == _currentUserEmail 
-        ? chatRoom['user2_email'] 
-        : chatRoom['user1_email'];
+      final otherUserEmail = chatRoom['user1_email'] == _currentUserEmail
+          ? chatRoom['user2_email']
+          : chatRoom['user1_email'];
 
       // Skip if no other user email
       if (otherUserEmail == null) return;
 
       // Fetch other user's details
-      final userDetails = await chatService.getUserDetailsByEmail(otherUserEmail);
-      
+      final userDetails =
+          await chatService.getUserDetailsByEmail(otherUserEmail);
+
       if (userDetails != null) {
         setState(() {
           _otherUserDetails = userDetails;
@@ -78,71 +80,89 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   @override
   Widget build(BuildContext context) {
     final messagesAsync = ref.watch(chatMessagesProvider(widget.chatRoomId));
+    final isDarkMode = ref.watch(themeProvider);
 
     return Scaffold(
-      appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          Expanded(
-            child: messagesAsync.when(
-              data: (messages) => _buildMessageList(messages.cast<Map<String, dynamic>>()),
-              loading: () => Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(child: Text('Error: $error')),
+      appBar: _buildAppBar(isDarkMode),
+      body: Container(
+        color: isDarkMode ? Colors.grey[900] : Colors.grey[100],
+        child: Column(
+          children: [
+            Expanded(
+              child: messagesAsync.when(
+                data: (messages) => _buildMessageList(
+                    messages.cast<Map<String, dynamic>>(), isDarkMode),
+                loading: () => Center(
+                  child: CircularProgressIndicator(
+                    color: isDarkMode ? Colors.white70 : AppColors.primaryColor,
+                  ),
+                ),
+                error: (error, _) => Center(
+                  child: Text(
+                    'Error: $error',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.red,
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-          _buildMessageInput(),
-        ],
+            _buildMessageInput(isDarkMode),
+          ],
+        ),
       ),
     );
   }
 
-  AppBar _buildAppBar() {
+  AppBar _buildAppBar(bool isDarkMode) {
     // Use _otherUserDetails if available, otherwise fallback to widget.otherUser
-    final otherUser = _otherUserDetails ?? widget.otherUser ?? <String, dynamic>{};
+    final otherUser =
+        _otherUserDetails ?? widget.otherUser ?? <String, dynamic>{};
     final profileImageUrl = otherUser['profile_image_url'] ?? '';
-    final userName = otherUser['full_name'] ?? otherUser['name'] ?? otherUser['email'] ?? 'Chat';
+    final userName = otherUser['full_name'] ??
+        otherUser['name'] ??
+        otherUser['email'] ??
+        'Chat';
     final userEmail = otherUser['email'] ?? otherUser['user_email'] ?? '';
 
     return AppBar(
-      backgroundColor: AppColors.primaryColor,
+      backgroundColor: isDarkMode ? Colors.grey[850] : AppColors.primaryColor,
+      elevation: 2,
       title: GestureDetector(
-        onTap: userEmail.isNotEmpty 
-          ? () {
-              Navigator.push(
-                context, 
-                MaterialPageRoute(
-                  builder: (context) => UserProfileScreen(
-                    userEmail: userEmail,
-                  )
-                )
-              );
-            } 
-          : null,
+        onTap: userEmail.isNotEmpty
+            ? () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => UserProfileScreen(
+                              userEmail: userEmail,
+                            )));
+              }
+            : null,
         child: Row(
           children: [
             GestureDetector(
-              onTap: userEmail.isNotEmpty 
-                ? () {
-                    Navigator.push(
-                      context, 
-                      MaterialPageRoute(
-                        builder: (context) => UserProfileScreen(
-                          userEmail: userEmail,
-                        )
-                      )
-                    );
-                  } 
-                : null,
+              onTap: userEmail.isNotEmpty
+                  ? () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => UserProfileScreen(
+                                    userEmail: userEmail,
+                                  )));
+                    }
+                  : null,
               child: profileImageUrl.isNotEmpty
-                ? CircleAvatar(
-                    radius: 20,
-                    backgroundImage: CachedNetworkImageProvider(profileImageUrl),
-                  )
-                : CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.white.withOpacity(0.3),
-                    child: Icon(Icons.person, color: Colors.white),
-                  ),
+                  ? CircleAvatar(
+                      radius: 20,
+                      backgroundImage:
+                          CachedNetworkImageProvider(profileImageUrl),
+                    )
+                  : CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.white.withOpacity(0.3),
+                      child: Icon(Icons.person, color: Colors.white),
+                    ),
             ),
             SizedBox(width: 12),
             Column(
@@ -153,13 +173,14 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
                 Text(
                   'Online',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white,
                   ),
                 ),
               ],
@@ -169,7 +190,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.more_vert),
+          icon: Icon(Icons.more_vert, color: Colors.white),
           onPressed: () {
             // TODO: Implement more options
           },
@@ -178,7 +199,8 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     );
   }
 
-  Widget _buildMessageList(List<Map<String, dynamic>> messages) {
+  Widget _buildMessageList(
+      List<Map<String, dynamic>> messages, bool isDarkMode) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
@@ -192,21 +214,22 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
         final message = messages[index];
         final isMe = message['sender_email'] == _currentUserEmail;
 
-        return _buildMessageBubble(message, isMe);
+        return _buildMessageBubble(message, isMe, isDarkMode);
       },
     );
   }
 
-  Widget _buildMessageBubble(Map<String, dynamic> message, bool isMe) {
+  Widget _buildMessageBubble(
+      Map<String, dynamic> message, bool isMe, bool isDarkMode) {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isMe 
-            ? AppColors.primaryColor.withOpacity(0.8) 
-            : Colors.grey[300],
+          color: isMe
+              ? (isDarkMode ? Colors.indigo[700] : AppColors.primaryColor)
+              : (isDarkMode ? Colors.grey[800] : Colors.grey[300]),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(15),
             topRight: Radius.circular(15),
@@ -227,7 +250,9 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             Text(
               message['message'],
               style: TextStyle(
-                color: isMe ? Colors.white : Colors.black87,
+                color: isMe
+                    ? Colors.white
+                    : (isDarkMode ? Colors.white : Colors.black87),
                 fontSize: 16,
               ),
             ),
@@ -235,7 +260,9 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
             Text(
               DateFormat('HH:mm').format(DateTime.parse(message['timestamp'])),
               style: TextStyle(
-                color: isMe ? Colors.white70 : Colors.black54,
+                color: isMe
+                    ? Colors.white70
+                    : (isDarkMode ? Colors.grey[400] : Colors.black54),
                 fontSize: 12,
               ),
             ),
@@ -245,11 +272,11 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     );
   }
 
-  Widget _buildMessageInput() {
+  Widget _buildMessageInput(bool isDarkMode) {
     return Container(
-      padding: EdgeInsets.all(8),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
@@ -265,8 +292,11 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
               controller: _messageController,
               decoration: InputDecoration(
                 hintText: 'Type a message',
+                hintStyle: TextStyle(
+                  color: isDarkMode ? Colors.grey[400] : Colors.grey[400],
+                ),
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[100],
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide.none,
@@ -276,14 +306,19 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                   vertical: 10,
                 ),
               ),
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
               maxLines: null,
             ),
           ),
           SizedBox(width: 8),
           CircleAvatar(
-            backgroundColor: AppColors.primaryColor,
+            backgroundColor:
+                isDarkMode ? Colors.indigo[700] : AppColors.primaryColor,
+            radius: 24,
             child: IconButton(
-              icon: Icon(Icons.send, color: Colors.white),
+              icon: Icon(Icons.send, color: Colors.white, size: 20),
               onPressed: _sendMessage,
             ),
           ),
@@ -298,10 +333,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
 
     final chatService = ref.read(chatServiceProvider);
     final sentMessage = await chatService.sendMessage(
-      widget.chatRoomId, 
-      _currentUserEmail, 
-      message
-    );
+        widget.chatRoomId, _currentUserEmail, message);
 
     if (sentMessage != null) {
       _messageController.clear();

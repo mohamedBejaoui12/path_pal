@@ -7,16 +7,15 @@ import 'core/config/app_config.dart';
 import 'features/authentication/data/auth_service.dart';
 
 Future<void> main() async {
-  
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Supabase
   await Supabase.initialize(
     url: AppConfig.supabaseUrl,
     anonKey: AppConfig.supabaseAnonKey,
-    debug: false, 
+    debug: false,
   );
-  
+
   // Initialize persistent session
   final authService = AuthService();
   final sessionMaintained = await authService.maintainSession();
@@ -26,5 +25,4 @@ Future<void> main() async {
       child: MyApp(isAuthenticated: sessionMaintained),
     ),
   );
-
-} 
+}

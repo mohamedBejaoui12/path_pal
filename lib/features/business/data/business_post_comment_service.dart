@@ -10,9 +10,17 @@ class BusinessPostCommentService {
     try {
       debugPrint('Fetching comments for business post ID: $businessPostId');
       
+      // Modified query to use the user table instead of profiles
       final response = await _supabase
           .from('business_post_comments')
-          .select('*, user:user_email(name, family_name, profile_image_url)')
+          .select('''
+            *,
+            user:user_email (
+              name,
+              family_name,
+              profile_image_url
+            )
+          ''')
           .eq('business_post_id', businessPostId)
           .order('created_at', ascending: false);
 
@@ -20,10 +28,8 @@ class BusinessPostCommentService {
 
       // Validate and map comments
       return (response as List).map((json) {
-        // Handle user data
-        final userData = json['user'] is List && json['user'].isNotEmpty 
-          ? json['user'][0] 
-          : {};
+        // Handle user data - user is now a direct object, not a list
+        final userData = json['user'] ?? {};
 
         // Construct comment JSON
         final commentJson = {
@@ -32,9 +38,7 @@ class BusinessPostCommentService {
           'userEmail': json['user_email'],
           'userName': userData['name'] ?? userData['family_name'] ?? 'Anonymous',
           'userProfileImage': userData['profile_image_url'] ?? 
-              _generateDefaultProfileImage(
-                userData['name'] ?? userData['family_name'] ?? 'Anonymous'
-              ),
+              _generateDefaultProfileImage(userData['name'] ?? userData['family_name'] ?? 'Anonymous'),
           'commentText': json['comment_text'],
           'createdAt': json['created_at'],
         };
@@ -53,7 +57,8 @@ class BusinessPostCommentService {
     required String userEmail,
   }) async {
     try {
-      final response = await _supabase
+      // First insert the comment
+      final insertResponse = await _supabase
           .from('business_post_comments')
           .insert({
             'business_post_id': businessPostId,
@@ -61,28 +66,28 @@ class BusinessPostCommentService {
             'comment_text': commentText,
             'created_at': DateTime.now().toIso8601String(),
           })
-          .select('*, user:user_email(name, family_name, profile_image_url)')
+          .select()
           .single();
+      
+      // Then fetch the user profile from the user table
+      final userResponse = await _supabase
+          .from('user')
+          .select('name, family_name, profile_image_url')
+          .eq('email', userEmail)
+          .maybeSingle();
 
-      debugPrint('Add comment response: $response');
-
-      // Handle user data
-      final userData = response['user'] is List && response['user'].isNotEmpty 
-        ? response['user'][0] 
-        : {};
-
+      final userData = userResponse ?? {};
+      
       // Construct comment JSON
       final commentJson = {
-        'id': response['id'],
-        'postId': response['business_post_id'],
-        'userEmail': response['user_email'],
+        'id': insertResponse['id'],
+        'postId': insertResponse['business_post_id'],
+        'userEmail': insertResponse['user_email'],
         'userName': userData['name'] ?? userData['family_name'] ?? 'Anonymous',
         'userProfileImage': userData['profile_image_url'] ?? 
-            _generateDefaultProfileImage(
-              userData['name'] ?? userData['family_name'] ?? 'Anonymous'
-            ),
-        'commentText': response['comment_text'],
-        'createdAt': response['created_at'],
+            _generateDefaultProfileImage(userData['name'] ?? userData['family_name'] ?? 'Anonymous'),
+        'commentText': insertResponse['comment_text'],
+        'createdAt': insertResponse['created_at'],
       };
 
       return CommentModel.fromJson(commentJson);

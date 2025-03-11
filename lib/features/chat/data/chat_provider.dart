@@ -147,3 +147,131 @@ class UserSearchNotifier extends StateNotifier<UserSearchState> {
     state = UserSearchState();
   }
 }
+
+// Notifications Provider
+final userNotificationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final authState = ref.watch(authProvider);
+  final chatService = ref.watch(chatServiceProvider);
+  
+  if (authState.user?.email == null) {
+    return [];
+  }
+  
+  try {
+    return await chatService.getUserNotifications(authState.user!.email!);
+  } catch (e) {
+    debugPrint('Error fetching user notifications: $e');
+    return [];
+  }
+});
+
+// Unread notification count provider
+final unreadNotificationCountProvider = StreamProvider<int>((ref) {
+  final authState = ref.watch(authProvider);
+  final chatService = ref.watch(chatServiceProvider);
+  
+  if (authState.user?.email == null) {
+    return Stream.value(0);
+  }
+  
+  return chatService.watchUnreadNotificationCount(authState.user!.email!);
+});
+
+// Notification state class
+class NotificationState {
+  final List<Map<String, dynamic>> notifications;
+  final bool isLoading;
+  final String? error;
+
+  NotificationState({
+    this.notifications = const [],
+    this.isLoading = false,
+    this.error,
+  });
+
+  NotificationState copyWith({
+    List<Map<String, dynamic>>? notifications,
+    bool? isLoading,
+    String? error,
+  }) {
+    return NotificationState(
+      notifications: notifications ?? this.notifications,
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
+    );
+  }
+}
+
+// Notification notifier
+class NotificationNotifier extends StateNotifier<NotificationState> {
+  final ChatService _chatService;
+  final String? _currentUserEmail;
+
+  NotificationNotifier(this._chatService, this._currentUserEmail) 
+    : super(NotificationState());
+
+  Future<void> loadNotifications() async {
+    if (_currentUserEmail == null) return;
+    
+    state = state.copyWith(isLoading: true, error: null);
+    
+    try {
+      final notifications = await _chatService.getUserNotifications(_currentUserEmail!);
+      state = NotificationState(
+        notifications: notifications,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = NotificationState(
+        notifications: [],
+        isLoading: false,
+        error: e.toString(),
+      );
+      debugPrint('Error loading notifications: $e');
+    }
+  }
+
+  Future<void> markAsRead(String notificationId) async {
+    try {
+      final success = await _chatService.markNotificationAsRead(notificationId);
+      if (success) {
+        // Update the local state
+        final updatedNotifications = state.notifications.map((notification) {
+          if (notification['id'] == notificationId) {
+            return {...notification, 'is_read': true};
+          }
+          return notification;
+        }).toList();
+        
+        state = state.copyWith(notifications: updatedNotifications);
+      }
+    } catch (e) {
+      debugPrint('Error marking notification as read: $e');
+    }
+  }
+
+  Future<void> markAllAsRead() async {
+    if (_currentUserEmail == null) return;
+    
+    try {
+      final success = await _chatService.markAllNotificationsAsRead(_currentUserEmail!);
+      if (success) {
+        // Update all notifications in the local state
+        final updatedNotifications = state.notifications.map((notification) {
+          return {...notification, 'is_read': true};
+        }).toList();
+        
+        state = state.copyWith(notifications: updatedNotifications);
+      }
+    } catch (e) {
+      debugPrint('Error marking all notifications as read: $e');
+    }
+  }
+}
+
+// Notification provider
+final notificationProvider = StateNotifierProvider<NotificationNotifier, NotificationState>((ref) {
+  final authState = ref.watch(authProvider);
+  final chatService = ref.watch(chatServiceProvider);
+  return NotificationNotifier(chatService, authState.user?.email);
+});
