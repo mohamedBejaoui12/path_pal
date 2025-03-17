@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../domain/chat_message_model.dart';
+
 import '../domain/chat_room_model.dart';
 import './chat_service.dart';
 import '../../authentication/providers/auth_provider.dart';

@@ -9,7 +9,6 @@ import 'package:pfe1/shared/theme/theme_provider.dart';
 
 // Color Constants
 const Color _primaryColor = Color(0xFF862C24);
-const Color _accentColor = Color(0xFFBE9B7B);
 const Color _lightBackground = Colors.white;  // Changed from _lightBackground to pure white
 const Color _darkBackground = Color(0xFF1A1A1A);
 

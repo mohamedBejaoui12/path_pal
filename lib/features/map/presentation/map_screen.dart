@@ -3,17 +3,14 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:map_launcher/map_launcher.dart';
 import 'package:pfe1/features/business/presentation/user_business_profile_screen.dart';
 import 'package:pfe1/shared/theme/theme_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:typed_data'; // Add this import for Uint8List
 import '../../../shared/theme/app_colors.dart';
 import '../data/map_provider.dart';
 import '../../business/domain/business_model.dart';
 import '../../business/data/business_list_provider.dart';
-import 'widgets/business_search_widget.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({Key? key}) : super(key: key);

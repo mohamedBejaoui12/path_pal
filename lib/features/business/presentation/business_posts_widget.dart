@@ -4,7 +4,7 @@ import 'package:pfe1/features/business/data/business_post_provider.dart';
 import 'package:pfe1/features/business/domain/business_post_model.dart';
 import 'package:pfe1/features/business/presentation/business_profile_screen.dart';
 import 'package:pfe1/features/business/presentation/user_business_profile_screen.dart';
-import 'package:pfe1/features/home/presentation/business_post_details_widget.dart';
+
 import 'package:pfe1/features/home/presentation/comments_bottom_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';

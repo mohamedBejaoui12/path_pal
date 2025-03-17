@@ -20,7 +20,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   @override
   Widget build(BuildContext context) {
     final chatRoomsAsync = ref.watch(userChatRoomsProvider);
-    final authState = ref.watch(authProvider);
+
     final isDarkMode = ref.watch(themeProvider);
 
     return Scaffold(

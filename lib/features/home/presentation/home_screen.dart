@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pfe1/features/business/data/business_profile_provider.dart';
-import 'package:pfe1/features/business/presentation/add_business_screen.dart';
 import 'package:pfe1/features/chat/data/chat_service.dart';
 import 'package:pfe1/features/chat/presentation/notification_screen.dart';
 import 'package:pfe1/features/home/presentation/business_posts_widget.dart';
@@ -10,6 +9,7 @@ import 'package:pfe1/features/home/presentation/profile_widget.dart';
 import 'package:pfe1/features/search/presentation/search_screen.dart';
 import 'package:pfe1/features/todos/presentation/todos_screen.dart';
 import 'package:pfe1/features/map/presentation/map_screen.dart';
+import 'package:pfe1/features/vocabulary/presentation/vocabulary_list_screen.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:pfe1/features/home/presentation/post_list_widget.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
@@ -83,7 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isDarkMode = ref.watch(themeProvider);
     final userEmail = ref.watch(authProvider).user?.email;
     final chatService = ChatService(supabase.Supabase.instance.client);
-    
+
     if (_currentIndex == 0) {
       return AppBar(
         title: const Text(
@@ -130,7 +130,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   stream: chatService.watchUnreadNotificationCount(userEmail),
                   builder: (context, snapshot) {
                     final hasUnread = snapshot.hasData && snapshot.data! > 0;
-                    
+
                     return Stack(
                       alignment: Alignment.center,
                       children: [
@@ -140,7 +140,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const NotificationScreen(),
+                                builder: (context) =>
+                                    const NotificationScreen(),
                               ),
                             );
                           },
@@ -206,7 +207,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   stream: chatService.watchUnreadNotificationCount(userEmail),
                   builder: (context, snapshot) {
                     final hasUnread = snapshot.hasData && snapshot.data! > 0;
-                    
+
                     return Stack(
                       alignment: Alignment.center,
                       children: [
@@ -216,7 +217,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const NotificationScreen(),
+                                builder: (context) =>
+                                    const NotificationScreen(),
                               ),
                             );
                           },
@@ -410,6 +412,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             leading: const Icon(Icons.edit),
             title: const Text('Update Profile'),
             onTap: () => context.push('/update-profile'),
+          ),
+          // Add Vocabulary feature link here
+          ListTile(
+            leading: const Icon(Icons.book),
+            title: const Text('My Vocabulary'),
+            onTap: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const VocabularyListScreen(),
+                ),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.settings),

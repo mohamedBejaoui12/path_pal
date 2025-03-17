@@ -8,7 +8,7 @@ import '../data/chat_provider.dart';
 import '../../authentication/providers/auth_provider.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/theme_provider.dart';
-import '../data/chat_service.dart';
+
 
 class ChatRoomScreen extends ConsumerStatefulWidget {
   final String chatRoomId;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
 import 'package:pfe1/features/business/presentation/update_business_profile_screen.dart';
 import 'package:pfe1/features/business/presentation/create_business_post_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,8 +9,8 @@ import 'package:pfe1/features/home/presentation/comments_bottom_sheet.dart';
 import '../data/business_profile_provider.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../domain/business_post_model.dart';
-import '../data/business_post_service.dart';
-import '../data/business_post_comment_service.dart';
+
+
 import '../data/business_post_provider.dart';
 import '../../authentication/providers/auth_provider.dart';
 

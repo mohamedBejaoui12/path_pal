@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pfe1/features/home/domain/comment_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../authentication/providers/auth_provider.dart';
-import '../../authentication/data/user_details_provider.dart';
+
 
 class CommentService {
   final _supabase = Supabase.instance.client;

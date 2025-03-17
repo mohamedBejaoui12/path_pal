@@ -6,7 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pfe1/features/authentication/domain/user_details_model.dart';
 import 'package:pfe1/features/authentication/providers/auth_provider.dart';
 import 'package:pfe1/features/home/domain/post_model.dart';
-import 'package:pfe1/features/home/data/post_provider.dart';
 import 'package:pfe1/features/home/presentation/post_list_widget.dart';
 
 String _generateDefaultProfileImage(String name) {

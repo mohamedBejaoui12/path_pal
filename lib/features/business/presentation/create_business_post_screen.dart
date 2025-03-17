@@ -6,10 +6,10 @@ import 'package:pfe1/features/business/domain/business_post_model.dart';
 import 'dart:io';
 
 import '../presentation/business_profile_screen.dart'; // Import the business profile screen
-import '../../authentication/providers/auth_provider.dart';
+
 import '../../interests/domain/interest_model.dart';
 import '../data/business_post_provider.dart';
-import '../../../../shared/theme/theme_provider.dart';
+
 
 class CreateBusinessPostScreen extends ConsumerStatefulWidget {
   final int? businessId; // Optional business ID parameter

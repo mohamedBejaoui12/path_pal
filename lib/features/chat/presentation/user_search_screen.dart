@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/chat_provider.dart';
-import '../data/chat_service.dart';
+
 import '../../authentication/providers/auth_provider.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/theme_provider.dart';

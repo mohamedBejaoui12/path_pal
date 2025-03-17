@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+
 
 class BusinessRateModel {
   final int? id;

@@ -56,7 +56,7 @@ class AuthService {
       );
       
       // Allow a small buffer before expiration (5 minutes)
-      final bufferTime = expirationTime.subtract(Duration(minutes: 5));
+      final bufferTime = expirationTime.subtract(Duration(minutes: 30));
       
       if (now.isAfter(bufferTime)) {
         debugPrint('Session near expiration or expired');

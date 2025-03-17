@@ -20,16 +20,16 @@ import 'package:pfe1/features/interests/presentation/interests_selection_screen.
 import 'package:pfe1/shared/theme/app_colors.dart';
 import 'package:pfe1/shared/theme/theme_provider.dart';
 
-class RouterNotifier extends ChangeNotifier {
+class RouterNotifier extends ChangeNotifier { 
   final WidgetRef _ref;
-  AuthStatus? _previousStatus;
 
   RouterNotifier(this._ref) {
-    _ref.listen(authProvider, (previous, next) {
+    _ref.listen(authProvider, (previous, next) { // Listen to authProvider changes
       // Only notify listeners if the authentication status has significantly changed
       if (previous?.status != next.status && 
-          (next.status == AuthStatus.authenticated || 
-           next.status == AuthStatus.unauthenticated)) {
+          (next.status == AuthStatus.authenticated || // User is authenticated
+           next.status == AuthStatus.unauthenticated)) { // User is unauthenticated
+        // Notify listeners
         notifyListeners();
       }
     });
@@ -47,7 +47,7 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Restore session on app startup
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) { // This is called after the widget is built 
       ref.read(authProvider.notifier).restoreSession();
     });
 
@@ -122,10 +122,7 @@ class MyApp extends ConsumerWidget {
             return EmailVerificationScreen(email: email);
           },
         ),
-// GoRoute(
-//   path: '/profile',
-//   builder: (context, state) => const ProfileScreen(),
-// ),
+
         GoRoute(
           path: '/user-details',
           builder: (context, state) {

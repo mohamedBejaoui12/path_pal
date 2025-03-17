@@ -6,8 +6,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
 import '../data/business_profile_provider.dart';
-import '../domain/business_model.dart';
-import '../../../shared/theme/app_colors.dart';
+
+
 
 enum LocationInputMethod {
   manual,
