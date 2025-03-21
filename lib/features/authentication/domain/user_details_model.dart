@@ -9,16 +9,17 @@ enum Gender { male, female }
 class UserDetailsModel with _$UserDetailsModel {
   const factory UserDetailsModel({
     required String name,
-    required String familyName,
-    required DateTime dateOfBirth,
-    required String phoneNumber,
-    required String cityOfBirth,
-    required Gender gender,
     required String email,
-    String? profileImageUrl, 
-    String? description, 
+    required String familyName,
+    String? profileImageUrl,
+    String? description,
+    required DateTime dateOfBirth,
+    required String cityOfBirth,
+    required String phoneNumber,
+    required Gender gender,
+    @Default(false) bool isVerified, // This field should be present
   }) = _UserDetailsModel;
 
-  factory UserDetailsModel.fromJson(Map<String, dynamic> json) => 
+  factory UserDetailsModel.fromJson(Map<String, dynamic> json) =>
       _$UserDetailsModelFromJson(json);
 }

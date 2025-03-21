@@ -44,9 +44,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
       try {
         await ref.read(authProvider.notifier).signup(
-          email: _emailController.text.trim(), 
-          password: _passwordController.text.trim()
-        );
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim());
 
         context.go('/verify-email', extra: _emailController.text.trim());
       } catch (e) {
@@ -125,7 +124,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                   decoration: BoxDecoration(
                     color: AppColors.backgroundColor,
                     borderRadius: const BorderRadius.only(
@@ -157,7 +157,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.error_outline, color: AppColors.primaryColor),
+                                  Icon(Icons.error_outline,
+                                      color: AppColors.primaryColor),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
@@ -230,7 +231,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               ),
                               onPressed: () {
                                 setState(() {
-                                  _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                                  _isConfirmPasswordVisible =
+                                      !_isConfirmPasswordVisible;
                                 });
                               },
                             ),
@@ -248,12 +250,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               onPressed: _isLoading ? null : _submitForm,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryColor,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 elevation: 3,
-                                shadowColor: AppColors.primaryColor.withOpacity(0.3),
+                                shadowColor:
+                                    AppColors.primaryColor.withOpacity(0.3),
                               ),
                               child: const Text(
                                 'Sign Up',
@@ -273,7 +277,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 fontSize: 14,
                               ),
                               children: [
-                                const TextSpan(text: 'Already have an account? '),
+                                const TextSpan(
+                                    text: 'Already have an account? '),
                                 TextSpan(
                                   text: 'Login',
                                   style: TextStyle(
@@ -296,7 +301,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               ),
               Container(
                 color: AppColors.backgroundColor,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                 child: Column(
                   children: [
                     const Divider(height: 30, color: Colors.grey),
@@ -324,7 +330,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         ),
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Text('•', style: TextStyle(color: Colors.grey)),
+                          child:
+                              Text('•', style: TextStyle(color: Colors.grey)),
                         ),
                         GestureDetector(
                           onTap: () => context.go('/privacy'),
@@ -339,7 +346,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         ),
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Text('•', style: TextStyle(color: Colors.grey)),
+                          child:
+                              Text('•', style: TextStyle(color: Colors.grey)),
                         ),
                         GestureDetector(
                           onTap: () => context.go('/contact'),

@@ -17,9 +17,12 @@ final businessProfileServiceProvider = Provider<BusinessProfileService>((ref) {
   return BusinessProfileService();
 });
 
+// Move the fetchAllBusinessPosts implementation into the BusinessPostService class
+// and then use the provider to access it
+
 final businessPostsProvider = FutureProvider<List<BusinessPostModel>>((ref) async {
   final service = ref.read(businessPostServiceProvider);
-  return await service.fetchAllBusinessPosts(); // Implement this method in your service
+  return await service.fetchAllBusinessPosts();
 });
 
 // Declare BusinessProfileProvider before using it

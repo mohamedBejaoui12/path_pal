@@ -51,11 +51,12 @@ class PostListNotifier extends StateNotifier<PostListState> {
         throw Exception('User not authenticated');
       }
 
+      // Update the query to include is_verified field
       final response = await _supabase
           .from('user_post')
           .select('''
         *,
-        user:user_email(name, family_name, profile_image_url),
+        user:user_email(name, family_name, profile_image_url, is_verified),
         post_likes(*)
       ''')
           .order('created_at', ascending: false);
@@ -70,6 +71,9 @@ class PostListNotifier extends StateNotifier<PostListState> {
         json['user_name'] = userData['name'] ?? 'Anonymous';
         json['user_profile_image'] = userData['profile_image_url'] ??
             _generateDefaultProfileImage(userData['name'] ?? 'A');
+            
+        // Add verification status to the JSON
+        json['is_user_verified'] = userData['is_verified'] == true;
 
         // Explicitly check likes for current user
         final likes = json['post_likes'] as List? ?? [];

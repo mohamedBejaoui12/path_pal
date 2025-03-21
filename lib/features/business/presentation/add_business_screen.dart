@@ -119,7 +119,7 @@ class _AddBusinessScreenState extends ConsumerState<AddBusinessScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${business.businessName} created!'),
-            backgroundColor: AppColors.successColor,
+            backgroundColor: AppColors.primaryColor,
           ),
         );
         Navigator.pop(context);

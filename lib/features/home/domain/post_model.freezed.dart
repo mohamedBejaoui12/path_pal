@@ -28,6 +28,7 @@ mixin _$PostModel {
   int get likesCount => throw _privateConstructorUsedError;
   int get commentsCount => throw _privateConstructorUsedError;
   bool get isLikedByCurrentUser => throw _privateConstructorUsedError;
+  bool get isUserVerified => throw _privateConstructorUsedError;
 
   /// Create a copy of PostModel
   /// with the given fields replaced by the non-null parameter values.
@@ -53,7 +54,8 @@ abstract class $PostModelCopyWith<$Res> {
       DateTime? createdAt,
       int likesCount,
       int commentsCount,
-      bool isLikedByCurrentUser});
+      bool isLikedByCurrentUser,
+      bool isUserVerified});
 }
 
 /// @nodoc
@@ -83,6 +85,7 @@ class _$PostModelCopyWithImpl<$Res, $Val extends PostModel>
     Object? likesCount = null,
     Object? commentsCount = null,
     Object? isLikedByCurrentUser = null,
+    Object? isUserVerified = null,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -133,6 +136,10 @@ class _$PostModelCopyWithImpl<$Res, $Val extends PostModel>
           ? _value.isLikedByCurrentUser
           : isLikedByCurrentUser // ignore: cast_nullable_to_non_nullable
               as bool,
+      isUserVerified: null == isUserVerified
+          ? _value.isUserVerified
+          : isUserVerified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -157,7 +164,8 @@ abstract class _$$PostModelImplCopyWith<$Res>
       DateTime? createdAt,
       int likesCount,
       int commentsCount,
-      bool isLikedByCurrentUser});
+      bool isLikedByCurrentUser,
+      bool isUserVerified});
 }
 
 /// @nodoc
@@ -185,6 +193,7 @@ class __$$PostModelImplCopyWithImpl<$Res>
     Object? likesCount = null,
     Object? commentsCount = null,
     Object? isLikedByCurrentUser = null,
+    Object? isUserVerified = null,
   }) {
     return _then(_$PostModelImpl(
       id: freezed == id
@@ -235,6 +244,10 @@ class __$$PostModelImplCopyWithImpl<$Res>
           ? _value.isLikedByCurrentUser
           : isLikedByCurrentUser // ignore: cast_nullable_to_non_nullable
               as bool,
+      isUserVerified: null == isUserVerified
+          ? _value.isUserVerified
+          : isUserVerified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -254,7 +267,8 @@ class _$PostModelImpl implements _PostModel {
       this.createdAt,
       this.likesCount = 0,
       this.commentsCount = 0,
-      this.isLikedByCurrentUser = false})
+      this.isLikedByCurrentUser = false,
+      this.isUserVerified = false})
       : _interests = interests;
 
   @override
@@ -291,10 +305,13 @@ class _$PostModelImpl implements _PostModel {
   @override
   @JsonKey()
   final bool isLikedByCurrentUser;
+  @override
+  @JsonKey()
+  final bool isUserVerified;
 
   @override
   String toString() {
-    return 'PostModel(id: $id, userEmail: $userEmail, userName: $userName, userProfileImage: $userProfileImage, title: $title, description: $description, imageUrl: $imageUrl, interests: $interests, createdAt: $createdAt, likesCount: $likesCount, commentsCount: $commentsCount, isLikedByCurrentUser: $isLikedByCurrentUser)';
+    return 'PostModel(id: $id, userEmail: $userEmail, userName: $userName, userProfileImage: $userProfileImage, title: $title, description: $description, imageUrl: $imageUrl, interests: $interests, createdAt: $createdAt, likesCount: $likesCount, commentsCount: $commentsCount, isLikedByCurrentUser: $isLikedByCurrentUser, isUserVerified: $isUserVerified)';
   }
 
   @override
@@ -323,7 +340,9 @@ class _$PostModelImpl implements _PostModel {
             (identical(other.commentsCount, commentsCount) ||
                 other.commentsCount == commentsCount) &&
             (identical(other.isLikedByCurrentUser, isLikedByCurrentUser) ||
-                other.isLikedByCurrentUser == isLikedByCurrentUser));
+                other.isLikedByCurrentUser == isLikedByCurrentUser) &&
+            (identical(other.isUserVerified, isUserVerified) ||
+                other.isUserVerified == isUserVerified));
   }
 
   @override
@@ -340,7 +359,8 @@ class _$PostModelImpl implements _PostModel {
       createdAt,
       likesCount,
       commentsCount,
-      isLikedByCurrentUser);
+      isLikedByCurrentUser,
+      isUserVerified);
 
   /// Create a copy of PostModel
   /// with the given fields replaced by the non-null parameter values.
@@ -364,7 +384,8 @@ abstract class _PostModel implements PostModel {
       final DateTime? createdAt,
       final int likesCount,
       final int commentsCount,
-      final bool isLikedByCurrentUser}) = _$PostModelImpl;
+      final bool isLikedByCurrentUser,
+      final bool isUserVerified}) = _$PostModelImpl;
 
   @override
   int? get id;
@@ -390,6 +411,8 @@ abstract class _PostModel implements PostModel {
   int get commentsCount;
   @override
   bool get isLikedByCurrentUser;
+  @override
+  bool get isUserVerified;
 
   /// Create a copy of PostModel
   /// with the given fields replaced by the non-null parameter values.

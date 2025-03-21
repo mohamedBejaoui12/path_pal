@@ -11,17 +11,19 @@ Future<void> main() async {
 
   // this line is to intialize supabase
   await Supabase.initialize(
-    url: AppConfig.supabaseUrl,  // supabase url
+    url: AppConfig.supabaseUrl, // supabase url
     anonKey: AppConfig.supabaseAnonKey, // supabase anon key
     debug: false, // debug mode
   );
 
   // Initialize persistent session
   final authService = AuthService(); // initialize auth service
-  final sessionMaintained = await authService.maintainSession(); // maintain session
+  final sessionMaintained =
+      await authService.maintainSession(); // maintain session
 
   runApp(
-    ProviderScope( // wrap it with provider scope to use riverpod
+    ProviderScope(
+      // wrap it with provider scope to use riverpod
       child: MyApp(isAuthenticated: sessionMaintained),
     ),
   );

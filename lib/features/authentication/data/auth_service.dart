@@ -2,9 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
-  final _supabase = Supabase.instance.client;
+  final _supabase = Supabase.instance.client; // Supabase client initialization
 
-  // Enhanced session initialization and persistence
   Future<Session?> initializeSession() async {
     try {
       // Attempt to restore the session
@@ -72,7 +71,6 @@ class AuthService {
     final session = await initializeSession();
     return session != null;
   }
-
   Future<AuthResponse?> signUp({
     required String email, 
     required String password
@@ -92,7 +90,6 @@ class AuthService {
       return null;
     }
   }
-
   Future<User?> login({
     required String email, 
     required String password
@@ -102,7 +99,6 @@ class AuthService {
         email: email,
         password: password,
       );
-      
       return response.user;
     } on AuthException catch (e) {
       _handleAuthException(e, 'Login');

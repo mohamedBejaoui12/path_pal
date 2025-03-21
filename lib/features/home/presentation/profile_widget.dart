@@ -43,7 +43,8 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
   final String userEmail;
   final _supabase = Supabase.instance.client;
 
-  UserProfilePostsNotifier(this.ref, this.userEmail) : super(UserProfilePostsState()) {
+  UserProfilePostsNotifier(this.ref, this.userEmail)
+      : super(UserProfilePostsState()) {
     fetchUserPosts();
   }
 
@@ -55,19 +56,32 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
       final authState = ref.read(authProvider);
       final currentUserEmail = authState.user?.email;
 
-      // Fetch user details
+      // Fetch user details with is_verified field
       final userResponse = await _supabase
           .from('user')
-          .select('*')
+          .select('*, is_verified')
           .eq('email', userEmail)
           .single();
+
+      // Check if is_verified exists and its value
+      bool isUserVerified = false;
+      if (userResponse.containsKey('is_verified')) {
+        isUserVerified = userResponse['is_verified'] == true;
+        debugPrint('User verified status: $isUserVerified');
+      } else {
+        // For testing, set specific users as verified
+        if (userEmail == 'test@example.com' ||
+            userEmail == 'admin@example.com') {
+          isUserVerified = true;
+        }
+      }
 
       // Fetch user posts with full user details and likes
       final postsResponse = await _supabase
           .from('user_post')
           .select('''
             *,
-            user:user_email(name, family_name, profile_image_url),
+            user:user_email(name, family_name, profile_image_url, is_verified),
             post_likes(*)
           ''')
           .eq('user_email', userEmail)
@@ -76,25 +90,36 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
       // Convert posts to PostModel
       final posts = (postsResponse as List).map<PostModel>((json) {
         // Safely extract user data
-        final userData = (json['user'] is List && json['user'].isNotEmpty) 
-          ? json['user'][0] 
-          : {};
+        final userData = (json['user'] is List && json['user'].isNotEmpty)
+            ? json['user'][0]
+            : {};
 
         // Extract name safely
         final name = userData['name'] ?? userResponse['name'] ?? '';
-        final familyName = userData['family_name'] ?? userResponse['family_name'] ?? '';
+        final familyName =
+            userData['family_name'] ?? userResponse['family_name'] ?? '';
         final fullName = '$name $familyName'.trim();
 
         // Get profile image URL with fallback
-        final profileImageUrl = userData['profile_image_url'] ?? 
-          userResponse['profile_image_url'] ?? 
-          _generateDefaultProfileImage(fullName);
+        final profileImageUrl = userData['profile_image_url'] ??
+            userResponse['profile_image_url'] ??
+            _generateDefaultProfileImage(fullName);
+
+        // Add verification status - prioritize user data from the user table
+        bool postUserVerified = false;
+        if (userData['is_verified'] == true) {
+          postUserVerified = true;
+        } else {
+          postUserVerified = isUserVerified;
+        }
+
+        json['is_user_verified'] = postUserVerified;
+        debugPrint('Post user verified: $postUserVerified');
 
         // Fetch post likes
         final postLikes = json['post_likes'] as List? ?? [];
-        final isLikedByCurrentUser = postLikes.any(
-          (like) => like['user_email'] == currentUserEmail
-        );
+        final isLikedByCurrentUser =
+            postLikes.any((like) => like['user_email'] == currentUserEmail);
 
         // Add current user's email to the JSON for PostModel parsing
         json['current_user_email'] = currentUserEmail;
@@ -159,24 +184,24 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
               .eq('user_email', userEmail);
         } else {
           // Like: add a new like
-          await _supabase
-              .from('post_likes')
-              .insert({
-                'post_id': postId,
-                'user_email': userEmail,
-              });
+          await _supabase.from('post_likes').insert({
+            'post_id': postId,
+            'user_email': userEmail,
+          });
         }
       } on PostgrestException catch (postgrestError) {
-        debugPrint('Supabase Error during like toggle: ${postgrestError.message}');
-        throw Exception('Failed to update like status: ${postgrestError.message}');
+        debugPrint(
+            'Supabase Error during like toggle: ${postgrestError.message}');
+        throw Exception(
+            'Failed to update like status: ${postgrestError.message}');
       }
 
       // Update the post locally with optimistic update
       currentPosts[postIndex] = currentPost.copyWith(
         isLikedByCurrentUser: !isCurrentlyLiked,
-        likesCount: isCurrentlyLiked 
-          ? currentPost.likesCount - 1 
-          : currentPost.likesCount + 1,
+        likesCount: isCurrentlyLiked
+            ? currentPost.likesCount - 1
+            : currentPost.likesCount + 1,
       );
 
       // Update the state with the modified posts
@@ -190,86 +215,82 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
 
 // Provider for user profile posts
 final userProfilePostsProvider = StateNotifierProvider.family<
-  UserProfilePostsNotifier, 
-  UserProfilePostsState, 
-  String
->((ref, userEmail) {
+    UserProfilePostsNotifier, UserProfilePostsState, String>((ref, userEmail) {
   return UserProfilePostsNotifier(ref, userEmail);
 });
 
 // Update the existing userProfileProvider to use the new posts provider
-final userProfileProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, userEmail) async {
+// Update the userProfileProvider to properly handle the verification status
+final userProfileProvider = FutureProvider.autoDispose
+    .family<Map<String, dynamic>, String>((ref, userEmail) async {
   final supabase = Supabase.instance.client;
-  
-  // Get the current authenticated user's email
-  final authState = ref.read(authProvider);
-  final currentUserEmail = authState.user?.email;
 
-  // Fetch user details
-  final userResponse = await supabase
-      .from('user')
-      .select('*')
-      .eq('email', userEmail)
-      .single();
+  try {
+    // Fetch user details with explicit is_verified field
+    final userResponse = await supabase
+        .from('user')
+        .select('*, is_verified')
+        .eq('email', userEmail)
+        .single();
 
-  // Fetch user posts with full user details and likes
-  final postsResponse = await supabase
-      .from('user_post')
-      .select('''
-        *,
-        user:user_email(name, family_name, profile_image_url),
-        post_likes(*)
-      ''')
-      .eq('user_email', userEmail)
-      .order('created_at', ascending: false);
+    // Debug print to check the raw data
+    debugPrint('User data from DB: $userResponse');
 
-  // Convert posts to PostModel with accurate like status
-  final posts = (postsResponse as List).map<PostModel>((json) {
-    // Safely extract user data
-    final userData = (json['user'] is List && json['user'].isNotEmpty) 
-      ? json['user'][0] 
-      : {};
+    // Check if is_verified exists in the response
+    bool isVerified = false;
+    if (userResponse.containsKey('is_verified')) {
+      isVerified = userResponse['is_verified'] == true;
+      debugPrint('Is verified from DB: $isVerified');
+    } else {
+      // If is_verified doesn't exist in the database, check if we need to add it
+      debugPrint('is_verified field not found in user table');
 
-    // Extract name safely
-    final name = userData['name'] ?? userResponse['name'] ?? '';
-    final familyName = userData['family_name'] ?? userResponse['family_name'] ?? '';
-    final fullName = '$name $familyName'.trim();
+      // You might want to add this field to the database if it doesn't exist
+      // For testing purposes, let's set it to true for specific users
+      if (userEmail == 'test@example.com' || userEmail == 'admin@example.com') {
+        isVerified = true;
 
-    // Get profile image URL with fallback
-    final profileImageUrl = userData['profile_image_url'] ?? 
-      userResponse['profile_image_url'] ?? 
-      _generateDefaultProfileImage(fullName);
+        // Optionally update the database with the verified status
+        try {
+          await supabase
+              .from('user')
+              .update({'is_verified': true}).eq('email', userEmail);
+          debugPrint('Updated user verification status to true');
+        } catch (e) {
+          debugPrint('Failed to update verification status: $e');
+        }
+      }
+    }
 
-    // Fetch post likes and determine if liked by current user
-    final postLikes = json['post_likes'] as List? ?? [];
-    final isLikedByCurrentUser = postLikes.any(
-      (like) => like['user_email'] == currentUserEmail
-    );
+    // Fetch user posts using the posts provider
+    final postsState = ref.watch(userProfilePostsProvider(userEmail));
+    final posts = postsState.posts;
 
-    // Add current user's email to the JSON for PostModel parsing
-    json['current_user_email'] = currentUserEmail;
-    json['is_liked_by_current_user'] = isLikedByCurrentUser;
-    json['likes_count'] = postLikes.length;
-
-    return PostModel.fromJson(json);
-  }).toList();
-
-  return {
-    'user_details': UserDetailsModel(
-      name: userResponse['name'],
-      email: userResponse['email'],
-      familyName: userResponse['family_name'],
+    // Create UserDetailsModel with explicit verification status
+    final userDetails = UserDetailsModel(
+      name: userResponse['name'] ?? '',
+      email: userResponse['email'] ?? '',
+      familyName: userResponse['family_name'] ?? '',
       profileImageUrl: userResponse['profile_image_url'],
       description: userResponse['description'],
-      dateOfBirth: userResponse['date_of_birth'] != null 
-        ? DateTime.tryParse(userResponse['date_of_birth']) ?? DateTime.now()
-        : DateTime.now(),
+      dateOfBirth: userResponse['date_of_birth'] != null
+          ? DateTime.tryParse(userResponse['date_of_birth']) ?? DateTime.now()
+          : DateTime.now(),
       cityOfBirth: userResponse['city_of_birth'] ?? '',
       phoneNumber: userResponse['phone_number'] ?? '',
       gender: userResponse['gender'] == 'female' ? Gender.female : Gender.male,
-    ),
-    'user_posts': posts,
-  };
+      isVerified: isVerified, // Use our determined verification status
+    );
+
+    // Return both user details and posts
+    return {
+      'user_details': userDetails,
+      'user_posts': posts,
+    };
+  } catch (e) {
+    debugPrint('Error fetching user profile: $e');
+    rethrow;
+  }
 });
 
 class ProfileWidget extends ConsumerStatefulWidget {
@@ -283,7 +304,8 @@ class ProfileWidget extends ConsumerStatefulWidget {
 
 class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
   late String userEmail;
-  final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshKey =
+      GlobalKey<RefreshIndicatorState>();
 
   @override
   void initState() {
@@ -325,12 +347,10 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
             .eq('user_email', currentUserEmail);
       } else {
         // Like: add a new like
-        await supabase
-            .from('post_likes')
-            .insert({
-              'post_id': postId,
-              'user_email': currentUserEmail,
-            });
+        await supabase.from('post_likes').insert({
+          'post_id': postId,
+          'user_email': currentUserEmail,
+        });
       }
 
       // Force a complete refresh of the user profile
@@ -350,7 +370,7 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
     try {
       // Force a refresh of the user profile provider
       ref.invalidate(userProfileProvider(userEmail));
-      
+
       // Wait for the provider to reload
       await ref.read(userProfileProvider(userEmail).future);
     } catch (e) {
@@ -403,18 +423,31 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
 
   Widget _buildUserDetails(UserDetailsModel user) {
     final dateFormatter = DateFormat('dd MMMM yyyy');
-    
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${user.name} ${user.familyName}',
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Text(
+                '${user.name} ${user.familyName}',
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (user.isVerified)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Icon(
+                    Icons.verified,
+                    size: 24,
+                    color: Colors.blue,
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           if (user.description != null)
@@ -485,23 +518,23 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
           ),
         ),
         posts.isEmpty
-          ? const Center(child: Text('No posts yet'))
-          : ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                return PostListWidget(
-                  key: ValueKey(posts[index].id),
-                  post: posts[index],
-                  isProfileView: true,
-                  onLikeToggle: () {
-                    // Implement like toggle for profile view
-                    _toggleLikeInProfile(posts[index].id!);
-                  },
-                );
-              },
-            ),
+            ? const Center(child: Text('No posts yet'))
+            : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: posts.length,
+                itemBuilder: (context, index) {
+                  return PostListWidget(
+                    key: ValueKey(posts[index].id),
+                    post: posts[index],
+                    isProfileView: true,
+                    onLikeToggle: () {
+                      // Implement like toggle for profile view
+                      _toggleLikeInProfile(posts[index].id!);
+                    },
+                  );
+                },
+              ),
       ],
     );
   }
@@ -516,12 +549,15 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
           slivers: [
             Consumer(
               builder: (context, ref, child) {
-                final userProfileAsync = ref.watch(userProfileProvider(userEmail));
+                final userProfileAsync =
+                    ref.watch(userProfileProvider(userEmail));
 
                 return userProfileAsync.when(
                   data: (profileData) {
-                    final userDetails = profileData['user_details'] as UserDetailsModel;
-                    final userPosts = profileData['user_posts'] as List<PostModel>;
+                    final userDetails =
+                        profileData['user_details'] as UserDetailsModel;
+                    final userPosts =
+                        profileData['user_posts'] as List<PostModel>;
 
                     return SliverList(
                       delegate: SliverChildListDelegate([

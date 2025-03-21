@@ -23,18 +23,33 @@ class BusinessProfileService {
     }
   }
 
-  Future<BusinessModel> getBusinessDetails(int businessId) async {
+  Future<BusinessModel?> getBusinessDetails(int businessId) async {
     try {
       final response = await _supabase
           .from('business')
-          .select()
+          .select('*')  // Make sure to select all fields including is_verified
           .eq('id', businessId)
           .single();
       
-      return BusinessModel.fromJson(response);
+      // Add debug print to check if is_verified is in the response
+      debugPrint('Business details response: $response');
+      
+      return BusinessModel(
+        id: response['id'],
+        businessName: response['business_name'],
+        email: response['email'] ?? '',
+        imageUrl: response['image_url'],
+        latitude: response['latitude'] ?? 0.0,
+        longitude: response['longitude'] ?? 0.0,
+        userEmail: response['user_email'],
+        createdAt: response['created_at'] != null
+            ? DateTime.parse(response['created_at'])
+            : null,
+        isVerified: response['is_verified'] == true,  // Explicitly check for true
+      );
     } catch (e) {
       debugPrint('Error fetching business details: $e');
-      rethrow;
+      return null;
     }
   }
 

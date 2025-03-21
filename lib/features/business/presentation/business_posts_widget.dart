@@ -22,10 +22,19 @@ final businessPostInteractionProvider =
 });
 
 // Provider for home business posts
+// Update the homeBusinessPostsProvider to include debugging
 final homeBusinessPostsProvider =
     FutureProvider<List<BusinessPostModel>>((ref) async {
   final businessPostService = ref.read(businessPostServiceProvider);
-  return businessPostService.fetchAllBusinessPosts();
+  final posts = await businessPostService.fetchAllBusinessPosts();
+
+  // Debug print to check verification status of all posts
+  for (var post in posts) {
+    debugPrint(
+        'Fetched business post: ${post.businessName}, isVerified: ${post.isVerified}');
+  }
+
+  return posts;
 });
 
 class BusinessPostInteractionNotifier extends StateNotifier<bool> {
@@ -102,7 +111,7 @@ class BusinessPostsWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Get the current theme mode
     final isDarkMode = ref.watch(themeProvider);
-    
+
     // Fetch all business posts using the provider
     final businessPostsAsync = ref.watch(homeBusinessPostsProvider);
 
@@ -126,11 +135,15 @@ class BusinessPostsWidget extends ConsumerWidget {
             );
           }
 
+          // Inside the ListView.builder in the build method
           return ListView.builder(
             physics: const BouncingScrollPhysics(),
             itemCount: posts.length,
             itemBuilder: (context, index) {
               final post = posts[index];
+              // Add direct debug print here
+              debugPrint(
+                  'Building post card for ${post.businessName}, isVerified: ${post.isVerified}, type: ${post.isVerified.runtimeType}');
               return _buildBusinessPostCard(context, ref, post, isDarkMode);
             },
           );
@@ -148,28 +161,35 @@ class BusinessPostsWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildBusinessPostCard(BuildContext context, WidgetRef ref, BusinessPostModel post, bool isDarkMode) {
+  // Inside the _buildBusinessPostCard method, add debug prints
+  Widget _buildBusinessPostCard(BuildContext context, WidgetRef ref,
+      BusinessPostModel post, bool isDarkMode) {
     final authState = ref.read(authProvider);
     final currentUserEmail = authState.user?.email;
     final isCurrentUser = post.userEmail == currentUserEmail;
 
+    // Add debug print to check verification status
+    debugPrint(
+        'Business: ${post.businessName}, isVerified: ${post.isVerified}');
+
     // Provider for individual post interaction
-    final postInteractionProvider = businessPostInteractionProvider(post.id ?? 0);
+    final postInteractionProvider =
+        businessPostInteractionProvider(post.id ?? 0);
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: !isDarkMode 
-        ? BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                spreadRadius: 1,
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          )
-        : null,
+      decoration: !isDarkMode
+          ? BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            )
+          : null,
       child: Material(
         borderRadius: BorderRadius.circular(16),
         color: isDarkMode ? Colors.grey[850] : Colors.white,
@@ -184,12 +204,14 @@ class BusinessPostsWidget extends ConsumerWidget {
                   radius: 20,
                   backgroundColor: Colors.grey[200],
                   backgroundImage: post.businessProfileImage != null
-                          ? NetworkImage(post.businessProfileImage!)
-                          : null,
+                      ? NetworkImage(post.businessProfileImage!)
+                      : null,
                   child: post.businessProfileImage == null
                       ? const Icon(Icons.business, size: 30)
                       : null,
                 ),
+                // Inside the _buildBusinessPostCard method, update the title section
+
                 title: GestureDetector(
                   onTap: () {
                     if (authState.user?.email == post.userEmail) {
@@ -212,18 +234,35 @@ class BusinessPostsWidget extends ConsumerWidget {
                       );
                     }
                   },
-                  child: Text(
-                    post.businessName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isDarkMode ? Colors.white : Colors.black,
-                    ),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          post.businessName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      // Direct approach for verification icon
+                      if (post.isVerified)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4.0),
+                          child: Icon(
+                            Icons.verified,
+                            size: 18,
+                            color: Colors.blue,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 subtitle: Text(
-                  post.createdAt != null 
-                    ? DateFormat('dd MMM yyyy').format(post.createdAt!) 
-                    : 'Unknown Date',
+                  post.createdAt != null
+                      ? DateFormat('dd MMM yyyy').format(post.createdAt!)
+                      : 'Unknown Date',
                   style: TextStyle(
                     color: isDarkMode ? Colors.white70 : Colors.grey[600],
                   ),
@@ -239,7 +278,8 @@ class BusinessPostsWidget extends ConsumerWidget {
                             case 'update':
                               final result = await Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) => CreateBusinessPostScreen(
+                                  builder: (context) =>
+                                      CreateBusinessPostScreen(
                                     businessId: post.businessId ?? 0,
                                     existingPost: post,
                                   ),
@@ -250,7 +290,8 @@ class BusinessPostsWidget extends ConsumerWidget {
                                 ref.invalidate(homeBusinessPostsProvider);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Business post updated successfully!'),
+                                    content: Text(
+                                        'Business post updated successfully!'),
                                   ),
                                 );
                               }
@@ -265,11 +306,13 @@ class BusinessPostsWidget extends ConsumerWidget {
                                   ),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(false),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
                                       child: const Text('Cancel'),
                                     ),
                                     TextButton(
-                                      onPressed: () => Navigator.of(context).pop(true),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
                                       child: const Text(
                                         'Delete',
                                         style: TextStyle(color: Colors.red),
@@ -281,7 +324,8 @@ class BusinessPostsWidget extends ConsumerWidget {
 
                               if (confirmDelete == true && post.id != null) {
                                 try {
-                                  await ref.read(businessPostServiceProvider)
+                                  await ref
+                                      .read(businessPostServiceProvider)
                                       .deleteBusinessPost(
                                         postId: post.id!,
                                         userEmail: authState.user!.email!,
@@ -291,13 +335,15 @@ class BusinessPostsWidget extends ConsumerWidget {
 
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Business post deleted successfully!'),
+                                      content: Text(
+                                          'Business post deleted successfully!'),
                                     ),
                                   );
                                 } catch (e) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Failed to delete post: $e'),
+                                      content:
+                                          Text('Failed to delete post: $e'),
                                     ),
                                   );
                                 }
@@ -312,13 +358,16 @@ class BusinessPostsWidget extends ConsumerWidget {
                               children: [
                                 Icon(
                                   Icons.edit,
-                                  color: isDarkMode ? Colors.white : Colors.black,
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Update',
                                   style: TextStyle(
-                                    color: isDarkMode ? Colors.white : Colors.black,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : Colors.black,
                                   ),
                                 ),
                               ],
@@ -330,7 +379,8 @@ class BusinessPostsWidget extends ConsumerWidget {
                               children: const [
                                 Icon(Icons.delete, color: Colors.red),
                                 SizedBox(width: 8),
-                                Text('Delete', style: TextStyle(color: Colors.red)),
+                                Text('Delete',
+                                    style: TextStyle(color: Colors.red)),
                               ],
                             ),
                           ),
@@ -338,7 +388,7 @@ class BusinessPostsWidget extends ConsumerWidget {
                       )
                     : null,
               ),
-              
+
               // Post Content
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -354,14 +404,16 @@ class BusinessPostsWidget extends ConsumerWidget {
                         color: isDarkMode ? Colors.white : Colors.black,
                       ),
                     ),
-                    if (post.description != null && post.description!.isNotEmpty)
+                    if (post.description != null &&
+                        post.description!.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
                           post.description!,
                           style: TextStyle(
                             fontSize: 14,
-                            color: isDarkMode ? Colors.grey[300] : Colors.black87,
+                            color:
+                                isDarkMode ? Colors.grey[300] : Colors.black87,
                           ),
                         ),
                       ),
@@ -386,7 +438,8 @@ class BusinessPostsWidget extends ConsumerWidget {
                         height: 200,
                         color: Colors.grey[300],
                         child: const Center(
-                          child: Icon(Icons.broken_image, size: 50, color: Colors.red),
+                          child: Icon(Icons.broken_image,
+                              size: 50, color: Colors.red),
                         ),
                       );
                     },
@@ -399,7 +452,8 @@ class BusinessPostsWidget extends ConsumerWidget {
               // Interests
               if (post.interests.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 4,
@@ -412,7 +466,8 @@ class BusinessPostsWidget extends ConsumerWidget {
                             color: isDarkMode ? Colors.white : Colors.black,
                           ),
                         ),
-                        backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                        backgroundColor:
+                            isDarkMode ? Colors.grey[700] : Colors.grey[200],
                       );
                     }).toList(),
                   ),
@@ -420,35 +475,44 @@ class BusinessPostsWidget extends ConsumerWidget {
 
               // Comments and Likes Section
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // Like Button
                     Consumer(
                       builder: (context, ref, child) {
-                        final isLiked = ref.watch(postInteractionProvider) || 
-                                        post.isLikedByCurrentUser;
-                        
+                        final isLiked = ref.watch(postInteractionProvider) ||
+                            post.isLikedByCurrentUser;
+
                         return Row(
                           children: [
                             IconButton(
                               icon: Icon(
-                                isLiked ? Icons.favorite : Icons.favorite_border,
-                                color: isLiked 
-                                  ? Colors.red 
-                                  : (isDarkMode ? Colors.white : Colors.black),
+                                isLiked
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: isLiked
+                                    ? Colors.red
+                                    : (isDarkMode
+                                        ? Colors.white
+                                        : Colors.black),
                               ),
                               onPressed: () {
                                 if (post.id != null) {
-                                  ref.read(postInteractionProvider.notifier).toggleLike();
+                                  ref
+                                      .read(postInteractionProvider.notifier)
+                                      .toggleLike();
                                 }
                               },
                             ),
                             Text(
                               '${post.likesCount ?? 0}',
                               style: TextStyle(
-                                color: isDarkMode ? Colors.white70 : Colors.black87,
+                                color: isDarkMode
+                                    ? Colors.white70
+                                    : Colors.black87,
                               ),
                             ),
                           ],

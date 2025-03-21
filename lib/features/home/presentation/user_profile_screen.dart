@@ -69,12 +69,31 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '${userDetails.name} ${userDetails.familyName}',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '${userDetails.name} ${userDetails.familyName}',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Debug print to check if isVerified exists and its value
+                          Builder(builder: (context) {
+                            debugPrint('Is verified: ${userDetails.isVerified}');
+                            return userDetails.isVerified == true
+                                ? Icon(
+                                    Icons.verified,
+                                    size: 24,
+                                    color: Colors.blue,
+                                  )
+                                : SizedBox.shrink();
+                          }),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       if (userDetails.description != null)

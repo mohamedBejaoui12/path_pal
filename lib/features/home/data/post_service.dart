@@ -94,6 +94,47 @@ class PostService {
   Future<List<InterestModel>> fetchInterests() async {
     return await InterestService().fetchAllInterests();
   }
+
+  Future<List<PostModel>> fetchPosts() async {
+    try {
+      final currentUser = _supabase.auth.currentUser;
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
+  
+      // Update the query to include is_verified field
+      final response = await _supabase.from('user_post').select('''
+            *,
+            user:user_email(name, family_name, profile_image_url, is_verified),
+            post_likes:likes(user_email),
+            comments_count:comments(count)
+          ''').order('created_at', ascending: false);
+  
+      // Add verification status and current user email to each post
+      return response.map<PostModel>((post) {
+        final userEmail = post['user_email'].toString();
+        post['current_user_email'] = currentUser.email;
+        
+        // Extract user data
+        dynamic userData;
+        if (post['user'] is List && post['user'].isNotEmpty) {
+          userData = post['user'][0];
+        } else if (post['user'] is Map) {
+          userData = post['user'];
+        } else {
+          userData = {};
+        }
+        
+        // Set verification status
+        post['is_user_verified'] = userData['is_verified'] == true;
+        
+        return PostModel.fromJson(post);
+      }).toList();
+    } catch (e) {
+      print('Error fetching posts: $e');
+      throw Exception('Failed to fetch posts: $e');
+    }
+  }
 }
 
 // Add the provider

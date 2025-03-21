@@ -21,15 +21,15 @@ UserDetailsModel _$UserDetailsModelFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$UserDetailsModel {
   String get name => throw _privateConstructorUsedError;
-  String get familyName => throw _privateConstructorUsedError;
-  DateTime get dateOfBirth => throw _privateConstructorUsedError;
-  String get phoneNumber => throw _privateConstructorUsedError;
-  String get cityOfBirth => throw _privateConstructorUsedError;
-  Gender get gender => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
-  String? get profileImageUrl =>
-      throw _privateConstructorUsedError; // Keep this as is
+  String get familyName => throw _privateConstructorUsedError;
+  String? get profileImageUrl => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
+  DateTime get dateOfBirth => throw _privateConstructorUsedError;
+  String get cityOfBirth => throw _privateConstructorUsedError;
+  String get phoneNumber => throw _privateConstructorUsedError;
+  Gender get gender => throw _privateConstructorUsedError;
+  bool get isVerified => throw _privateConstructorUsedError;
 
   /// Serializes this UserDetailsModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -49,14 +49,15 @@ abstract class $UserDetailsModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String name,
-      String familyName,
-      DateTime dateOfBirth,
-      String phoneNumber,
-      String cityOfBirth,
-      Gender gender,
       String email,
+      String familyName,
       String? profileImageUrl,
-      String? description});
+      String? description,
+      DateTime dateOfBirth,
+      String cityOfBirth,
+      String phoneNumber,
+      Gender gender,
+      bool isVerified});
 }
 
 /// @nodoc
@@ -75,43 +76,28 @@ class _$UserDetailsModelCopyWithImpl<$Res, $Val extends UserDetailsModel>
   @override
   $Res call({
     Object? name = null,
-    Object? familyName = null,
-    Object? dateOfBirth = null,
-    Object? phoneNumber = null,
-    Object? cityOfBirth = null,
-    Object? gender = null,
     Object? email = null,
+    Object? familyName = null,
     Object? profileImageUrl = freezed,
     Object? description = freezed,
+    Object? dateOfBirth = null,
+    Object? cityOfBirth = null,
+    Object? phoneNumber = null,
+    Object? gender = null,
+    Object? isVerified = null,
   }) {
     return _then(_value.copyWith(
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      familyName: null == familyName
-          ? _value.familyName
-          : familyName // ignore: cast_nullable_to_non_nullable
-              as String,
-      dateOfBirth: null == dateOfBirth
-          ? _value.dateOfBirth
-          : dateOfBirth // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      phoneNumber: null == phoneNumber
-          ? _value.phoneNumber
-          : phoneNumber // ignore: cast_nullable_to_non_nullable
-              as String,
-      cityOfBirth: null == cityOfBirth
-          ? _value.cityOfBirth
-          : cityOfBirth // ignore: cast_nullable_to_non_nullable
-              as String,
-      gender: null == gender
-          ? _value.gender
-          : gender // ignore: cast_nullable_to_non_nullable
-              as Gender,
       email: null == email
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
+              as String,
+      familyName: null == familyName
+          ? _value.familyName
+          : familyName // ignore: cast_nullable_to_non_nullable
               as String,
       profileImageUrl: freezed == profileImageUrl
           ? _value.profileImageUrl
@@ -121,6 +107,26 @@ class _$UserDetailsModelCopyWithImpl<$Res, $Val extends UserDetailsModel>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
+      dateOfBirth: null == dateOfBirth
+          ? _value.dateOfBirth
+          : dateOfBirth // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      cityOfBirth: null == cityOfBirth
+          ? _value.cityOfBirth
+          : cityOfBirth // ignore: cast_nullable_to_non_nullable
+              as String,
+      phoneNumber: null == phoneNumber
+          ? _value.phoneNumber
+          : phoneNumber // ignore: cast_nullable_to_non_nullable
+              as String,
+      gender: null == gender
+          ? _value.gender
+          : gender // ignore: cast_nullable_to_non_nullable
+              as Gender,
+      isVerified: null == isVerified
+          ? _value.isVerified
+          : isVerified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -135,14 +141,15 @@ abstract class _$$UserDetailsModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String name,
-      String familyName,
-      DateTime dateOfBirth,
-      String phoneNumber,
-      String cityOfBirth,
-      Gender gender,
       String email,
+      String familyName,
       String? profileImageUrl,
-      String? description});
+      String? description,
+      DateTime dateOfBirth,
+      String cityOfBirth,
+      String phoneNumber,
+      Gender gender,
+      bool isVerified});
 }
 
 /// @nodoc
@@ -159,43 +166,28 @@ class __$$UserDetailsModelImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? name = null,
-    Object? familyName = null,
-    Object? dateOfBirth = null,
-    Object? phoneNumber = null,
-    Object? cityOfBirth = null,
-    Object? gender = null,
     Object? email = null,
+    Object? familyName = null,
     Object? profileImageUrl = freezed,
     Object? description = freezed,
+    Object? dateOfBirth = null,
+    Object? cityOfBirth = null,
+    Object? phoneNumber = null,
+    Object? gender = null,
+    Object? isVerified = null,
   }) {
     return _then(_$UserDetailsModelImpl(
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      familyName: null == familyName
-          ? _value.familyName
-          : familyName // ignore: cast_nullable_to_non_nullable
-              as String,
-      dateOfBirth: null == dateOfBirth
-          ? _value.dateOfBirth
-          : dateOfBirth // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      phoneNumber: null == phoneNumber
-          ? _value.phoneNumber
-          : phoneNumber // ignore: cast_nullable_to_non_nullable
-              as String,
-      cityOfBirth: null == cityOfBirth
-          ? _value.cityOfBirth
-          : cityOfBirth // ignore: cast_nullable_to_non_nullable
-              as String,
-      gender: null == gender
-          ? _value.gender
-          : gender // ignore: cast_nullable_to_non_nullable
-              as Gender,
       email: null == email
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
+              as String,
+      familyName: null == familyName
+          ? _value.familyName
+          : familyName // ignore: cast_nullable_to_non_nullable
               as String,
       profileImageUrl: freezed == profileImageUrl
           ? _value.profileImageUrl
@@ -205,6 +197,26 @@ class __$$UserDetailsModelImplCopyWithImpl<$Res>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
+      dateOfBirth: null == dateOfBirth
+          ? _value.dateOfBirth
+          : dateOfBirth // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      cityOfBirth: null == cityOfBirth
+          ? _value.cityOfBirth
+          : cityOfBirth // ignore: cast_nullable_to_non_nullable
+              as String,
+      phoneNumber: null == phoneNumber
+          ? _value.phoneNumber
+          : phoneNumber // ignore: cast_nullable_to_non_nullable
+              as String,
+      gender: null == gender
+          ? _value.gender
+          : gender // ignore: cast_nullable_to_non_nullable
+              as Gender,
+      isVerified: null == isVerified
+          ? _value.isVerified
+          : isVerified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -214,14 +226,15 @@ class __$$UserDetailsModelImplCopyWithImpl<$Res>
 class _$UserDetailsModelImpl implements _UserDetailsModel {
   const _$UserDetailsModelImpl(
       {required this.name,
-      required this.familyName,
-      required this.dateOfBirth,
-      required this.phoneNumber,
-      required this.cityOfBirth,
-      required this.gender,
       required this.email,
+      required this.familyName,
       this.profileImageUrl,
-      this.description});
+      this.description,
+      required this.dateOfBirth,
+      required this.cityOfBirth,
+      required this.phoneNumber,
+      required this.gender,
+      this.isVerified = false});
 
   factory _$UserDetailsModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserDetailsModelImplFromJson(json);
@@ -229,26 +242,28 @@ class _$UserDetailsModelImpl implements _UserDetailsModel {
   @override
   final String name;
   @override
+  final String email;
+  @override
   final String familyName;
+  @override
+  final String? profileImageUrl;
+  @override
+  final String? description;
   @override
   final DateTime dateOfBirth;
   @override
-  final String phoneNumber;
-  @override
   final String cityOfBirth;
+  @override
+  final String phoneNumber;
   @override
   final Gender gender;
   @override
-  final String email;
-  @override
-  final String? profileImageUrl;
-// Keep this as is
-  @override
-  final String? description;
+  @JsonKey()
+  final bool isVerified;
 
   @override
   String toString() {
-    return 'UserDetailsModel(name: $name, familyName: $familyName, dateOfBirth: $dateOfBirth, phoneNumber: $phoneNumber, cityOfBirth: $cityOfBirth, gender: $gender, email: $email, profileImageUrl: $profileImageUrl, description: $description)';
+    return 'UserDetailsModel(name: $name, email: $email, familyName: $familyName, profileImageUrl: $profileImageUrl, description: $description, dateOfBirth: $dateOfBirth, cityOfBirth: $cityOfBirth, phoneNumber: $phoneNumber, gender: $gender, isVerified: $isVerified)';
   }
 
   @override
@@ -257,26 +272,38 @@ class _$UserDetailsModelImpl implements _UserDetailsModel {
         (other.runtimeType == runtimeType &&
             other is _$UserDetailsModelImpl &&
             (identical(other.name, name) || other.name == name) &&
+            (identical(other.email, email) || other.email == email) &&
             (identical(other.familyName, familyName) ||
                 other.familyName == familyName) &&
-            (identical(other.dateOfBirth, dateOfBirth) ||
-                other.dateOfBirth == dateOfBirth) &&
-            (identical(other.phoneNumber, phoneNumber) ||
-                other.phoneNumber == phoneNumber) &&
-            (identical(other.cityOfBirth, cityOfBirth) ||
-                other.cityOfBirth == cityOfBirth) &&
-            (identical(other.gender, gender) || other.gender == gender) &&
-            (identical(other.email, email) || other.email == email) &&
             (identical(other.profileImageUrl, profileImageUrl) ||
                 other.profileImageUrl == profileImageUrl) &&
             (identical(other.description, description) ||
-                other.description == description));
+                other.description == description) &&
+            (identical(other.dateOfBirth, dateOfBirth) ||
+                other.dateOfBirth == dateOfBirth) &&
+            (identical(other.cityOfBirth, cityOfBirth) ||
+                other.cityOfBirth == cityOfBirth) &&
+            (identical(other.phoneNumber, phoneNumber) ||
+                other.phoneNumber == phoneNumber) &&
+            (identical(other.gender, gender) || other.gender == gender) &&
+            (identical(other.isVerified, isVerified) ||
+                other.isVerified == isVerified));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, name, familyName, dateOfBirth,
-      phoneNumber, cityOfBirth, gender, email, profileImageUrl, description);
+  int get hashCode => Object.hash(
+      runtimeType,
+      name,
+      email,
+      familyName,
+      profileImageUrl,
+      description,
+      dateOfBirth,
+      cityOfBirth,
+      phoneNumber,
+      gender,
+      isVerified);
 
   /// Create a copy of UserDetailsModel
   /// with the given fields replaced by the non-null parameter values.
@@ -298,14 +325,15 @@ class _$UserDetailsModelImpl implements _UserDetailsModel {
 abstract class _UserDetailsModel implements UserDetailsModel {
   const factory _UserDetailsModel(
       {required final String name,
-      required final String familyName,
-      required final DateTime dateOfBirth,
-      required final String phoneNumber,
-      required final String cityOfBirth,
-      required final Gender gender,
       required final String email,
+      required final String familyName,
       final String? profileImageUrl,
-      final String? description}) = _$UserDetailsModelImpl;
+      final String? description,
+      required final DateTime dateOfBirth,
+      required final String cityOfBirth,
+      required final String phoneNumber,
+      required final Gender gender,
+      final bool isVerified}) = _$UserDetailsModelImpl;
 
   factory _UserDetailsModel.fromJson(Map<String, dynamic> json) =
       _$UserDetailsModelImpl.fromJson;
@@ -313,21 +341,23 @@ abstract class _UserDetailsModel implements UserDetailsModel {
   @override
   String get name;
   @override
+  String get email;
+  @override
   String get familyName;
+  @override
+  String? get profileImageUrl;
+  @override
+  String? get description;
   @override
   DateTime get dateOfBirth;
   @override
-  String get phoneNumber;
-  @override
   String get cityOfBirth;
+  @override
+  String get phoneNumber;
   @override
   Gender get gender;
   @override
-  String get email;
-  @override
-  String? get profileImageUrl; // Keep this as is
-  @override
-  String? get description;
+  bool get isVerified;
 
   /// Create a copy of UserDetailsModel
   /// with the given fields replaced by the non-null parameter values.

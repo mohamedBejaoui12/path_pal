@@ -214,7 +214,8 @@ class BusinessPostsWidget extends ConsumerWidget {
                   child: CircleAvatar(
                     radius: 24,
                     backgroundColor: Colors.grey[300],
-                    child: post.businessProfileImage != null && post.businessProfileImage!.isNotEmpty
+                    child: post.businessProfileImage != null &&
+                            post.businessProfileImage!.isNotEmpty
                         ? Container(
                             width: 48,
                             height: 48,
@@ -224,12 +225,15 @@ class BusinessPostsWidget extends ConsumerWidget {
                                 image: NetworkImage(post.businessProfileImage!),
                                 fit: BoxFit.cover,
                                 onError: (exception, stackTrace) {
-                                  debugPrint('Error loading business image: $exception');
+                                  debugPrint(
+                                      'Error loading business image: $exception');
                                 },
                               ),
                             ),
                           )
-                        : Icon(Icons.business, color: isDarkMode ? Colors.white70 : Colors.grey[700]),
+                        : Icon(Icons.business,
+                            color:
+                                isDarkMode ? Colors.white70 : Colors.grey[700]),
                   ),
                 ),
                 title: GestureDetector(
@@ -254,12 +258,28 @@ class BusinessPostsWidget extends ConsumerWidget {
                       );
                     }
                   },
-                  child: Text(
-                    post.businessName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isDarkMode ? Colors.white : Colors.black,
-                    ),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          post.businessName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (post.isVerified)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4.0),
+                          child: Icon(
+                            Icons.verified,
+                            size: 18,
+                            color: Colors.blue,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 subtitle: Text(

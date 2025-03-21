@@ -19,8 +19,8 @@ class PostListWidget extends ConsumerStatefulWidget {
   final VoidCallback? onLikeToggle;
 
   const PostListWidget({
-    Key? key, 
-    this.post, 
+    Key? key,
+    this.post,
     this.isProfileView = false,
     this.onLikeToggle,
   }) : super(key: key);
@@ -67,11 +67,11 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
             children: [
               ListTile(
                 leading: Icon(
-                  Icons.edit, 
+                  Icons.edit,
                   color: isDarkMode ? Colors.white : Colors.black,
                 ),
                 title: Text(
-                  'Edit Post', 
+                  'Edit Post',
                   style: TextStyle(
                     color: isDarkMode ? Colors.white : Colors.black,
                   ),
@@ -83,11 +83,11 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
               ),
               ListTile(
                 leading: Icon(
-                  Icons.delete, 
+                  Icons.delete,
                   color: Colors.red,
                 ),
                 title: const Text(
-                  'Delete Post', 
+                  'Delete Post',
                   style: TextStyle(color: Colors.red),
                 ),
                 onTap: () {
@@ -112,12 +112,12 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
         title: Row(
           children: [
             Icon(
-              Icons.warning_rounded, 
+              Icons.warning_rounded,
               color: Colors.orange[700],
             ),
             const SizedBox(width: 10),
             const Text(
-              'Confirm Deletion', 
+              'Confirm Deletion',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
               ),
@@ -155,16 +155,14 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              
+
               // Check if this is from a profile view
               if (widget.isProfileView) {
-                ref.read(postListProvider.notifier).deletePost(
-                  post.id!, 
-                  onPostDeleted: () {
-                    // Trigger a refresh of the profile view
-                    ref.invalidate(userProfileProvider);
-                  }
-                );
+                ref.read(postListProvider.notifier).deletePost(post.id!,
+                    onPostDeleted: () {
+                  // Trigger a refresh of the profile view
+                  ref.invalidate(userProfileProvider);
+                });
               } else {
                 ref.read(postListProvider.notifier).deletePost(post.id!);
               }
@@ -186,8 +184,9 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
   void _showEditPostDialog(PostModel post) {
     final titleController = TextEditingController(text: post.title);
     final descriptionController = TextEditingController(text: post.description);
-    final interestsController = TextEditingController(text: post.interests.join(', '));
-    
+    final interestsController =
+        TextEditingController(text: post.interests.join(', '));
+
     // Image picker variables
     XFile? pickedImage;
     String? existingImageUrl = post.imageUrl;
@@ -202,12 +201,12 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
           title: Row(
             children: [
               Icon(
-                Icons.edit_rounded, 
+                Icons.edit_rounded,
                 color: Colors.blue[700],
               ),
               const SizedBox(width: 10),
               const Text(
-                'Edit Post', 
+                'Edit Post',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                 ),
@@ -244,15 +243,15 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                   children: [
                     Expanded(
                       child: Text(
-                        pickedImage != null 
-                          ? 'Image Selected: ${pickedImage!.name}' 
-                          : existingImageUrl != null 
-                            ? 'Current Image Exists' 
-                            : 'No Image Selected',
+                        pickedImage != null
+                            ? 'Image Selected: ${pickedImage!.name}'
+                            : existingImageUrl != null
+                                ? 'Current Image Exists'
+                                : 'No Image Selected',
                         style: TextStyle(
-                          color: pickedImage != null || existingImageUrl != null 
-                            ? Colors.green 
-                            : Colors.grey,
+                          color: pickedImage != null || existingImageUrl != null
+                              ? Colors.green
+                              : Colors.grey,
                         ),
                       ),
                     ),
@@ -266,7 +265,7 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                           maxHeight: 1000,
                           imageQuality: 80,
                         );
-                        
+
                         setState(() {
                           if (image != null) {
                             pickedImage = image;
@@ -301,42 +300,41 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                
+
                 // Check if this is from a profile view
                 if (widget.isProfileView) {
                   ref.read(postListProvider.notifier).updatePost(
-                    postId: post.id!,
-                    title: titleController.text,
-                    description: descriptionController.text,
-                    imageUrl: pickedImage != null 
-                      ? pickedImage!.path 
-                      : existingImageUrl,
-                    interests: interestsController.text.isNotEmpty
-                      ? interestsController.text
-                          .split(',')
-                          .map((e) => e.trim())
-                          .toList()
-                      : null,
-                    onPostUpdated: () {
-                      // Trigger a refresh of the profile view
-                      ref.invalidate(userProfileProvider);
-                    }
-                  );
+                      postId: post.id!,
+                      title: titleController.text,
+                      description: descriptionController.text,
+                      imageUrl: pickedImage != null
+                          ? pickedImage!.path
+                          : existingImageUrl,
+                      interests: interestsController.text.isNotEmpty
+                          ? interestsController.text
+                              .split(',')
+                              .map((e) => e.trim())
+                              .toList()
+                          : null,
+                      onPostUpdated: () {
+                        // Trigger a refresh of the profile view
+                        ref.invalidate(userProfileProvider);
+                      });
                 } else {
                   ref.read(postListProvider.notifier).updatePost(
-                    postId: post.id!,
-                    title: titleController.text,
-                    description: descriptionController.text,
-                    imageUrl: pickedImage != null 
-                      ? pickedImage!.path 
-                      : existingImageUrl,
-                    interests: interestsController.text.isNotEmpty
-                      ? interestsController.text
-                          .split(',')
-                          .map((e) => e.trim())
-                          .toList()
-                      : null,
-                  );
+                        postId: post.id!,
+                        title: titleController.text,
+                        description: descriptionController.text,
+                        imageUrl: pickedImage != null
+                            ? pickedImage!.path
+                            : existingImageUrl,
+                        interests: interestsController.text.isNotEmpty
+                            ? interestsController.text
+                                .split(',')
+                                .map((e) => e.trim())
+                                .toList()
+                            : null,
+                      );
                 }
               },
               child: const Text('Save'),
@@ -354,11 +352,11 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
     if (userEmail != currentUserEmail) {
       // Only navigate for other users
       Navigator.push(
-        context, 
+        context,
         MaterialPageRoute(
           builder: (context) => UserProfileScreen(
-            userEmail: userEmail, 
-            isOtherUserProfile: true, 
+            userEmail: userEmail,
+            isOtherUserProfile: true,
           ),
         ),
       );
@@ -368,7 +366,7 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeProvider);
-    
+
     // If in profile view, use the passed post
     if (widget.isProfileView && widget.post != null) {
       return _buildPostCard(widget.post!, isDarkMode);
@@ -409,18 +407,18 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: !isDarkMode 
-        ? BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                spreadRadius: 1,
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          )
-        : null,
+      decoration: !isDarkMode
+          ? BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  spreadRadius: 1,
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            )
+          : null,
       child: Material(
         borderRadius: BorderRadius.circular(16),
         color: isDarkMode ? Colors.grey[850] : Colors.white,
@@ -439,35 +437,63 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                       ? const Icon(Icons.person)
                       : null,
                 ),
-                title: isCurrentUser 
-                  ? Text(
-                      post.userName,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
-                    )
-                  : GestureDetector(
-                      onTap: () => _navigateToUserProfile(post.userEmail),
-                      child: Text(
-                        post.userName,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.black,
+                // In the _buildPostCard method, update the ListTile title section
+                title: isCurrentUser
+                    ? Row(
+                        children: [
+                          Text(
+                            post.userName,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                          ),
+                          if (post.isUserVerified)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4.0),
+                              child: Icon(
+                                Icons.verified,
+                                size: 16,
+                                color: Colors.blue,
+                              ),
+                            ),
+                        ],
+                      )
+                    : GestureDetector(
+                        onTap: () => _navigateToUserProfile(post.userEmail),
+                        child: Row(
+                          children: [
+                            Text(
+                              post.userName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode ? Colors.white : Colors.black,
+                              ),
+                            ),
+                            if (post.isUserVerified)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 4.0),
+                                child: Icon(
+                                  Icons.verified,
+                                  size: 16,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                    ),
                 subtitle: Text(
-                  post.createdAt != null 
-                    ? DateFormat('dd MMM yyyy').format(post.createdAt!) 
-                    : 'Unknown Date',
+                  post.createdAt != null
+                      ? DateFormat('dd MMM yyyy').format(post.createdAt!)
+                      : 'Unknown Date',
                   style: TextStyle(
                     color: isDarkMode ? Colors.white70 : Colors.grey[600],
                   ),
                 ),
                 trailing: post.userEmail == currentUserEmail
                     ? IconButton(
-                        icon: Icon(Icons.more_vert, color: isDarkMode ? Colors.white : Colors.black),
+                        icon: Icon(Icons.more_vert,
+                            color: isDarkMode ? Colors.white : Colors.black),
                         onPressed: () => _showPostOptionsMenu(context, post),
                       )
                     : null,
@@ -494,9 +520,8 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                           post.description!,
                           style: TextStyle(
                             fontSize: 14,
-                            color: isDarkMode
-                                ? Colors.grey[300]
-                                : Colors.black87,
+                            color:
+                                isDarkMode ? Colors.grey[300] : Colors.black87,
                           ),
                         ),
                       ),
@@ -521,7 +546,8 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                         height: 200,
                         color: Colors.grey[300],
                         child: const Center(
-                          child: Icon(Icons.broken_image, size: 50, color: Colors.red),
+                          child: Icon(Icons.broken_image,
+                              size: 50, color: Colors.red),
                         ),
                       );
                     },
@@ -534,7 +560,8 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
               // Interests
               if (post.interests.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 4,
@@ -547,9 +574,8 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                             color: isDarkMode ? Colors.white : Colors.black,
                           ),
                         ),
-                        backgroundColor: isDarkMode 
-                          ? Colors.grey[700] 
-                          : Colors.grey[200],
+                        backgroundColor:
+                            isDarkMode ? Colors.grey[700] : Colors.grey[200],
                       );
                     }).toList(),
                   ),
@@ -557,7 +583,8 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
 
               // Comments and Likes Section
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -566,12 +593,12 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                       children: [
                         IconButton(
                           icon: Icon(
-                            post.isLikedByCurrentUser 
-                              ? Icons.favorite 
-                              : Icons.favorite_border,
-                            color: post.isLikedByCurrentUser 
-                              ? Colors.red 
-                              : (isDarkMode ? Colors.white : Colors.black),
+                            post.isLikedByCurrentUser
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: post.isLikedByCurrentUser
+                                ? Colors.red
+                                : (isDarkMode ? Colors.white : Colors.black),
                           ),
                           onPressed: () {
                             // If onLikeToggle is provided, use it first
@@ -579,7 +606,9 @@ class _PostListWidgetState extends ConsumerState<PostListWidget> {
                               widget.onLikeToggle!();
                             } else {
                               // Fallback to the default provider method
-                              ref.read(postListProvider.notifier).toggleLike(post.id!);
+                              ref
+                                  .read(postListProvider.notifier)
+                                  .toggleLike(post.id!);
                             }
                           },
                         ),

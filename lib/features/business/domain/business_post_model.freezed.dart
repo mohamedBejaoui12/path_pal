@@ -40,6 +40,7 @@ mixin _$BusinessPostModel {
   int get likesCount => throw _privateConstructorUsedError;
   int get commentsCount => throw _privateConstructorUsedError;
   bool get isLikedByCurrentUser => throw _privateConstructorUsedError;
+  bool get isVerified => throw _privateConstructorUsedError;
 
   /// Serializes this BusinessPostModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -70,7 +71,8 @@ abstract class $BusinessPostModelCopyWith<$Res> {
       @JsonKey(name: 'created_at') DateTime? createdAt,
       int likesCount,
       int commentsCount,
-      bool isLikedByCurrentUser});
+      bool isLikedByCurrentUser,
+      bool isVerified});
 }
 
 /// @nodoc
@@ -101,6 +103,7 @@ class _$BusinessPostModelCopyWithImpl<$Res, $Val extends BusinessPostModel>
     Object? likesCount = null,
     Object? commentsCount = null,
     Object? isLikedByCurrentUser = null,
+    Object? isVerified = null,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -155,6 +158,10 @@ class _$BusinessPostModelCopyWithImpl<$Res, $Val extends BusinessPostModel>
           ? _value.isLikedByCurrentUser
           : isLikedByCurrentUser // ignore: cast_nullable_to_non_nullable
               as bool,
+      isVerified: null == isVerified
+          ? _value.isVerified
+          : isVerified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -180,7 +187,8 @@ abstract class _$$BusinessPostModelImplCopyWith<$Res>
       @JsonKey(name: 'created_at') DateTime? createdAt,
       int likesCount,
       int commentsCount,
-      bool isLikedByCurrentUser});
+      bool isLikedByCurrentUser,
+      bool isVerified});
 }
 
 /// @nodoc
@@ -209,6 +217,7 @@ class __$$BusinessPostModelImplCopyWithImpl<$Res>
     Object? likesCount = null,
     Object? commentsCount = null,
     Object? isLikedByCurrentUser = null,
+    Object? isVerified = null,
   }) {
     return _then(_$BusinessPostModelImpl(
       id: freezed == id
@@ -263,6 +272,10 @@ class __$$BusinessPostModelImplCopyWithImpl<$Res>
           ? _value.isLikedByCurrentUser
           : isLikedByCurrentUser // ignore: cast_nullable_to_non_nullable
               as bool,
+      isVerified: null == isVerified
+          ? _value.isVerified
+          : isVerified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -283,7 +296,8 @@ class _$BusinessPostModelImpl implements _BusinessPostModel {
       @JsonKey(name: 'created_at') this.createdAt,
       this.likesCount = 0,
       this.commentsCount = 0,
-      this.isLikedByCurrentUser = false})
+      this.isLikedByCurrentUser = false,
+      this.isVerified = false})
       : _interests = interests;
 
   factory _$BusinessPostModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -332,10 +346,13 @@ class _$BusinessPostModelImpl implements _BusinessPostModel {
   @override
   @JsonKey()
   final bool isLikedByCurrentUser;
+  @override
+  @JsonKey()
+  final bool isVerified;
 
   @override
   String toString() {
-    return 'BusinessPostModel(id: $id, businessId: $businessId, userEmail: $userEmail, businessName: $businessName, businessProfileImage: $businessProfileImage, title: $title, description: $description, imageUrl: $imageUrl, interests: $interests, createdAt: $createdAt, likesCount: $likesCount, commentsCount: $commentsCount, isLikedByCurrentUser: $isLikedByCurrentUser)';
+    return 'BusinessPostModel(id: $id, businessId: $businessId, userEmail: $userEmail, businessName: $businessName, businessProfileImage: $businessProfileImage, title: $title, description: $description, imageUrl: $imageUrl, interests: $interests, createdAt: $createdAt, likesCount: $likesCount, commentsCount: $commentsCount, isLikedByCurrentUser: $isLikedByCurrentUser, isVerified: $isVerified)';
   }
 
   @override
@@ -366,7 +383,9 @@ class _$BusinessPostModelImpl implements _BusinessPostModel {
             (identical(other.commentsCount, commentsCount) ||
                 other.commentsCount == commentsCount) &&
             (identical(other.isLikedByCurrentUser, isLikedByCurrentUser) ||
-                other.isLikedByCurrentUser == isLikedByCurrentUser));
+                other.isLikedByCurrentUser == isLikedByCurrentUser) &&
+            (identical(other.isVerified, isVerified) ||
+                other.isVerified == isVerified));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -385,7 +404,8 @@ class _$BusinessPostModelImpl implements _BusinessPostModel {
       createdAt,
       likesCount,
       commentsCount,
-      isLikedByCurrentUser);
+      isLikedByCurrentUser,
+      isVerified);
 
   /// Create a copy of BusinessPostModel
   /// with the given fields replaced by the non-null parameter values.
@@ -419,7 +439,8 @@ abstract class _BusinessPostModel implements BusinessPostModel {
       @JsonKey(name: 'created_at') final DateTime? createdAt,
       final int likesCount,
       final int commentsCount,
-      final bool isLikedByCurrentUser}) = _$BusinessPostModelImpl;
+      final bool isLikedByCurrentUser,
+      final bool isVerified}) = _$BusinessPostModelImpl;
 
   factory _BusinessPostModel.fromJson(Map<String, dynamic> json) =
       _$BusinessPostModelImpl.fromJson;
@@ -457,6 +478,8 @@ abstract class _BusinessPostModel implements BusinessPostModel {
   int get commentsCount;
   @override
   bool get isLikedByCurrentUser;
+  @override
+  bool get isVerified;
 
   /// Create a copy of BusinessPostModel
   /// with the given fields replaced by the non-null parameter values.

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:pfe1/features/business/presentation/update_business_profile_screen.dart';
 import 'package:pfe1/features/business/presentation/create_business_post_screen.dart';
+import 'package:pfe1/shared/theme/theme_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pfe1/features/home/presentation/comments_bottom_sheet.dart';
 
@@ -161,13 +162,22 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> w
     final businessDetailsAsync = ref.watch(businessDetailsProvider(widget.businessId));
     final businessPostsAsync = ref.watch(businessPostsProvider(widget.businessId));
     final authState = ref.watch(authProvider);
+    final isDarkMode = ref.watch(themeProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Business Profile'),
+        title: const Text(
+          'Business Profile',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: isDarkMode ? Colors.grey[900] : AppColors.primaryColor,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.post_add),
+            icon: const Icon(Icons.post_add, color: Colors.white),
             tooltip: 'Create Business Post',
             onPressed: () async {
               final result = await Navigator.of(context).push(
@@ -186,7 +196,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> w
             },
           ),
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit, color: Colors.white),
             onPressed: () async {
               final result = await Navigator.of(context).push(
                 MaterialPageRoute(
@@ -241,14 +251,30 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> w
                     ),
 
                 // Business Details
+                // In the business details section, update the business name display to include verification icon
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        business?.businessName ?? 'Business Name',
-                        style: Theme.of(context).textTheme.headlineSmall,
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              business?.businessName ?? 'Business Name',
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                          ),
+                          if (business?.isVerified == true)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4.0),
+                              child: Icon(
+                                Icons.verified,
+                                size: 24,
+                                color: Colors.blue,
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       _buildDetailRow(

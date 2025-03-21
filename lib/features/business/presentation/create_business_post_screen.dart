@@ -3,13 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pfe1/features/business/data/business_profile_provider.dart';
 import 'package:pfe1/features/business/domain/business_post_model.dart';
+import 'package:pfe1/shared/theme/theme_provider.dart';
 import 'dart:io';
 
+import '../../../shared/theme/app_colors.dart';
 import '../presentation/business_profile_screen.dart'; // Import the business profile screen
 
 import '../../interests/domain/interest_model.dart';
 import '../data/business_post_provider.dart';
-
 
 class CreateBusinessPostScreen extends ConsumerStatefulWidget {
   final int? businessId; // Optional business ID parameter
@@ -142,15 +143,30 @@ class _CreateBusinessPostScreenState
     }
   }
 
+  // In the build method of CreateBusinessPostScreen
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeProvider);
+    // Use the correct provider for interests
     final interestsAsync = ref.watch(interestProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.existingPost == null
-            ? 'Create Business Post'
-            : 'Update Business Post'),
+        title: Text(
+          widget.existingPost != null ? 'Update Post' : 'Create Post',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: isDarkMode ? Colors.grey[900] : AppColors.primaryColor,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check, color: Colors.white),
+            onPressed: _submitPost, // Changed from _savePost to _submitPost
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -188,6 +204,10 @@ class _CreateBusinessPostScreenState
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _pickImage,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDarkMode ? Colors.grey[800] : AppColors.primaryColor,
+                      foregroundColor: Colors.white,
+                    ),
                     child: Text(_imageFile == null
                         ? 'Pick Image (Optional)'
                         : 'Change Image'),
@@ -227,6 +247,11 @@ class _CreateBusinessPostScreenState
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _submitPost,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDarkMode ? Colors.grey[800] : AppColors.primaryColor,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.grey,
+                    ),
                     child: Text(widget.existingPost == null
                         ? 'Create Post'
                         : 'Update Post'),

@@ -408,31 +408,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 }
-
-class _CircularPatternPainter extends CustomPainter {
-  final Color color;
-
-  _CircularPatternPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    final center = Offset(size.width / 2, size.height / 2);
-    const radius = 50.0;
-
-    for (int i = 0; i < 360; i += 15) {
-      final angle = i * (3.1416 / 180);
-      final start = center + Offset(radius * cos(angle), radius * sin(angle));
-      final end = center +
-          Offset((radius - 15) * cos(angle), (radius - 15) * sin(angle));
-      canvas.drawLine(start, end, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

@@ -17,6 +17,7 @@ class PostModel with _$PostModel {
     @Default(0) int likesCount,
     @Default(0) int commentsCount,
     @Default(false) bool isLikedByCurrentUser,
+    @Default(false) bool isUserVerified,
   }) = _PostModel;
 
   // Helper method for default avatar
@@ -51,38 +52,46 @@ class PostModel with _$PostModel {
       likesCount = postLikes.length;
 
       // Determine if liked by current user
-      // This assumes current user's email is passed or available in the context
       final currentUserEmail = json['current_user_email'];
       if (currentUserEmail != null) {
-        isLikedByCurrentUser = postLikes.any(
-          (like) => like['user_email'] == currentUserEmail
-        );
+        isLikedByCurrentUser =
+            postLikes.any((like) => like['user_email'] == currentUserEmail);
       } else {
-        // Fallback to explicit flag if available
         isLikedByCurrentUser = json['is_liked_by_current_user'] ?? false;
       }
     } else {
-      // Fallback for cases where post_likes might not be a list
       likesCount = json['likes_count'] ?? 0;
       isLikedByCurrentUser = json['is_liked_by_current_user'] ?? false;
+    }
+
+    // Get verification status - check both possible sources
+    bool isVerified = false;
+    if (json['is_user_verified'] == true) {
+      isVerified = true;
+    } else if (userData['is_verified'] == true) {
+      isVerified = true;
     }
 
     return PostModel(
       id: json['id'] as int?,
       userEmail: (json['user_email'] ?? '').toString(),
       userName: fullName.isNotEmpty ? fullName : 'Anonymous',
-      userProfileImage: userData['profile_image_url'] ?? 
-        _generateDefaultProfileImage(fullName),
+      userProfileImage: userData['profile_image_url'] ??
+          _generateDefaultProfileImage(fullName),
       title: (json['title'] ?? '').toString(),
       description: json['description'] as String?,
-      imageUrl: json['image_link'] ?? json['image_url'] as String?,
-      interests: (json['interests'] as List?)?.map((e) => e.toString()).toList() ?? [],
-      createdAt: json['created_at'] != null 
-        ? DateTime.tryParse(json['created_at'].toString()) 
-        : null,
+      imageUrl: json['image_link'] != null
+          ? json['image_link'] as String?
+          : (json['image_url'] != null ? json['image_url'] as String? : null),
+      interests:
+          (json['interests'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
       likesCount: likesCount,
       commentsCount: json['comments_count'] as int? ?? 0,
       isLikedByCurrentUser: isLikedByCurrentUser,
+      isUserVerified: isVerified,
     );
   }
 }

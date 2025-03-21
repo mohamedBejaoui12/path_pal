@@ -24,7 +24,7 @@ class RouterNotifier extends ChangeNotifier {
   final WidgetRef _ref;
 
   RouterNotifier(this._ref) {
-    _ref.listen(authProvider, (previous, next) { // Listen to authProvider changes
+    _ref.listen(authProvider, (previous, next) { // to93ed tesma3 oo testana fi il  authProvider changes
       // Only notify listeners if the authentication status has significantly changed
       if (previous?.status != next.status && 
           (next.status == AuthStatus.authenticated || // User is authenticated
@@ -118,7 +118,7 @@ class MyApp extends ConsumerWidget {
         GoRoute(
           path: '/verify-email',
           builder: (context, state) {
-            final email = state.extra as String? ?? 'your email';
+            final email = state.extra as String? ?? '';
             return EmailVerificationScreen(email: email);
           },
         ),

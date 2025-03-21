@@ -142,8 +142,9 @@ class _UserBusinessProfileScreenState
 
   // Add this method to show the rating bottom sheet
   void _showRateBusinessBottomSheet() {
-    final businessDetailsAsync = ref.read(businessDetailsProvider(widget.businessId));
-    
+    final businessDetailsAsync =
+        ref.read(businessDetailsProvider(widget.businessId));
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -170,7 +171,8 @@ class _UserBusinessProfileScreenState
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => BusinessRatingsPage(businessId: widget.businessId),
+        builder: (context) =>
+            BusinessRatingsPage(businessId: widget.businessId),
       ),
     );
   }
@@ -183,7 +185,8 @@ class _UserBusinessProfileScreenState
         ref.watch(userBusinessPostsProvider(widget.businessId));
     final isDarkMode = ref.watch(themeProvider);
     // Add this to get the average rating
-    final averageRatingAsync = ref.watch(businessAverageRatingProvider(widget.businessId));
+    final averageRatingAsync =
+        ref.watch(businessAverageRatingProvider(widget.businessId));
 
     return Scaffold(
       appBar: AppBar(
@@ -259,9 +262,26 @@ class _UserBusinessProfileScreenState
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
-                            child: Text(
-                              business?.businessName ?? 'Business Name',
-                              style: Theme.of(context).textTheme.headlineSmall,
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    business?.businessName ?? 'Business Name',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall,
+                                  ),
+                                ),
+                                if (business?.isVerified == true)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 4.0),
+                                    child: Icon(
+                                      Icons.verified,
+                                      size: 20,
+                                      color: Colors.blue,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                           // Add rating display
@@ -286,7 +306,8 @@ class _UserBusinessProfileScreenState
                                 ],
                               ),
                             ),
-                            loading: () => const CircularProgressIndicator(strokeWidth: 2),
+                            loading: () =>
+                                const CircularProgressIndicator(strokeWidth: 2),
                             error: (_, __) => InkWell(
                               onTap: _showRateBusinessBottomSheet,
                               child: const Row(

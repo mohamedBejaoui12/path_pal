@@ -1,11 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pfe1/features/business/domain/business_post_model.dart';
+import 'package:pfe1/features/interests/domain/interest_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../interests/domain/interest_model.dart';
 
 class BusinessPostService {
   final _supabase = Supabase.instance.client;
+
+  // Remove the first fetchAllBusinessPosts method and keep only the one below
 
   Future<List<InterestModel>> fetchAllInterests() async {
     try {
@@ -158,12 +161,23 @@ class BusinessPostService {
 
   Future<List<BusinessPostModel>> fetchAllBusinessPosts() async {
     try {
-      // Modify the query to include business data for profile images
+      // Debug the table structure first - change 'businesses' to 'business'
+      final businessTableInfo =
+          await _supabase.from('business').select('*').limit(1);
+
+      debugPrint('Business table structure: $businessTableInfo');
+
+      // Update the query with correct table name
       final response = await _supabase.from('business_posts').select('''
             *,
-            business_post_likes(count),
-            business_post_comments(count),
-            businesses:business_id(image_url)
+            business!business_id(
+              id, 
+              business_name, 
+              image_url,
+              is_verified
+            ),
+            business_post_likes(user_email),
+            business_post_comments(id)
           ''').order('created_at', ascending: false);
 
       debugPrint('Raw business posts response: ${response.length} posts');
@@ -172,59 +186,63 @@ class BusinessPostService {
       final currentUserEmail = _supabase.auth.currentUser?.email;
 
       // Process the response
-      return Future.wait((response as List).map((json) async {
-        // Get likes count
-        final likesCount = json['business_post_likes']?[0]?['count'] ?? 0;
+      // In the fetchAllBusinessPosts method, update how we map the business data
+      
+      return (response as List).map((post) {
+      // Extract business data - handle null case properly
+      final businessData = post['business'] ?? {};
+      
+      debugPrint('Business data: $businessData');
+      
+      // Explicitly check the verification status
+      final isVerified = businessData['is_verified'] == true;
+      debugPrint('Is business verified (explicit check in service): $isVerified');
 
-        // Get comments count
-        final commentsCount = json['business_post_comments']?[0]?['count'] ?? 0;
+        // Count likes and check if current user liked the post
+        final likes = post['business_post_likes'] as List? ?? [];
+        final isLikedByCurrentUser = currentUserEmail != null &&
+            likes.any((like) => like['user_email'] == currentUserEmail);
 
-        // Get business profile image from the joined businesses table
-        String? businessProfileImage;
-        if (json['businesses'] != null &&
-            json['businesses']['image_url'] != null) {
-          businessProfileImage = json['businesses']['image_url'];
-          // Clean the URL to ensure it's valid
-          if (businessProfileImage != null) {
-            businessProfileImage = businessProfileImage.trim();
-          }
-          debugPrint('Business profile image from DB: $businessProfileImage');
-        }
+        // Count comments
+        final comments = post['business_post_comments'] as List? ?? [];
 
-        // Check if current user has liked the post
-        bool isLikedByCurrentUser = false;
-        if (currentUserEmail != null) {
-          final likeResponse = await _supabase
-              .from('business_post_likes')
-              .select()
-              .eq('post_id', json['id'])
-              .eq('user_email', currentUserEmail)
-              .maybeSingle();
-          isLikedByCurrentUser = likeResponse != null;
-        }
-
-        // Map interests
+        // Parse interests
         List<String> interests = [];
-        if (json['interests'] != null) {
-          interests = List<String>.from(json['interests']);
+        if (post['interests'] != null) {
+          if (post['interests'] is String) {
+            try {
+              final decoded = jsonDecode(post['interests']);
+              if (decoded is List) {
+                interests = decoded.map((e) => e.toString()).toList();
+              }
+            } catch (e) {
+              debugPrint('Error parsing interests: $e');
+            }
+          } else if (post['interests'] is List) {
+            interests =
+                (post['interests'] as List).map((e) => e.toString()).toList();
+          }
         }
 
         return BusinessPostModel(
-          id: json['id'],
-          businessId: json['business_id'],
-          userEmail: json['user_email'],
-          businessName: json['business_name'],
-          businessProfileImage: businessProfileImage,
-          title: json['title'],
-          description: json['description'],
-          imageUrl: json['image_url'],
-          createdAt: DateTime.parse(json['created_at']),
+          id: post['id'],
+          title: post['title'] ?? '',
+          description: post['description'],
+          imageUrl: post['image_url'],
+          businessName: businessData['business_name'] ?? 'Unknown Business',
+          businessId: businessData['id'] ?? 0,
+          businessProfileImage: businessData['image_url'],
+          userEmail: post['user_email'] ?? '',
           interests: interests,
-          likesCount: likesCount,
-          commentsCount: commentsCount,
+          createdAt: post['created_at'] != null
+              ? DateTime.parse(post['created_at'])
+              : null,
+          likesCount: likes.length,
+          commentsCount: comments.length,
           isLikedByCurrentUser: isLikedByCurrentUser,
+          isVerified: isVerified, // Use the explicitly checked value
         );
-      }).toList());
+      }).toList();
     } catch (e, stackTrace) {
       debugPrint('Error fetching business posts: $e');
       debugPrint('Stack trace: $stackTrace');
@@ -338,6 +356,14 @@ class BusinessPostService {
   }
 }
 
+// Keep the existing provider
 final businessPostServiceProvider = Provider<BusinessPostService>((ref) {
   return BusinessPostService();
+});
+
+// Add the missing provider for all business posts
+final allBusinessPostsProvider =
+    FutureProvider<List<BusinessPostModel>>((ref) async {
+  final businessPostService = ref.read(businessPostServiceProvider);
+  return await businessPostService.fetchAllBusinessPosts();
 });

@@ -34,6 +34,7 @@ mixin _$BusinessModel {
   String get userEmail => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime? get createdAt => throw _privateConstructorUsedError;
+  bool get isVerified => throw _privateConstructorUsedError;
 
   /// Serializes this BusinessModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -59,7 +60,8 @@ abstract class $BusinessModelCopyWith<$Res> {
       double latitude,
       double longitude,
       @JsonKey(name: 'user_email') String userEmail,
-      @JsonKey(name: 'created_at') DateTime? createdAt});
+      @JsonKey(name: 'created_at') DateTime? createdAt,
+      bool isVerified});
 }
 
 /// @nodoc
@@ -85,6 +87,7 @@ class _$BusinessModelCopyWithImpl<$Res, $Val extends BusinessModel>
     Object? longitude = null,
     Object? userEmail = null,
     Object? createdAt = freezed,
+    Object? isVerified = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -119,6 +122,10 @@ class _$BusinessModelCopyWithImpl<$Res, $Val extends BusinessModel>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      isVerified: null == isVerified
+          ? _value.isVerified
+          : isVerified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -139,7 +146,8 @@ abstract class _$$BusinessModelImplCopyWith<$Res>
       double latitude,
       double longitude,
       @JsonKey(name: 'user_email') String userEmail,
-      @JsonKey(name: 'created_at') DateTime? createdAt});
+      @JsonKey(name: 'created_at') DateTime? createdAt,
+      bool isVerified});
 }
 
 /// @nodoc
@@ -163,6 +171,7 @@ class __$$BusinessModelImplCopyWithImpl<$Res>
     Object? longitude = null,
     Object? userEmail = null,
     Object? createdAt = freezed,
+    Object? isVerified = null,
   }) {
     return _then(_$BusinessModelImpl(
       id: null == id
@@ -197,6 +206,10 @@ class __$$BusinessModelImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      isVerified: null == isVerified
+          ? _value.isVerified
+          : isVerified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -214,7 +227,8 @@ class _$BusinessModelImpl
       required this.latitude,
       required this.longitude,
       @JsonKey(name: 'user_email') required this.userEmail,
-      @JsonKey(name: 'created_at') this.createdAt});
+      @JsonKey(name: 'created_at') this.createdAt,
+      this.isVerified = false});
 
   factory _$BusinessModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$BusinessModelImplFromJson(json);
@@ -241,10 +255,13 @@ class _$BusinessModelImpl
   @override
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
+  @override
+  @JsonKey()
+  final bool isVerified;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'BusinessModel(id: $id, businessName: $businessName, email: $email, imageUrl: $imageUrl, latitude: $latitude, longitude: $longitude, userEmail: $userEmail, createdAt: $createdAt)';
+    return 'BusinessModel(id: $id, businessName: $businessName, email: $email, imageUrl: $imageUrl, latitude: $latitude, longitude: $longitude, userEmail: $userEmail, createdAt: $createdAt, isVerified: $isVerified)';
   }
 
   @override
@@ -259,7 +276,8 @@ class _$BusinessModelImpl
       ..add(DiagnosticsProperty('latitude', latitude))
       ..add(DiagnosticsProperty('longitude', longitude))
       ..add(DiagnosticsProperty('userEmail', userEmail))
-      ..add(DiagnosticsProperty('createdAt', createdAt));
+      ..add(DiagnosticsProperty('createdAt', createdAt))
+      ..add(DiagnosticsProperty('isVerified', isVerified));
   }
 
   @override
@@ -280,13 +298,15 @@ class _$BusinessModelImpl
             (identical(other.userEmail, userEmail) ||
                 other.userEmail == userEmail) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.isVerified, isVerified) ||
+                other.isVerified == isVerified));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, businessName, email,
-      imageUrl, latitude, longitude, userEmail, createdAt);
+      imageUrl, latitude, longitude, userEmail, createdAt, isVerified);
 
   /// Create a copy of BusinessModel
   /// with the given fields replaced by the non-null parameter values.
@@ -306,15 +326,15 @@ class _$BusinessModelImpl
 
 abstract class _BusinessModel implements BusinessModel {
   const factory _BusinessModel(
-          {@JsonKey(name: 'id') required final int id,
-          @JsonKey(name: 'business_name') required final String businessName,
-          required final String email,
-          @JsonKey(name: 'image_url') final String? imageUrl,
-          required final double latitude,
-          required final double longitude,
-          @JsonKey(name: 'user_email') required final String userEmail,
-          @JsonKey(name: 'created_at') final DateTime? createdAt}) =
-      _$BusinessModelImpl;
+      {@JsonKey(name: 'id') required final int id,
+      @JsonKey(name: 'business_name') required final String businessName,
+      required final String email,
+      @JsonKey(name: 'image_url') final String? imageUrl,
+      required final double latitude,
+      required final double longitude,
+      @JsonKey(name: 'user_email') required final String userEmail,
+      @JsonKey(name: 'created_at') final DateTime? createdAt,
+      final bool isVerified}) = _$BusinessModelImpl;
 
   factory _BusinessModel.fromJson(Map<String, dynamic> json) =
       _$BusinessModelImpl.fromJson;
@@ -340,6 +360,8 @@ abstract class _BusinessModel implements BusinessModel {
   @override
   @JsonKey(name: 'created_at')
   DateTime? get createdAt;
+  @override
+  bool get isVerified;
 
   /// Create a copy of BusinessModel
   /// with the given fields replaced by the non-null parameter values.

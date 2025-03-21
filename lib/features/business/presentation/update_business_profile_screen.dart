@@ -3,36 +3,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:pfe1/shared/theme/theme_provider.dart';
 import 'dart:io';
 
+import '../../../shared/theme/app_colors.dart';
 import '../data/business_profile_provider.dart';
 
-
-
-enum LocationInputMethod {
-  manual,
-  automatic
-}
+enum LocationInputMethod { manual, automatic }
 
 class UpdateBusinessProfileScreen extends ConsumerStatefulWidget {
   final int businessId;
 
-  const UpdateBusinessProfileScreen({
-    Key? key, 
-    required this.businessId
-  }) : super(key: key);
+  const UpdateBusinessProfileScreen({Key? key, required this.businessId})
+      : super(key: key);
 
   @override
-  _UpdateBusinessProfileScreenState createState() => _UpdateBusinessProfileScreenState();
+  _UpdateBusinessProfileScreenState createState() =>
+      _UpdateBusinessProfileScreenState();
 }
 
-class _UpdateBusinessProfileScreenState extends ConsumerState<UpdateBusinessProfileScreen> {
+class _UpdateBusinessProfileScreenState
+    extends ConsumerState<UpdateBusinessProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
-  
+
   String? _imageUrl;
   File? _imageFile;
   bool _isLoading = true;
@@ -50,7 +47,9 @@ class _UpdateBusinessProfileScreenState extends ConsumerState<UpdateBusinessProf
   }
 
   void _loadBusinessDetails() {
-    ref.read(businessDetailsProvider(widget.businessId).notifier).fetchBusinessDetails();
+    ref
+        .read(businessDetailsProvider(widget.businessId).notifier)
+        .fetchBusinessDetails();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -99,14 +98,14 @@ class _UpdateBusinessProfileScreenState extends ConsumerState<UpdateBusinessProf
       final pickedFile = await ImagePicker().pickImage(
         source: ImageSource.gallery,
         imageQuality: 70, // Compress image (0-100)
-        maxWidth: 1024,   // Resize image
+        maxWidth: 1024, // Resize image
         maxHeight: 1024,
       );
 
       if (pickedFile != null) {
         // Convert to File and validate
         final imageFile = File(pickedFile.path);
-        
+
         // Optional: Add image validation if needed
         // bool isValid = ref.read(businessProfileServiceProvider)._validateImage(imageFile);
         // if (!isValid) {
@@ -155,8 +154,9 @@ class _UpdateBusinessProfileScreenState extends ConsumerState<UpdateBusinessProf
         String? uploadedImageUrl;
         if (_imageFile != null) {
           // Upload image
-          uploadedImageUrl = await ref.read(businessProfileServiceProvider)
-            .uploadBusinessImage(_imageFile!, widget.businessId);
+          uploadedImageUrl = await ref
+              .read(businessProfileServiceProvider)
+              .uploadBusinessImage(_imageFile!, widget.businessId);
 
           // Check if upload was successful
           if (uploadedImageUrl == null) {
@@ -173,27 +173,30 @@ class _UpdateBusinessProfileScreenState extends ConsumerState<UpdateBusinessProf
           }
         }
 
-        final updatedBusiness = await ref.read(businessProfileProvider).updateBusinessProfile(
-          businessId: widget.businessId,
-          businessName: _nameController.text,
-          email: _emailController.text,
-          imageUrl: uploadedImageUrl ?? _imageUrl,
-          latitude: double.parse(_latitudeController.text),
-          longitude: double.parse(_longitudeController.text),
-        );
+        final updatedBusiness =
+            await ref.read(businessProfileProvider).updateBusinessProfile(
+                  businessId: widget.businessId,
+                  businessName: _nameController.text,
+                  email: _emailController.text,
+                  imageUrl: uploadedImageUrl ?? _imageUrl,
+                  latitude: double.parse(_latitudeController.text),
+                  longitude: double.parse(_longitudeController.text),
+                );
 
         // Close loading dialog
         Navigator.of(context).pop();
 
         if (updatedBusiness != null) {
           // Refresh the business details
-          await ref.read(businessDetailsProvider(widget.businessId).notifier)
-            .refreshBusinessDetails();
+          await ref
+              .read(businessDetailsProvider(widget.businessId).notifier)
+              .refreshBusinessDetails();
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profile Updated Successfully')),
           );
-          Navigator.of(context).pop(true); // Return true to indicate successful update
+          Navigator.of(context)
+              .pop(true); // Return true to indicate successful update
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to update profile')),
@@ -210,14 +213,30 @@ class _UpdateBusinessProfileScreenState extends ConsumerState<UpdateBusinessProf
     }
   }
 
+  // In the build method of UpdateBusinessProfileScreen
   @override
   Widget build(BuildContext context) {
-    // Watch the provider to get real-time updates
-    final businessDetailsState = ref.watch(businessDetailsProvider(widget.businessId));
+    final isDarkMode = ref.watch(themeProvider);
+    final businessDetailsState =
+        ref.watch(businessDetailsProvider(widget.businessId));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Update Business Profile'),
+        title: const Text(
+          'Update Business Profile',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: isDarkMode ? Colors.grey[900] : AppColors.primaryColor,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.save, color: Colors.white),
+            onPressed: _updateProfile,
+          ),
+        ],
       ),
       body: businessDetailsState.when(
         data: (business) {
@@ -248,17 +267,17 @@ class _UpdateBusinessProfileScreenState extends ConsumerState<UpdateBusinessProf
                       child: CircleAvatar(
                         radius: 80,
                         backgroundImage: _imageFile != null
-                          ? FileImage(_imageFile!)
-                          : (_imageUrl != null 
-                            ? NetworkImage(_imageUrl!) 
-                            : null),
+                            ? FileImage(_imageFile!)
+                            : (_imageUrl != null
+                                ? NetworkImage(_imageUrl!) as ImageProvider
+                                : null),
                         child: (_imageFile == null && _imageUrl == null)
-                          ? const Icon(Icons.camera_alt, size: 50) 
-                          : null,
+                            ? const Icon(Icons.camera_alt, size: 50)
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    
+
                     // Business Name TextField
                     TextFormField(
                       controller: _nameController,
@@ -302,9 +321,9 @@ class _UpdateBusinessProfileScreenState extends ConsumerState<UpdateBusinessProf
                           items: LocationInputMethod.values.map((method) {
                             return DropdownMenuItem(
                               value: method,
-                              child: Text(method == LocationInputMethod.manual 
-                                ? 'Manual' 
-                                : 'Automatic'),
+                              child: Text(method == LocationInputMethod.manual
+                                  ? 'Manual'
+                                  : 'Automatic'),
                             );
                           }).toList(),
                           onChanged: (method) {
@@ -358,6 +377,10 @@ class _UpdateBusinessProfileScreenState extends ConsumerState<UpdateBusinessProf
                     ElevatedButton(
                       onPressed: _updateProfile,
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: isDarkMode
+                            ? Colors.grey[800]
+                            : AppColors.primaryColor,
+                        foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 50),
                       ),
                       child: const Text('Update Profile'),

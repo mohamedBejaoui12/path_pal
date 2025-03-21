@@ -27,6 +27,7 @@ _$BusinessPostModelImpl _$$BusinessPostModelImplFromJson(
       likesCount: (json['likesCount'] as num?)?.toInt() ?? 0,
       commentsCount: (json['commentsCount'] as num?)?.toInt() ?? 0,
       isLikedByCurrentUser: json['isLikedByCurrentUser'] as bool? ?? false,
+      isVerified: json['isVerified'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$BusinessPostModelImplToJson(
@@ -45,4 +46,5 @@ Map<String, dynamic> _$$BusinessPostModelImplToJson(
       'likesCount': instance.likesCount,
       'commentsCount': instance.commentsCount,
       'isLikedByCurrentUser': instance.isLikedByCurrentUser,
+      'isVerified': instance.isVerified,
     };
