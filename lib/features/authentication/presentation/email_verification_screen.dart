@@ -73,7 +73,6 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
           backgroundColor: Colors.green,
         ),
       );
-
       // Explicitly navigate to user details and maintain email unverified state
       context.pushReplacement('/user-details', extra: widget.email);
     } on AuthException catch (e) {

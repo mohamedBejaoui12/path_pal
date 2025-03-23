@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pfe1/features/business/data/business_profile_provider.dart';
 import 'package:pfe1/features/chat/data/chat_service.dart';
 import 'package:pfe1/features/chat/presentation/notification_screen.dart';
+import 'package:pfe1/features/chatbot/presentation/chatbot_screen.dart';
 import 'package:pfe1/features/home/presentation/business_posts_widget.dart';
 import 'package:pfe1/features/home/presentation/profile_widget.dart';
 import 'package:pfe1/features/search/presentation/search_screen.dart';
@@ -114,6 +115,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const SearchScreen(),
+                ),
+              );
+            },
+          ),
+          // Add chatbot icon
+          IconButton(
+            icon: Stack(
+              children: [
+                const Icon(Icons.auto_awesome, color: Colors.white),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Colors.amber,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ChatbotScreen(),
                 ),
               );
             },
@@ -425,6 +454,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const VocabularyListScreen(),
+                ),
+              );
+            },
+          ),
+          // Add Chatbot feature here
+          ListTile(
+            leading: const Icon(Icons.auto_awesome),
+            title: Row(
+              children: [
+                const Text('Tunisia AI Assistant'),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.amber,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    'NEW',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            onTap: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ChatbotScreen(),
                 ),
               );
             },

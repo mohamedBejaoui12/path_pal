@@ -18,7 +18,8 @@ _$BusinessModelImpl _$$BusinessModelImplFromJson(Map<String, dynamic> json) =>
       createdAt: json['created_at'] == null
           ? null
           : DateTime.parse(json['created_at'] as String),
-      isVerified: json['isVerified'] as bool? ?? false,
+      isVerified: json['is_verified'] as bool? ?? false,
+      category: json['category'] as String?,
     );
 
 Map<String, dynamic> _$$BusinessModelImplToJson(_$BusinessModelImpl instance) =>
@@ -31,5 +32,6 @@ Map<String, dynamic> _$$BusinessModelImplToJson(_$BusinessModelImpl instance) =>
       'longitude': instance.longitude,
       'user_email': instance.userEmail,
       'created_at': instance.createdAt?.toIso8601String(),
-      'isVerified': instance.isVerified,
+      'is_verified': instance.isVerified,
+      'category': instance.category,
     };

@@ -25,6 +25,7 @@ class CreateBusinessNotifier extends StateNotifier<AsyncValue<BusinessModel?>> {
   required double latitude,
   required double longitude,
   required File imageFile,
+  String? category, // Added category parameter
 }) async {
   state = const AsyncValue.loading();
 
@@ -51,6 +52,7 @@ class CreateBusinessNotifier extends StateNotifier<AsyncValue<BusinessModel?>> {
       latitude: latitude,
       longitude: longitude,
       userEmail: authState.user!.email!,
+      category: category, // Added category parameter
     );
 
     // Create business in database

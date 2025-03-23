@@ -8,7 +8,8 @@ class ChatService {
   ChatService(this._supabase);
 
   // Create or get existing chat room between two users
-  Future<ChatRoom> createOrGetChatRoom(String currentUserEmail, String otherUserEmail) async {
+  Future<ChatRoom> createOrGetChatRoom(
+      String currentUserEmail, String otherUserEmail) async {
     try {
       // Check if chat room already exists
       final existingRoomResponse = await _supabase
@@ -24,9 +25,11 @@ class ChatService {
           user1Email: existingRoomResponse['user1_email'],
           user2Email: existingRoomResponse['user2_email'],
           lastMessage: existingRoomResponse['last_message'],
-          lastMessageTimestamp: existingRoomResponse['last_message_timestamp'] != null 
-            ? DateTime.parse(existingRoomResponse['last_message_timestamp']) 
-            : null,
+          lastMessageTimestamp:
+              existingRoomResponse['last_message_timestamp'] != null
+                  ? DateTime.parse(
+                      existingRoomResponse['last_message_timestamp'])
+                  : null,
         );
       }
 
@@ -54,7 +57,8 @@ class ChatService {
   }
 
   // Send a message in a chat room
-  Future<ChatMessage?> sendMessage(String chatRoomId, String senderEmail, String message) async {
+  Future<ChatMessage?> sendMessage(
+      String chatRoomId, String senderEmail, String message) async {
     try {
       // Insert the message
       final messageResponse = await _supabase
@@ -69,13 +73,10 @@ class ChatService {
           .single();
 
       // Update the last message in the chat room
-      await _supabase
-          .from('chat_rooms')
-          .update({
-            'last_message': message,
-            'last_message_timestamp': DateTime.now().toIso8601String(),
-          })
-          .eq('id', chatRoomId);
+      await _supabase.from('chat_rooms').update({
+        'last_message': message,
+        'last_message_timestamp': DateTime.now().toIso8601String(),
+      }).eq('id', chatRoomId);
 
       // Create notification for the recipient
       await _createNotification(chatRoomId, senderEmail, message);
@@ -95,7 +96,8 @@ class ChatService {
   }
 
   // Create notification for the recipient
-  Future<void> _createNotification(String chatRoomId, String senderEmail, String message) async {
+  Future<void> _createNotification(
+      String chatRoomId, String senderEmail, String message) async {
     try {
       // Get the chat room to determine the recipient
       final chatRoom = await _supabase
@@ -123,7 +125,8 @@ class ChatService {
   }
 
   // Get notifications for a user
-  Future<List<Map<String, dynamic>>> getUserNotifications(String userEmail) async {
+  Future<List<Map<String, dynamic>>> getUserNotifications(
+      String userEmail) async {
     try {
       final notifications = await _supabase
           .from('notifications')
@@ -133,12 +136,13 @@ class ChatService {
 
       // Process notifications to include sender details
       final processedNotifications = <Map<String, dynamic>>[];
-      
+
       for (var notification in notifications) {
         try {
           // Get sender details
-          final senderDetails = await getUserDetailsByEmail(notification['sender_email']);
-          
+          final senderDetails =
+              await getUserDetailsByEmail(notification['sender_email']);
+
           if (senderDetails != null) {
             processedNotifications.add({
               'id': notification['id'],
@@ -153,7 +157,7 @@ class ChatService {
           print('Error processing notification: $e');
         }
       }
-      
+
       return processedNotifications;
     } catch (e) {
       print('Error fetching notifications: $e');
@@ -166,8 +170,7 @@ class ChatService {
     try {
       await _supabase
           .from('notifications')
-          .update({'is_read': true})
-          .eq('id', notificationId);
+          .update({'is_read': true}).eq('id', notificationId);
       return true;
     } catch (e) {
       print('Error marking notification as read: $e');
@@ -180,14 +183,14 @@ class ChatService {
     try {
       await _supabase
           .from('notifications')
-          .update({'is_read': true})
-          .eq('recipient_email', userEmail);
+          .update({'is_read': true}).eq('recipient_email', userEmail);
       return true;
     } catch (e) {
       print('Error marking all notifications as read: $e');
       return false;
     }
   }
+
   // Get unread notification count
   Future<int> getUnreadNotificationCount(String userEmail) async {
     try {
@@ -196,7 +199,7 @@ class ChatService {
           .select()
           .eq('recipient_email', userEmail)
           .eq('is_read', false);
-      
+
       // Return the length of the response list
       return response.length;
     } catch (e) {
@@ -213,10 +216,11 @@ class ChatService {
         .asBroadcastStream()
         .map((data) {
           // Filter the data in Dart after receiving it
-          final filteredData = data.where((item) => 
-            item['recipient_email'] == userEmail && 
-            item['is_read'] == false
-          ).toList();
+          final filteredData = data
+              .where((item) =>
+                  item['recipient_email'] == userEmail &&
+                  item['is_read'] == false)
+              .toList();
           return filteredData.length;
         });
   }
@@ -229,15 +233,13 @@ class ChatService {
         .asBroadcastStream()
         .map((data) {
           // Filter the data in Dart after receiving it
-          final filteredData = data
-              .where((item) => item['chat_room_id'] == chatRoomId)
-              .toList();
-          
+          final filteredData =
+              data.where((item) => item['chat_room_id'] == chatRoomId).toList();
+
           // Sort the data by timestamp
-          filteredData.sort((a, b) => 
-            DateTime.parse(a['timestamp']).compareTo(DateTime.parse(b['timestamp']))
-          );
-          
+          filteredData.sort((a, b) => DateTime.parse(a['timestamp'])
+              .compareTo(DateTime.parse(b['timestamp'])));
+
           return filteredData.map<ChatMessage>((json) {
             return ChatMessage(
               id: json['id'],
@@ -261,9 +263,9 @@ class ChatService {
 
       return rooms.map<ChatRoom>((roomJson) {
         // Determine the other user's email
-        final otherUserEmail = roomJson['user1_email'] == userEmail 
-          ? roomJson['user2_email'] 
-          : roomJson['user1_email'];
+        final otherUserEmail = roomJson['user1_email'] == userEmail
+            ? roomJson['user2_email']
+            : roomJson['user1_email'];
 
         return ChatRoom(
           id: roomJson['id'],
@@ -271,8 +273,8 @@ class ChatService {
           user2Email: roomJson['user2_email'],
           lastMessage: roomJson['last_message'],
           lastMessageTimestamp: roomJson['last_message_timestamp'] != null
-            ? DateTime.parse(roomJson['last_message_timestamp'])
-            : null,
+              ? DateTime.parse(roomJson['last_message_timestamp'])
+              : null,
         );
       }).toList();
     } catch (e) {
@@ -289,7 +291,7 @@ class ChatService {
           .select('name, family_name, email, description, profile_image_url')
           .eq('email', email)
           .single();
-      
+
       return {
         'full_name': '${response['name']} ${response['family_name']}',
         'email': response['email'],
@@ -303,7 +305,8 @@ class ChatService {
   }
 
   // Get detailed chat rooms for a user with user details
-  Future<List<Map<String, dynamic>>> getUserChatRoomsWithDetails(String userEmail) async {
+  Future<List<Map<String, dynamic>>> getUserChatRoomsWithDetails(
+      String userEmail) async {
     try {
       // First, get the chat rooms
       final rooms = await _supabase
@@ -317,9 +320,9 @@ class ChatService {
       for (var room in rooms) {
         try {
           // Determine the other user's email
-          final otherUserEmail = room['user1_email'] == userEmail 
-            ? room['user2_email'] 
-            : room['user1_email'];
+          final otherUserEmail = room['user1_email'] == userEmail
+              ? room['user2_email']
+              : room['user1_email'];
 
           // Skip if no other user email
           if (otherUserEmail == null) continue;
@@ -332,8 +335,8 @@ class ChatService {
               'chat_room_id': room['id'],
               'last_message': room['last_message'] ?? '',
               'last_message_timestamp': room['last_message_timestamp'] != null
-                ? DateTime.parse(room['last_message_timestamp'])
-                : null,
+                  ? DateTime.parse(room['last_message_timestamp'])
+                  : null,
               'other_user': otherUserDetails,
               'user1_email': room['user1_email'],
               'user2_email': room['user2_email'],
@@ -350,30 +353,54 @@ class ChatService {
       return [];
     }
   }
-  
- 
 
   // Search users to start a chat
-  Future<List<Map<String, dynamic>>> searchUsers(String query, String? currentUserEmail) async {
+  Future<List<Map<String, dynamic>>> searchUsers(
+      String query, String? currentUserEmail) async {
     try {
       // Search by name, family name, or email
       final response = await _supabase
           .from('user')
           .select('name, family_name, email, description, profile_image_url')
-          .or(
-            'name.ilike.%$query%, family_name.ilike.%$query%, email.ilike.%$query%'
-          )
+          .or('name.ilike.%$query%, family_name.ilike.%$query%, email.ilike.%$query%')
           .neq('email', currentUserEmail ?? '');
 
-      return response.map<Map<String, dynamic>>((user) => {
-        'full_name': '${user['name']} ${user['family_name']}',
-        'email': user['email'],
-        'description': user['description'] ?? '',
-        'profile_image_url': user['profile_image_url'] ?? '',
-      }).toList();
+      return response
+          .map<Map<String, dynamic>>((user) => {
+                'full_name': '${user['name']} ${user['family_name']}',
+                'email': user['email'],
+                'description': user['description'] ?? '',
+                'profile_image_url': user['profile_image_url'] ?? '',
+              })
+          .toList();
     } catch (e) {
       print('Error searching users: $e');
       return [];
+    }
+  }
+
+  // Add these methods to your ChatService class
+
+  Future<bool> deleteNotification(String notificationId) async {
+    try {
+      await _supabase.from('notifications').delete().eq('id', notificationId);
+      return true;
+    } catch (e) {
+      print(e);
+      return false;
+    }
+  }
+
+  Future<bool> deleteAllNotifications(String userEmail) async {
+    try {
+      await _supabase
+          .from('notifications')
+          .delete()
+          .eq('recipient_email', userEmail);
+      return true;
+    } catch (e) {
+      print(e);
+      return false;
     }
   }
 }

@@ -12,6 +12,8 @@ class BusinessService {
       final businessMap = business.toJson();
       businessMap.remove('id'); // Remove ID for auto-increment
       businessMap.remove('created_at'); // Remove created_at for auto-generation
+      
+      // The category field will be automatically included from the toJson() method
 
       final response = await _supabase
           .from('business')
@@ -27,6 +29,7 @@ class BusinessService {
     }
   }
 
+  // Rest of the code remains unchanged
   Future<String> uploadBusinessProfileImage(Uint8List imageBytes, String fileName) async {
     try {
       // Validate image size

@@ -16,7 +16,8 @@ class BusinessModel with _$BusinessModel {
     required double longitude,
     @JsonKey(name: 'user_email') required String userEmail,
     @JsonKey(name: 'created_at') DateTime? createdAt,
-    @Default(false) bool isVerified,
+    @JsonKey(name: 'is_verified') @Default(false) bool isVerified,
+    String? category, // Added category field
   }) = _BusinessModel;
 
   factory BusinessModel.fromJson(Map<String, dynamic> json) =>
@@ -30,8 +31,8 @@ class BusinessModel with _$BusinessModel {
     required double latitude,
     required double longitude,
     required String userEmail,
-    bool isVerified =
-        false, // Changed from required to optional with default value
+    bool isVerified = false,
+    String? category, // Added category parameter
   }) =>
       BusinessModel(
         id: 0, // Placeholder, will be replaced by database
@@ -42,5 +43,6 @@ class BusinessModel with _$BusinessModel {
         longitude: longitude,
         userEmail: userEmail,
         isVerified: isVerified,
+        category: category, // Added category
       );
 }

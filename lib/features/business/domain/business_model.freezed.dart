@@ -34,7 +34,9 @@ mixin _$BusinessModel {
   String get userEmail => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime? get createdAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_verified')
   bool get isVerified => throw _privateConstructorUsedError;
+  String? get category => throw _privateConstructorUsedError;
 
   /// Serializes this BusinessModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -61,7 +63,8 @@ abstract class $BusinessModelCopyWith<$Res> {
       double longitude,
       @JsonKey(name: 'user_email') String userEmail,
       @JsonKey(name: 'created_at') DateTime? createdAt,
-      bool isVerified});
+      @JsonKey(name: 'is_verified') bool isVerified,
+      String? category});
 }
 
 /// @nodoc
@@ -88,6 +91,7 @@ class _$BusinessModelCopyWithImpl<$Res, $Val extends BusinessModel>
     Object? userEmail = null,
     Object? createdAt = freezed,
     Object? isVerified = null,
+    Object? category = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -126,6 +130,10 @@ class _$BusinessModelCopyWithImpl<$Res, $Val extends BusinessModel>
           ? _value.isVerified
           : isVerified // ignore: cast_nullable_to_non_nullable
               as bool,
+      category: freezed == category
+          ? _value.category
+          : category // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -147,7 +155,8 @@ abstract class _$$BusinessModelImplCopyWith<$Res>
       double longitude,
       @JsonKey(name: 'user_email') String userEmail,
       @JsonKey(name: 'created_at') DateTime? createdAt,
-      bool isVerified});
+      @JsonKey(name: 'is_verified') bool isVerified,
+      String? category});
 }
 
 /// @nodoc
@@ -172,6 +181,7 @@ class __$$BusinessModelImplCopyWithImpl<$Res>
     Object? userEmail = null,
     Object? createdAt = freezed,
     Object? isVerified = null,
+    Object? category = freezed,
   }) {
     return _then(_$BusinessModelImpl(
       id: null == id
@@ -210,6 +220,10 @@ class __$$BusinessModelImplCopyWithImpl<$Res>
           ? _value.isVerified
           : isVerified // ignore: cast_nullable_to_non_nullable
               as bool,
+      category: freezed == category
+          ? _value.category
+          : category // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -228,7 +242,8 @@ class _$BusinessModelImpl
       required this.longitude,
       @JsonKey(name: 'user_email') required this.userEmail,
       @JsonKey(name: 'created_at') this.createdAt,
-      this.isVerified = false});
+      @JsonKey(name: 'is_verified') this.isVerified = false,
+      this.category});
 
   factory _$BusinessModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$BusinessModelImplFromJson(json);
@@ -256,12 +271,14 @@ class _$BusinessModelImpl
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
   @override
-  @JsonKey()
+  @JsonKey(name: 'is_verified')
   final bool isVerified;
+  @override
+  final String? category;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'BusinessModel(id: $id, businessName: $businessName, email: $email, imageUrl: $imageUrl, latitude: $latitude, longitude: $longitude, userEmail: $userEmail, createdAt: $createdAt, isVerified: $isVerified)';
+    return 'BusinessModel(id: $id, businessName: $businessName, email: $email, imageUrl: $imageUrl, latitude: $latitude, longitude: $longitude, userEmail: $userEmail, createdAt: $createdAt, isVerified: $isVerified, category: $category)';
   }
 
   @override
@@ -277,7 +294,8 @@ class _$BusinessModelImpl
       ..add(DiagnosticsProperty('longitude', longitude))
       ..add(DiagnosticsProperty('userEmail', userEmail))
       ..add(DiagnosticsProperty('createdAt', createdAt))
-      ..add(DiagnosticsProperty('isVerified', isVerified));
+      ..add(DiagnosticsProperty('isVerified', isVerified))
+      ..add(DiagnosticsProperty('category', category));
   }
 
   @override
@@ -300,13 +318,25 @@ class _$BusinessModelImpl
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.isVerified, isVerified) ||
-                other.isVerified == isVerified));
+                other.isVerified == isVerified) &&
+            (identical(other.category, category) ||
+                other.category == category));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, businessName, email,
-      imageUrl, latitude, longitude, userEmail, createdAt, isVerified);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      businessName,
+      email,
+      imageUrl,
+      latitude,
+      longitude,
+      userEmail,
+      createdAt,
+      isVerified,
+      category);
 
   /// Create a copy of BusinessModel
   /// with the given fields replaced by the non-null parameter values.
@@ -334,7 +364,8 @@ abstract class _BusinessModel implements BusinessModel {
       required final double longitude,
       @JsonKey(name: 'user_email') required final String userEmail,
       @JsonKey(name: 'created_at') final DateTime? createdAt,
-      final bool isVerified}) = _$BusinessModelImpl;
+      @JsonKey(name: 'is_verified') final bool isVerified,
+      final String? category}) = _$BusinessModelImpl;
 
   factory _BusinessModel.fromJson(Map<String, dynamic> json) =
       _$BusinessModelImpl.fromJson;
@@ -361,7 +392,10 @@ abstract class _BusinessModel implements BusinessModel {
   @JsonKey(name: 'created_at')
   DateTime? get createdAt;
   @override
+  @JsonKey(name: 'is_verified')
   bool get isVerified;
+  @override
+  String? get category;
 
   /// Create a copy of BusinessModel
   /// with the given fields replaced by the non-null parameter values.
