@@ -4,17 +4,14 @@ import '../domain/location_model.dart';
 import 'map_service.dart';
 import 'directions_service.dart';
 
-// Provider for the MapService
 final mapServiceProvider = Provider<MapService>((ref) {
   return MapService();
 });
 
-// Provider for the DirectionsService
 final directionsServiceProvider = Provider<DirectionsService>((ref) {
   return DirectionsService();
 });
 
-// State class for the map
 class MapState {
   final LocationModel? currentLocation;
   final LocationModel? selectedLocation;
@@ -47,13 +44,11 @@ class MapState {
   }
 }
 
-// Notifier for the map state
 class MapNotifier extends StateNotifier<MapState> {
   final MapService _mapService;
   final DirectionsService _directionsService;
 
   MapNotifier(this._mapService, this._directionsService) : super(MapState());
-  // Initialize the map with current location
   Future<void> initializeMap() async {
     try {
       state = state.copyWith(isLoading: true, error: null);
@@ -80,7 +75,6 @@ class MapNotifier extends StateNotifier<MapState> {
     }
   }
 
-  // Handle tap on map
   Future<void> onMapTap(LatLng tappedPoint) async {
     if (state.currentLocation == null) return;
     state = state.copyWith(isLoading: true, error: null);
@@ -112,7 +106,6 @@ class MapNotifier extends StateNotifier<MapState> {
     }
   }
 
-  // Refresh current location
   Future<void> refreshLocation() async {
     try {
       state = state.copyWith(isLoading: true, error: null);
@@ -127,7 +120,6 @@ class MapNotifier extends StateNotifier<MapState> {
         return;
       }
 
-      // If there's a selected location, recalculate distance and route
       LocationModel? updatedSelectedLocation;
       List<LatLng>? updatedRoutePoints;
 
@@ -141,7 +133,6 @@ class MapNotifier extends StateNotifier<MapState> {
           distance: distance,
         );
 
-        // Update route
         updatedRoutePoints = await _directionsService.getRouteCoordinates(
           currentLocation.position,
           state.selectedLocation!.position,
@@ -163,7 +154,6 @@ class MapNotifier extends StateNotifier<MapState> {
   }
 }
 
-// Provider for the map state
 final mapProvider = StateNotifierProvider<MapNotifier, MapState>((ref) {
   final mapService = ref.watch(mapServiceProvider);
   final directionsService = ref.watch(directionsServiceProvider);

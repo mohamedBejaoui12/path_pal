@@ -7,11 +7,9 @@ class ChatService {
 
   ChatService(this._supabase);
 
-  // Create or get existing chat room between two users
   Future<ChatRoom> createOrGetChatRoom(
       String currentUserEmail, String otherUserEmail) async {
     try {
-      // Check if chat room already exists
       final existingRoomResponse = await _supabase
           .from('chat_rooms')
           .select()
@@ -33,7 +31,6 @@ class ChatService {
         );
       }
 
-      // Create new chat room
       final newRoom = await _supabase
           .from('chat_rooms')
           .insert({
@@ -56,7 +53,6 @@ class ChatService {
     }
   }
 
-  // Send a message in a chat room
   Future<ChatMessage?> sendMessage(
       String chatRoomId, String senderEmail, String message) async {
     try {
@@ -72,16 +68,13 @@ class ChatService {
           .select()
           .single();
 
-      // Update the last message in the chat room
       await _supabase.from('chat_rooms').update({
         'last_message': message,
         'last_message_timestamp': DateTime.now().toIso8601String(),
       }).eq('id', chatRoomId);
 
-      // Create notification for the recipient
       await _createNotification(chatRoomId, senderEmail, message);
 
-      // Convert the response to a ChatMessage
       return ChatMessage(
         id: messageResponse['id'],
         chatRoomId: chatRoomId,
@@ -95,23 +88,19 @@ class ChatService {
     }
   }
 
-  // Create notification for the recipient
   Future<void> _createNotification(
       String chatRoomId, String senderEmail, String message) async {
     try {
-      // Get the chat room to determine the recipient
       final chatRoom = await _supabase
           .from('chat_rooms')
           .select('user1_email, user2_email')
           .eq('id', chatRoomId)
           .single();
 
-      // Determine the recipient (the other user)
       final recipientEmail = chatRoom['user1_email'] == senderEmail
           ? chatRoom['user2_email']
           : chatRoom['user1_email'];
 
-      // Create the notification
       await _supabase.from('notifications').insert({
         'recipient_email': recipientEmail,
         'sender_email': senderEmail,
@@ -124,7 +113,6 @@ class ChatService {
     }
   }
 
-  // Get notifications for a user
   Future<List<Map<String, dynamic>>> getUserNotifications(
       String userEmail) async {
     try {
@@ -134,12 +122,10 @@ class ChatService {
           .eq('recipient_email', userEmail)
           .order('created_at', ascending: false);
 
-      // Process notifications to include sender details
       final processedNotifications = <Map<String, dynamic>>[];
 
       for (var notification in notifications) {
         try {
-          // Get sender details
           final senderDetails =
               await getUserDetailsByEmail(notification['sender_email']);
 
@@ -165,7 +151,6 @@ class ChatService {
     }
   }
 
-  // Mark notification as read
   Future<bool> markNotificationAsRead(String notificationId) async {
     try {
       await _supabase
@@ -178,7 +163,6 @@ class ChatService {
     }
   }
 
-  // Mark all notifications as read for a user
   Future<bool> markAllNotificationsAsRead(String userEmail) async {
     try {
       await _supabase
@@ -191,7 +175,6 @@ class ChatService {
     }
   }
 
-  // Get unread notification count
   Future<int> getUnreadNotificationCount(String userEmail) async {
     try {
       final response = await _supabase
@@ -200,7 +183,6 @@ class ChatService {
           .eq('recipient_email', userEmail)
           .eq('is_read', false);
 
-      // Return the length of the response list
       return response.length;
     } catch (e) {
       print('Error getting unread notification count: $e');
@@ -208,14 +190,12 @@ class ChatService {
     }
   }
 
-  // Stream of unread notification count
   Stream<int> watchUnreadNotificationCount(String userEmail) {
     return _supabase
         .from('notifications')
         .stream(primaryKey: ['id'])
         .asBroadcastStream()
         .map((data) {
-          // Filter the data in Dart after receiving it
           final filteredData = data
               .where((item) =>
                   item['recipient_email'] == userEmail &&
@@ -225,18 +205,15 @@ class ChatService {
         });
   }
 
-  // Get messages for a specific chat room
   Stream<List<ChatMessage>> watchChatMessages(String chatRoomId) {
     return _supabase
         .from('chat_messages')
         .stream(primaryKey: ['id'])
         .asBroadcastStream()
         .map((data) {
-          // Filter the data in Dart after receiving it
           final filteredData =
               data.where((item) => item['chat_room_id'] == chatRoomId).toList();
 
-          // Sort the data by timestamp
           filteredData.sort((a, b) => DateTime.parse(a['timestamp'])
               .compareTo(DateTime.parse(b['timestamp'])));
 

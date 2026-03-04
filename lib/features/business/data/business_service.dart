@@ -8,12 +8,11 @@ class BusinessService {
 
   Future<BusinessModel> createBusiness(BusinessModel business) async {
     try {
-      // Remove the 'id' from toJson since it's auto-generated
       final businessMap = business.toJson();
-      businessMap.remove('id'); // Remove ID for auto-increment
-      businessMap.remove('created_at'); // Remove created_at for auto-generation
+      businessMap.remove('id'); //  auto-increment
+      businessMap.remove('created_at'); //  auto-generation
       
-      // The category field will be automatically included from the toJson() method
+      
 
       final response = await _supabase
           .from('business')
@@ -21,7 +20,6 @@ class BusinessService {
           .select()
           .single();
       
-      // Return the full business model with the newly generated ID
       return BusinessModel.fromJson(response);
     } catch (e) {
       debugPrint('Error creating business: $e');
@@ -29,7 +27,6 @@ class BusinessService {
     }
   }
 
-  // Rest of the code remains unchanged
   Future<String> uploadBusinessProfileImage(Uint8List imageBytes, String fileName) async {
     try {
       // Validate image size
@@ -72,7 +69,6 @@ class BusinessService {
     }
   }
 
-  // Helper method to get content type
   String _getContentType(String fileName) {
     final extension = path.extension(fileName).toLowerCase();
     switch (extension) {

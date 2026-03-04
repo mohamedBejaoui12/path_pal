@@ -56,7 +56,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
           final userDetails = data['user_details'];
           final userPosts = data['user_posts'] as List<PostModel>;
 
-          return SingleChildScrollView(
+          return SingleChildScrollView( 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

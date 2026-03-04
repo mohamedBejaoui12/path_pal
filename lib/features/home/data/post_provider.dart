@@ -52,14 +52,11 @@ class PostListNotifier extends StateNotifier<PostListState> {
       }
 
       // Update the query to include is_verified field
-      final response = await _supabase
-          .from('user_post')
-          .select('''
+      final response = await _supabase.from('user_post').select('''
         *,
         user:user_email(name, family_name, profile_image_url, is_verified),
         post_likes(*)
-      ''')
-          .order('created_at', ascending: false);
+      ''').order('created_at', ascending: false);
 
       final posts = (response as List).map((json) {
         // Safely extract user data
@@ -71,15 +68,14 @@ class PostListNotifier extends StateNotifier<PostListState> {
         json['user_name'] = userData['name'] ?? 'Anonymous';
         json['user_profile_image'] = userData['profile_image_url'] ??
             _generateDefaultProfileImage(userData['name'] ?? 'A');
-            
+
         // Add verification status to the JSON
         json['is_user_verified'] = userData['is_verified'] == true;
 
         // Explicitly check likes for current user
         final likes = json['post_likes'] as List? ?? [];
-        final isLikedByCurrentUser = likes.any(
-          (like) => like['user_email'] == userEmail
-        );
+        final isLikedByCurrentUser =
+            likes.any((like) => like['user_email'] == userEmail);
 
         // Update JSON with explicit like information
         json['is_liked_by_current_user'] = isLikedByCurrentUser;
@@ -166,25 +162,25 @@ class PostListNotifier extends StateNotifier<PostListState> {
               .eq('user_email', userEmail);
         } else {
           // Like: add a new like
-          await _supabase
-              .from('post_likes')
-              .insert({
-                'post_id': postId,
-                'user_email': userEmail,
-              });
+          await _supabase.from('post_likes').insert({
+            'post_id': postId,
+            'user_email': userEmail,
+          });
         }
       } on PostgrestException catch (postgrestError) {
         // Handle Supabase-specific errors
-        debugPrint('Supabase Error during like toggle: ${postgrestError.message}');
-        throw Exception('Failed to update like status: ${postgrestError.message}');
+        debugPrint(
+            'Supabase Error during like toggle: ${postgrestError.message}');
+        throw Exception(
+            'Failed to update like status: ${postgrestError.message}');
       }
 
       // Update the post locally with optimistic update
       currentPosts[postIndex] = currentPost.copyWith(
         isLikedByCurrentUser: !isCurrentlyLiked,
-        likesCount: isCurrentlyLiked 
-          ? currentPost.likesCount - 1 
-          : currentPost.likesCount + 1,
+        likesCount: isCurrentlyLiked
+            ? currentPost.likesCount - 1
+            : currentPost.likesCount + 1,
       );
 
       // Update the state with the modified posts
@@ -217,19 +213,14 @@ class PostListNotifier extends StateNotifier<PostListState> {
       }
 
       // Delete related likes first to avoid foreign key constraints
-      await _supabase
-          .from('post_likes')
-          .delete()
-          .eq('post_id', postId);
+      await _supabase.from('post_likes').delete().eq('post_id', postId);
 
       // Delete the post
-      await _supabase
-          .from('user_post')
-          .delete()
-          .eq('id', postId);
+      await _supabase.from('user_post').delete().eq('id', postId);
 
       // Remove the post from local state
-      final updatedPosts = state.posts.where((post) => post.id != postId).toList();
+      final updatedPosts =
+          state.posts.where((post) => post.id != postId).toList();
       state = state.copyWith(posts: updatedPosts);
 
       // Call the optional callback if provided
@@ -271,7 +262,7 @@ class PostListNotifier extends StateNotifier<PostListState> {
       final updateData = <String, dynamic>{};
       if (title != null) updateData['title'] = title;
       if (description != null) updateData['description'] = description;
-      
+
       // Handle local file upload
       if (imageUrl != null) {
         final file = File(imageUrl);
@@ -283,13 +274,12 @@ class PostListNotifier extends StateNotifier<PostListState> {
           }
 
           // Generate unique filename
-          final fileName = '${userEmail}_post_${postId}_${DateTime.now().millisecondsSinceEpoch}${path_util.extension(imageUrl)}';
+          final fileName =
+              '${userEmail}_post_${postId}_${DateTime.now().millisecondsSinceEpoch}${path_util.extension(imageUrl)}';
 
           // Upload to Supabase storage
-          await _supabase.storage
-              .from('post_images')
-              .upload(
-                fileName, 
+          await _supabase.storage.from('post_images').upload(
+                fileName,
                 file,
                 fileOptions: FileOptions(
                   upsert: true,
@@ -298,24 +288,20 @@ class PostListNotifier extends StateNotifier<PostListState> {
               );
 
           // Get public URL
-          final uploadedImageUrl = _supabase.storage
-              .from('post_images')
-              .getPublicUrl(fileName);
-          
+          final uploadedImageUrl =
+              _supabase.storage.from('post_images').getPublicUrl(fileName);
+
           updateData['image_link'] = uploadedImageUrl;
         } else if (imageUrl.startsWith('http')) {
           // If it's already a URL, use it directly
           updateData['image_link'] = imageUrl;
         }
       }
-      
+
       if (interests != null) updateData['interests'] = interests;
 
       // Update the post in Supabase
-      await _supabase
-          .from('user_post')
-          .update(updateData)
-          .eq('id', postId);
+      await _supabase.from('user_post').update(updateData).eq('id', postId);
 
       // Update the post in local state
       final updatedPosts = state.posts.map((post) {
@@ -342,6 +328,7 @@ class PostListNotifier extends StateNotifier<PostListState> {
   }
 }
 
-final postListProvider = StateNotifierProvider<PostListNotifier, PostListState>((ref) {
+final postListProvider =
+    StateNotifierProvider<PostListNotifier, PostListState>((ref) {
   return PostListNotifier(ref);
 });

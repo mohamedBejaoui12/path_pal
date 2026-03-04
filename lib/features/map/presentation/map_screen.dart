@@ -30,16 +30,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize map with current location and fetch user profile
     Future.microtask(() async {
       await _checkLocationPermission();
       await _fetchUserProfile();
       ref.read(mapProvider.notifier).initializeMap();
-      // Fetch all businesses
       ref.read(businessListProvider.notifier).fetchAllBusinesses();
     });
 
-    // Add listener for real-time search
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -50,7 +47,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     super.dispose();
   }
 
-  // Debounce mechanism for search
   DateTime _lastSearchTime = DateTime.now();
   void _onSearchChanged() {
     final now = DateTime.now();
@@ -64,7 +60,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-  // Fetch user profile to get the profile image URL
   Future<void> _fetchUserProfile() async {
     try {
       final user = _supabase.auth.currentUser;
@@ -86,7 +81,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-  // Search for places
   Future<void> _searchPlace(String query) async {
     if (query.isEmpty) return;
 
@@ -95,7 +89,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     });
 
     try {
-      // Call the business search instead of the mock implementation
       await _searchBusiness(query);
     } catch (e) {
       if (context.mounted) {
@@ -103,7 +96,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           SnackBar(
             content: Text('Error searching for "$query"'),
             backgroundColor: Colors.red,
-          ),
+          )
         );
       }
     } finally {
@@ -226,13 +219,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final currentPos = mapState.currentLocation!.position;
     final destPos = mapState.selectedLocation!.position;
 
-    // Directly launch Google Maps without showing options dialog
     final url =
         'https://www.google.com/maps/dir/?api=1&origin=${currentPos.latitude},${currentPos.longitude}&destination=${destPos.latitude},${destPos.longitude}&travelmode=driving';
     await _launchUrl(url);
   }
 
-  // Add a floating action button to get directions to selected location
   Widget _buildDirectionsButton() {
     final mapState = ref.watch(mapProvider);
 

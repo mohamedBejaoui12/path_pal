@@ -19,7 +19,7 @@ class BusinessPostModel with _$BusinessPostModel {
     @Default(0) int likesCount,
     @Default(0) int commentsCount,
     @Default(false) bool isLikedByCurrentUser,
-    @Default(false) bool isVerified, // Add this field for business verification
+    @Default(false) bool isVerified, 
   }) = _BusinessPostModel;
 
   factory BusinessPostModel.fromJson(Map<String, dynamic> json) =>

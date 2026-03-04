@@ -17,7 +17,7 @@ class UserDetailsModel with _$UserDetailsModel {
     required String cityOfBirth,
     required String phoneNumber,
     required Gender gender,
-    @Default(false) bool isVerified, // This field should be present
+    @Default(false) bool isVerified, 
   }) = _UserDetailsModel;
 
   factory UserDetailsModel.fromJson(Map<String, dynamic> json) =>

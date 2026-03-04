@@ -19,20 +19,17 @@ class BusinessRateService {
       // Process each rating to include user details
       final List<BusinessRateModel> ratings = [];
       for (var ratingJson in response) {
-        // Get user details for each rating
         final userEmail = ratingJson['user_email'];
         final userResponse = await _supabase
-            .from('user')  // Changed from 'profiles' to 'user'
+            .from('user')  
             .select('name, family_name, profile_image_url')
             .eq('email', userEmail)
             .single();
 
-        // Create a full name from name and family name
         final userName = userResponse != null
             ? '${userResponse['name']} ${userResponse['family_name']}'
             : 'Unknown User';
 
-        // Add the rating with user details
         ratings.add(BusinessRateModel.fromJson({
           ...ratingJson,
           'user_name': userName,
@@ -68,7 +65,6 @@ class BusinessRateService {
     }
   }
 
-  // Add or update a rating
   Future<BusinessRateModel> rateBusinesss({
     required int businessId,
     required String userEmail,
@@ -76,7 +72,6 @@ class BusinessRateService {
     String? comment,
   }) async {
     try {
-      // Validate inputs
       if (businessId <= 0) {
         throw Exception('Invalid business ID');
       }
@@ -125,7 +120,7 @@ class BusinessRateService {
 
       // Get user details
       final userResponse = await _supabase
-          .from('user')  // Changed from 'profiles' to 'user'
+          .from('user') 
           .select('name, family_name, profile_image_url')
           .eq('email', userEmail)
           .single();
@@ -135,7 +130,7 @@ class BusinessRateService {
           ? '${userResponse['name']} ${userResponse['family_name']}'
           : 'Unknown User';
 
-      // Return the rating with user details
+     
       return BusinessRateModel.fromJson({
         ...response,
         'user_name': userName,
@@ -147,13 +142,12 @@ class BusinessRateService {
     }
   }
 
-  // Delete a rating
+
   Future<void> deleteRating({
     required int ratingId,
     required String userEmail,
   }) async {
     try {
-      // Validate inputs
       if (ratingId <= 0) {
         throw Exception('Invalid rating ID');
       }
@@ -161,7 +155,6 @@ class BusinessRateService {
         throw Exception('User email cannot be empty');
       }
 
-      // Verify the rating belongs to the user before deleting
       final existingRating = await _supabase
           .from('business_rates')
           .select()
@@ -174,7 +167,7 @@ class BusinessRateService {
             'Rating not found or you do not have permission to delete');
       }
 
-      // Delete the rating
+ 
       await _supabase.from('business_rates').delete().eq('id', ratingId);
     } catch (e) {
       debugPrint('Error deleting rating: $e');

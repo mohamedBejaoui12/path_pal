@@ -27,11 +27,11 @@ class BusinessProfileService {
     try {
       final response = await _supabase
           .from('business')
-          .select('*')  // Make sure to select all fields including is_verified
+          .select('*')  
           .eq('id', businessId)
           .single();
       
-      // Add debug print to check if is_verified is in the response
+    
       debugPrint('Business details response: $response');
       
       return BusinessModel(
@@ -45,7 +45,7 @@ class BusinessProfileService {
         createdAt: response['created_at'] != null
             ? DateTime.parse(response['created_at'])
             : null,
-        isVerified: response['is_verified'] == true,  // Explicitly check for true
+        isVerified: response['is_verified'] == true,  
       );
     } catch (e) {
       debugPrint('Error fetching business details: $e');
@@ -64,7 +64,7 @@ class BusinessProfileService {
       return response.map<BusinessModel>((json) => BusinessModel.fromJson(json)).toList();
     } catch (e) {
       debugPrint('Error fetching businesses for user: $e');
-      return []; // Return empty list if no businesses found or error occurs
+      return []; 
     }
   }
 
@@ -114,20 +114,20 @@ class BusinessProfileService {
 
   Future<String?> uploadBusinessImage(File imageFile, int businessId) async {
     try {
-      // Validate file
+     
       if (!imageFile.existsSync()) {
         debugPrint('Error: Image file does not exist');
         return null;
       }
 
-      // Check file size
+      
       final fileSize = imageFile.lengthSync();
       if (fileSize > 10 * 1024 * 1024) { // 10MB limit
         debugPrint('Error: Image file too large (>10MB)');
         return null;
       }
 
-      // Generate a unique filename with timestamp
+     
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = 'business_${businessId}_$timestamp${path.extension(imageFile.path)}';
       final filePath = 'buisness_profile_image/$fileName';
@@ -135,7 +135,7 @@ class BusinessProfileService {
       debugPrint('Uploading image: $filePath');
       debugPrint('File size: $fileSize bytes');
 
-      // Upload the file
+      
       final uploadResponse = await _supabase.storage
           .from('buisness_profile_image')
           .upload(
@@ -147,7 +147,7 @@ class BusinessProfileService {
             ),
           );
 
-      // Get public URL
+     
       final publicUrl = _supabase.storage
           .from('buisness_profile_image')
           .getPublicUrl(filePath);
@@ -162,13 +162,13 @@ class BusinessProfileService {
   }
 
   bool _validateImage(File imageFile) {
-    const maxSizeBytes = 10 * 1024 * 1024; // 10MB
+    const maxSizeBytes = 10 * 1024 * 1024; 
     const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
 
-    // Check file exists
+  
     if (!imageFile.existsSync()) return false;
 
-    // Check file size
+    
     final fileSize = imageFile.lengthSync();
     if (fileSize > maxSizeBytes) return false;
 

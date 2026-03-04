@@ -12,7 +12,6 @@ String _generateDefaultProfileImage(String name) {
   return 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random&color=fff&size=200';
 }
 
-// New State class for user profile posts
 class UserProfilePostsState {
   final List<PostModel> posts;
   final bool isLoading;
@@ -37,7 +36,6 @@ class UserProfilePostsState {
   }
 }
 
-// New Notifier for user profile posts
 class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
   final Ref ref;
   final String userEmail;
@@ -52,31 +50,23 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
     try {
       state = state.copyWith(isLoading: true);
 
-      // Get the current authenticated user's email
       final authState = ref.read(authProvider);
       final currentUserEmail = authState.user?.email;
 
-      // Fetch user details with is_verified field
       final userResponse = await _supabase
           .from('user')
           .select('*, is_verified')
           .eq('email', userEmail)
           .single();
 
-      // Check if is_verified exists and its value
       bool isUserVerified = false;
       if (userResponse.containsKey('is_verified')) {
         isUserVerified = userResponse['is_verified'] == true;
         debugPrint('User verified status: $isUserVerified');
       } else {
-        // For testing, set specific users as verified
-        if (userEmail == 'test@example.com' ||
-            userEmail == 'admin@example.com') {
-          isUserVerified = true;
-        }
+        debugPrint('User verified status not found in the database');
       }
 
-      // Fetch user posts with full user details and likes
       final postsResponse = await _supabase
           .from('user_post')
           .select('''
@@ -87,25 +77,20 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
           .eq('user_email', userEmail)
           .order('created_at', ascending: false);
 
-      // Convert posts to PostModel
       final posts = (postsResponse as List).map<PostModel>((json) {
-        // Safely extract user data
         final userData = (json['user'] is List && json['user'].isNotEmpty)
             ? json['user'][0]
             : {};
 
-        // Extract name safely
         final name = userData['name'] ?? userResponse['name'] ?? '';
         final familyName =
             userData['family_name'] ?? userResponse['family_name'] ?? '';
         final fullName = '$name $familyName'.trim();
 
-        // Get profile image URL with fallback
         final profileImageUrl = userData['profile_image_url'] ??
             userResponse['profile_image_url'] ??
             _generateDefaultProfileImage(fullName);
 
-        // Add verification status - prioritize user data from the user table
         bool postUserVerified = false;
         if (userData['is_verified'] == true) {
           postUserVerified = true;
@@ -116,12 +101,10 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
         json['is_user_verified'] = postUserVerified;
         debugPrint('Post user verified: $postUserVerified');
 
-        // Fetch post likes
         final postLikes = json['post_likes'] as List? ?? [];
         final isLikedByCurrentUser =
             postLikes.any((like) => like['user_email'] == currentUserEmail);
 
-        // Add current user's email to the JSON for PostModel parsing
         json['current_user_email'] = currentUserEmail;
 
         return PostModel.fromJson(json);
@@ -140,7 +123,6 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
     }
   }
 
-  // Add a method to toggle like for a specific post
   Future<void> toggleLike(int postId) async {
     try {
       final authState = ref.read(authProvider);
@@ -150,10 +132,8 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
         throw Exception('User not authenticated');
       }
 
-      // Create a copy of current posts to modify
       final currentPosts = [...state.posts];
 
-      // Find the index of the post to update
       final postIndex = currentPosts.indexWhere((post) => post.id == postId);
 
       if (postIndex == -1) {
@@ -162,12 +142,9 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
 
       final currentPost = currentPosts[postIndex];
 
-      // Determine if the post is currently liked
       final isCurrentlyLiked = currentPost.isLikedByCurrentUser;
 
-      // Perform like/unlike operation
       try {
-        // Try to find existing like
         final existingLikeResponse = await _supabase
             .from('post_likes')
             .select('id')
@@ -176,14 +153,12 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
             .maybeSingle();
 
         if (existingLikeResponse != null) {
-          // Unlike: remove the like
           await _supabase
               .from('post_likes')
               .delete()
               .eq('post_id', postId)
               .eq('user_email', userEmail);
         } else {
-          // Like: add a new like
           await _supabase.from('post_likes').insert({
             'post_id': postId,
             'user_email': userEmail,
@@ -196,7 +171,6 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
             'Failed to update like status: ${postgrestError.message}');
       }
 
-      // Update the post locally with optimistic update
       currentPosts[postIndex] = currentPost.copyWith(
         isLikedByCurrentUser: !isCurrentlyLiked,
         likesCount: isCurrentlyLiked
@@ -204,7 +178,6 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
             : currentPost.likesCount + 1,
       );
 
-      // Update the state with the modified posts
       state = state.copyWith(posts: currentPosts);
     } catch (e) {
       debugPrint('Comprehensive Error toggling like: $e');
@@ -213,44 +186,34 @@ class UserProfilePostsNotifier extends StateNotifier<UserProfilePostsState> {
   }
 }
 
-// Provider for user profile posts
 final userProfilePostsProvider = StateNotifierProvider.family<
     UserProfilePostsNotifier, UserProfilePostsState, String>((ref, userEmail) {
   return UserProfilePostsNotifier(ref, userEmail);
 });
 
-// Update the existing userProfileProvider to use the new posts provider
-// Update the userProfileProvider to properly handle the verification status
 final userProfileProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, String>((ref, userEmail) async {
   final supabase = Supabase.instance.client;
 
   try {
-    // Fetch user details with explicit is_verified field
     final userResponse = await supabase
         .from('user')
         .select('*, is_verified')
         .eq('email', userEmail)
         .single();
 
-    // Debug print to check the raw data
     debugPrint('User data from DB: $userResponse');
 
-    // Check if is_verified exists in the response
     bool isVerified = false;
     if (userResponse.containsKey('is_verified')) {
       isVerified = userResponse['is_verified'] == true;
       debugPrint('Is verified from DB: $isVerified');
     } else {
-      // If is_verified doesn't exist in the database, check if we need to add it
       debugPrint('is_verified field not found in user table');
 
-      // You might want to add this field to the database if it doesn't exist
-      // For testing purposes, let's set it to true for specific users
       if (userEmail == 'test@example.com' || userEmail == 'admin@example.com') {
         isVerified = true;
 
-        // Optionally update the database with the verified status
         try {
           await supabase
               .from('user')
@@ -262,11 +225,9 @@ final userProfileProvider = FutureProvider.autoDispose
       }
     }
 
-    // Fetch user posts using the posts provider
     final postsState = ref.watch(userProfilePostsProvider(userEmail));
     final posts = postsState.posts;
 
-    // Create UserDetailsModel with explicit verification status
     final userDetails = UserDetailsModel(
       name: userResponse['name'] ?? '',
       email: userResponse['email'] ?? '',
@@ -279,10 +240,9 @@ final userProfileProvider = FutureProvider.autoDispose
       cityOfBirth: userResponse['city_of_birth'] ?? '',
       phoneNumber: userResponse['phone_number'] ?? '',
       gender: userResponse['gender'] == 'female' ? Gender.female : Gender.male,
-      isVerified: isVerified, // Use our determined verification status
+      isVerified: isVerified,
     );
 
-    // Return both user details and posts
     return {
       'user_details': userDetails,
       'user_posts': posts,
@@ -313,7 +273,6 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
     userEmail = widget.userEmail;
   }
 
-  // Comprehensive like toggle method
   Future<void> _toggleLikeInProfile(int postId) async {
     try {
       final supabase = Supabase.instance.client;
@@ -330,7 +289,6 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
         return;
       }
 
-      // Check for existing like
       final existingLikeResponse = await supabase
           .from('post_likes')
           .select('id')
@@ -339,21 +297,18 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
           .maybeSingle();
 
       if (existingLikeResponse != null) {
-        // Unlike: remove the like
         await supabase
             .from('post_likes')
             .delete()
             .eq('post_id', postId)
             .eq('user_email', currentUserEmail);
       } else {
-        // Like: add a new like
         await supabase.from('post_likes').insert({
           'post_id': postId,
           'user_email': currentUserEmail,
         });
       }
 
-      // Force a complete refresh of the user profile
       ref.invalidate(userProfileProvider(userEmail));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -365,21 +320,25 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
     }
   }
 
-  // Comprehensive refresh method
   Future<void> _refreshProfile() async {
     try {
-      // Force a refresh of the user profile provider
       ref.invalidate(userProfileProvider(userEmail));
+      ref.invalidate(userProfilePostsProvider(userEmail));
 
-      // Wait for the provider to reload
+      await ref
+          .read(userProfilePostsProvider(userEmail).notifier)
+          .fetchUserPosts();
+
       await ref.read(userProfileProvider(userEmail).future);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to refresh profile: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to refresh profile: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -529,7 +488,6 @@ class _ProfileWidgetState extends ConsumerState<ProfileWidget> {
                     post: posts[index],
                     isProfileView: true,
                     onLikeToggle: () {
-                      // Implement like toggle for profile view
                       _toggleLikeInProfile(posts[index].id!);
                     },
                   );

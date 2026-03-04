@@ -6,7 +6,7 @@ import '../domain/message_model.dart';
 
 class ChatbotService {
   late final GenerativeModel _model;
-  ChatSession? _chatSession; // Remove 'late' keyword to allow null
+  ChatSession? _chatSession; 
 
   ChatbotService() {
     _initializeModel();
@@ -14,13 +14,11 @@ class ChatbotService {
 
   void _initializeModel() {
     try {
-      // Updated according to the latest documentation
       _model = GenerativeModel(
         model: GeminiConfig.modelName,
         apiKey: GeminiConfig.apiKey,
       );
 
-      // Don't call _initializeChat here, we'll do it lazily when needed
     } catch (e) {
       debugPrint('Error initializing Gemini model: $e');
       rethrow;
@@ -42,12 +40,10 @@ class ChatbotService {
 
   Future<ChatbotMessage> sendMessage(String message) async {
     try {
-      // Initialize chat session if it doesn't exist
       if (_chatSession == null) {
         await _initializeChat();
       }
 
-      // Ensure _chatSession is not null before using it
       if (_chatSession == null) {
         throw Exception('Failed to initialize chat session');
       }
@@ -56,7 +52,6 @@ class ChatbotService {
         Content.text(message),
       );
 
-      // Handle null response safely
       final responseText =
           response.text ?? 'Sorry, I couldn\'t generate a response.';
 
@@ -67,9 +62,19 @@ class ChatbotService {
       );
     } catch (e) {
       debugPrint('Error sending message to Gemini: $e');
+      
+      String errorMessage;
+      if (e.toString().contains('503') || e.toString().contains('UNAVAILABLE')) {
+        errorMessage = 'The AI service is currently unavailable. Please try again later.';
+      } else if (e.toString().contains('invalid')) {
+        errorMessage = 'The session has expired. Please restart the chat.';
+        _chatSession = null;
+      } else {
+        errorMessage = 'Sorry, I encountered an error. Please try again later.';
+      }
+      
       return ChatbotMessage(
-        text:
-            'Sorry, I encountered an error. Please try again later. Error: ${e.toString()}',
+        text: errorMessage,
         isUser: false,
         timestamp: DateTime.now(),
       );

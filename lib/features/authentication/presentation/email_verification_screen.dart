@@ -11,13 +11,16 @@ import '../providers/auth_provider.dart';
 class EmailVerificationScreen extends ConsumerStatefulWidget {
   final String email;
 
-  const EmailVerificationScreen({Key? key, required this.email}) : super(key: key);
+  const EmailVerificationScreen({Key? key, required this.email})
+      : super(key: key);
 
   @override
-  _EmailVerificationScreenState createState() => _EmailVerificationScreenState();
+  _EmailVerificationScreenState createState() =>
+      _EmailVerificationScreenState();
 }
 
-class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScreen> {
+class _EmailVerificationScreenState
+    extends ConsumerState<EmailVerificationScreen> {
   final TextEditingController _pinController = TextEditingController();
   String? _errorMessage;
   bool _isLoading = false;
@@ -38,9 +41,9 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
         const SnackBar(content: Text('OTP sent to your email')),
       );
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to send OTP: ${e.toString()}';
-      });
+      
+      print(
+          'Error sending OTP: $e'); 
     }
   }
 
@@ -61,11 +64,10 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
     });
 
     try {
-      // Verify OTP without changing to fully authenticated
       await ref.read(authProvider.notifier).verifyOtp(
-        email: widget.email,
-        token: _pinController.text,
-      );
+            email: widget.email,
+            token: _pinController.text,
+          );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -73,22 +75,16 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
           backgroundColor: Colors.green,
         ),
       );
-      // Explicitly navigate to user details and maintain email unverified state
       context.pushReplacement('/user-details', extra: widget.email);
-    } on AuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          backgroundColor: Colors.red,
-        ),
-      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('An unexpected error occurred: $e'),
+        const SnackBar(
+          content: Text('Verification failed. Please try again.'),
           backgroundColor: Colors.red,
         ),
       );
+      print(
+          'Verification error: $e'); // Keep for debugging but not visible to user
     } finally {
       setState(() {
         _isLoading = false;
@@ -180,7 +176,8 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                   decoration: BoxDecoration(
                     color: AppColors.backgroundColor,
                     borderRadius: const BorderRadius.only(
@@ -214,12 +211,15 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                           controller: _pinController,
                           defaultPinTheme: defaultPinTheme,
                           focusedPinTheme: defaultPinTheme.copyDecorationWith(
-                            border: Border.all(color: AppColors.primaryColor, width: 2),
+                            border: Border.all(
+                                color: AppColors.primaryColor, width: 2),
                           ),
                           errorPinTheme: defaultPinTheme.copyDecorationWith(
-                            border: Border.all(color: AppColors.errorColor, width: 2),
+                            border: Border.all(
+                                color: AppColors.errorColor, width: 2),
                           ),
-                          pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+                          pinputAutovalidateMode:
+                              PinputAutovalidateMode.onSubmit,
                           showCursor: true,
                           onCompleted: (_) => _verifyOtp(),
                         ),
@@ -234,7 +234,8 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.error_outline, color: AppColors.primaryColor),
+                                Icon(Icons.error_outline,
+                                    color: AppColors.primaryColor),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
@@ -260,7 +261,8 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               elevation: 3,
-                              shadowColor: AppColors.primaryColor.withOpacity(0.3),
+                              shadowColor:
+                                  AppColors.primaryColor.withOpacity(0.3),
                             ),
                             child: Text(
                               _isLoading ? 'Verifying...' : 'Verify',

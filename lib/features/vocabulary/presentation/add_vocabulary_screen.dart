@@ -16,8 +16,8 @@ class _AddVocabularyScreenState extends ConsumerState<AddVocabularyScreen> {
   final _originalWordController = TextEditingController();
   final _translationController = TextEditingController();
   final _notesController = TextEditingController();
-  String _languageFrom = 'en';
-  String _languageTo = 'fr';
+  String _languageFrom = 'ar';
+  String _languageTo = 'en';
   bool _isLoading = false;
 
   final List<Map<String, String>> _languages = [

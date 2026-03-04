@@ -20,37 +20,16 @@ class ChatbotFAB extends StatelessWidget {
               ),
             );
           },
-          child: const Icon(Icons.chat, color: Colors.white),
-        ),
-        
-        // Beta badge
-        Positioned(
-          right: 0,
-          top: 0,
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: Colors.amber,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Text(
-              'NEW',
-              style: TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
+          child: ClipOval(
+            child: Image.asset(
+              'assets/images/amSloma.png',
+              width: 36,
+              height: 36,
+              fit: BoxFit.cover,
             ),
           ),
         ),
-        
+
         // Animation overlay
         Positioned.fill(
           child: IgnorePointer(

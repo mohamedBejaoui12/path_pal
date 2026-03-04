@@ -44,13 +44,11 @@ class _InterestsSelectionScreenState extends ConsumerState<InterestsSelectionScr
         userId: widget.userId, 
         interestIds: _selectedInterestIds.toList()
       );
-
-      // Navigate to next screen or show success message
       context.go('/');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error saving interests: $e'),
+          content: Text('Error saving interests'),
           backgroundColor: Colors.red,
         ),
       );

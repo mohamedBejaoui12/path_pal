@@ -55,8 +55,8 @@ class VocabularyNotifier extends StateNotifier<AsyncValue<List<VocabularyModel>>
     required String originalWord,
     required String translation,
     String? notes,
-    String languageFrom = 'en',
-    String languageTo = 'fr',
+    String languageFrom = 'ar',
+    String languageTo = 'en',
   }) async {
     try {
       final newVocabulary = await _service.addVocabulary(

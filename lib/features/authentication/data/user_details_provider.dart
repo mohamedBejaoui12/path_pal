@@ -7,7 +7,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:pfe1/features/authentication/domain/user_details_model.dart';
 
-// State class for managing user details
 class UserDetailsState {
   final UserDetailsModel? userDetails;
   final bool isLoading;
@@ -32,14 +31,12 @@ class UserDetailsState {
   }
 }
 
-// User Details Notifier for managing user details state and operations
 class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
   final _supabase = Supabase.instance.client;
   final _imagePicker = ImagePicker();
 
   UserDetailsNotifier() : super(UserDetailsState());
 
-  // Fetch user details from Supabase
   Future<void> fetchUserDetails(String? email) async {
   state = state.copyWith(isLoading: true, error: null);
 
@@ -56,7 +53,6 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
 
     final userDetails = _validateAndParseUserDetails(response, email);
 
-    // Update the state with user details, including profile image URL
     state = state.copyWith(
       userDetails: userDetails,
       isLoading: false,
@@ -68,10 +64,8 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
   }
 }
 
-  // Update user details in Supabase
   Future<void> updateUserDetails(UserDetailsModel userDetails) async {
     try {
-      // Update user details in Supabase
       await _supabase
           .from('user')
           .update({
@@ -85,7 +79,6 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
       })
           .eq('email', userDetails.email);
 
-      // Update local state
       state = state.copyWith(userDetails: userDetails);
     } catch (e) {
       print('Error updating user details: $e');
@@ -93,10 +86,8 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
     }
   }
 
-  // Upload profile image
   Future<String?> uploadProfileImage(String email) async {
     try {
-      // Pick an image from the gallery
       final pickedFile = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1000,
@@ -105,19 +96,13 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
       );
 
       if (pickedFile == null) return null;
-
       final file = File(pickedFile.path);
-      
-      // Validate file size
       final fileSize = await file.length();
       if (fileSize > 5 * 1024 * 1024) {
         throw Exception('Image size exceeds 5MB limit');
       }
-
-      // Generate unique filename
       final fileName = '${email}_${DateTime.now().millisecondsSinceEpoch}${path.extension(pickedFile.path)}';
 
-      // Upload to Supabase storage
       await _supabase.storage
           .from('user_profile_images')
           .upload(
@@ -129,12 +114,10 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
             ),
           );
 
-      // Get public URL
       final imageUrl = _supabase.storage
           .from('user_profile_images')
           .getPublicUrl(fileName);
 
-      // Update user details with new image URL
       await _updateProfileImageUrl(email, imageUrl);
 
       return imageUrl;
@@ -144,16 +127,13 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
     }
   }
 
-  // Update profile image URL in user table
   Future<void> _updateProfileImageUrl(String email, String imageUrl) async {
     try {
-      // Update profile image URL in Supabase
       await _supabase
           .from('user')
           .update({'profile_image_url': imageUrl})
           .eq('email', email);
 
-      // Update local state with new profile image
       if (state.userDetails != null) {
         final updatedUserDetails = state.userDetails!.copyWith(profileImageUrl: imageUrl);
         state = state.copyWith(userDetails: updatedUserDetails);
@@ -164,7 +144,6 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
     }
   }
 
-  // Validate and parse user details from Supabase response
   UserDetailsModel _validateAndParseUserDetails(Map<String, dynamic> response, String email) {
     return UserDetailsModel(
       name: _parseStringValue(response['name']),
@@ -179,12 +158,10 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
     );
   }
 
-  // Helper method to parse string values
   String _parseStringValue(dynamic value, {String defaultValue = ''}) {
     return value?.toString() ?? defaultValue;
   }
 
-  // Helper method to parse date of birth
   DateTime _parseDateOfBirth(dynamic dobValue) {
     try {
       return dobValue != null ? DateTime.parse(dobValue.toString()) : DateTime.now();
@@ -194,13 +171,11 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
     }
   }
 
-  // Helper method to parse gender
   Gender _parseGender(dynamic genderValue) {
     final genderString = genderValue?.toString().toLowerCase();
     return genderString == 'female' ? Gender.female : Gender.male;
   }
 
-  // Helper method to determine content type
   String _getContentType(String filePath) {
     final extension = path.extension(filePath).toLowerCase();
     switch (extension) {
@@ -219,7 +194,6 @@ class UserDetailsNotifier extends StateNotifier<UserDetailsState> {
   }
 }
 
-// Provider for user details state management
 final userDetailsProvider = StateNotifierProvider<UserDetailsNotifier, UserDetailsState>((ref) {
   return UserDetailsNotifier();
 });

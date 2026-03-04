@@ -30,14 +30,12 @@ class CommentNotifier extends StateNotifier<CommentState> {
   final Ref ref;
   final CommentService _commentService;
   
-  // Cache to store comments for different posts
   final Map<int, List<CommentModel>> _commentCache = {};
 
   CommentNotifier(this.ref, this._commentService) : super(CommentState());
 
   Future<void> fetchComments(int postId) async {
     try {
-      // Check cache first
       if (_commentCache.containsKey(postId) && _commentCache[postId]!.isNotEmpty) {
         state = state.copyWith(
           comments: _commentCache[postId]!,
@@ -49,7 +47,6 @@ class CommentNotifier extends StateNotifier<CommentState> {
       state = state.copyWith(isLoading: true);
       final comments = await _commentService.fetchComments(postId);
       
-      // Update cache
       _commentCache[postId] = comments;
 
       state = state.copyWith(
@@ -76,13 +73,11 @@ class CommentNotifier extends StateNotifier<CommentState> {
         userEmail: userEmail,
       );
       
-      // Update cache
       if (!_commentCache.containsKey(postId)) {
         _commentCache[postId] = [];
       }
       _commentCache[postId]!.insert(0, newComment);
 
-      // Update state
       state = state.copyWith(
         comments: _commentCache[postId]!,
       );
@@ -93,7 +88,6 @@ class CommentNotifier extends StateNotifier<CommentState> {
     }
   }
 
-  // Method to clear comments when bottom sheet is closed
   void clearComments() {
     state = CommentState();
   }

@@ -8,6 +8,7 @@ import 'package:pfe1/features/chatbot/presentation/chatbot_screen.dart';
 import 'package:pfe1/features/home/presentation/business_posts_widget.dart';
 import 'package:pfe1/features/home/presentation/profile_widget.dart';
 import 'package:pfe1/features/search/presentation/search_screen.dart';
+import 'package:pfe1/features/support/presentation/ticket_list_screen.dart';
 import 'package:pfe1/features/todos/presentation/todos_screen.dart';
 import 'package:pfe1/features/map/presentation/map_screen.dart';
 import 'package:pfe1/features/vocabulary/presentation/vocabulary_list_screen.dart';
@@ -28,7 +29,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  // Bottom navigation: 0 = Home (with posts tabs), 1 = Todo, 2 = Map, 3 = Profile.
   int _currentIndex = 0;
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
@@ -39,7 +39,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _loadUserData();
   }
 
-  /// Loads user details if an email is available.
   void _loadUserData() {
     Future.microtask(() {
       final authState = ref.read(authProvider);
@@ -51,7 +50,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
-  /// Refresh posts by calling the provider method.
   Future<void> _refreshPosts() async {
     try {
       await ref.read(postListProvider.notifier).fetchPosts();
@@ -65,7 +63,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  /// Wraps the user posts list in a RefreshIndicator.
   Widget _buildRefreshablePosts() {
     return RefreshIndicator(
       key: _refreshIndicatorKey,
@@ -78,8 +75,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  /// Builds an AppBar.
-  /// When _currentIndex == 0, it adds a TabBar (for Home) to the bottom.
+ 
   PreferredSizeWidget _buildAppBar() {
     final isDarkMode = ref.watch(themeProvider);
     final userEmail = ref.watch(authProvider).user?.email;
@@ -87,16 +83,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     if (_currentIndex == 0) {
       return AppBar(
-        title: const Text(
-          'PathPal',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            letterSpacing: 1.1,
-          ),
-        ),
-        centerTitle: true,
         bottom: TabBar(
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
@@ -119,26 +105,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               );
             },
           ),
-          // Add chatbot icon
-          IconButton(
-            icon: Stack(
-              children: [
-                const Icon(Icons.auto_awesome, color: Colors.white),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Colors.amber,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            onPressed: () {
+          GestureDetector(
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -146,6 +114,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               );
             },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/amSloma.png',
+                  width: 36,
+                  height: 36,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
           ),
           IconButton(
             icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
@@ -153,13 +132,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ref.read(themeProvider.notifier).toggleTheme();
             },
           ),
-          // Notification icon with badge
           userEmail != null
               ? StreamBuilder<int>(
                   stream: chatService.watchUnreadNotificationCount(userEmail),
                   builder: (context, snapshot) {
                     final hasUnread = snapshot.hasData && snapshot.data! > 0;
-
                     return Stack(
                       alignment: Alignment.center,
                       children: [
@@ -236,7 +213,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   stream: chatService.watchUnreadNotificationCount(userEmail),
                   builder: (context, snapshot) {
                     final hasUnread = snapshot.hasData && snapshot.data! > 0;
-
                     return Stack(
                       alignment: Alignment.center,
                       children: [
@@ -290,21 +266,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
   }
-
-  /// Builds the body of the Scaffold.
-  /// For _currentIndex == 0, returns a TabBarView wrapped in a DefaultTabController.
   Widget _buildBody() {
     if (_currentIndex == 0) {
       return TabBarView(
         children: [
-          _buildRefreshablePosts(), // User posts with refresh capability.
-          BusinessPostsWidget(), // Business posts.
+          _buildRefreshablePosts(), 
+          BusinessPostsWidget(), 
         ],
       );
     } else if (_currentIndex == 1) {
       return TodosScreen();
     } else if (_currentIndex == 2) {
-      // Replace the placeholder with the actual MapScreen
+      
       return const MapScreen();
     } else if (_currentIndex == 3) {
       final authState = ref.watch(authProvider);
@@ -314,7 +287,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container();
   }
 
-  /// Builds the bottom navigation bar.
   Widget _buildBottomNavigationBar() {
     return SalomonBottomBar(
       currentIndex: _currentIndex,
@@ -323,36 +295,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _currentIndex = index;
         });
       },
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       items: [
         /// Home
         SalomonBottomBarItem(
-          icon: const Icon(Icons.home),
+          icon: Image.asset(
+            'assets/images/home.png',
+            width: 38,
+            height: 38,
+          ),
           title: const Text("Home"),
           selectedColor: AppColors.primaryColor,
         ),
 
         /// Todo
         SalomonBottomBarItem(
-          icon: const Icon(Icons.checklist),
+          icon: Image.asset(
+            'assets/images/todo.png',
+            width: 38,
+            height: 38,
+          ),
           title: const Text("Todo"),
           selectedColor: Colors.blue,
         ),
 
         /// Map
         SalomonBottomBarItem(
-          icon: const Icon(Icons.map),
+          icon: Image.asset(
+            'assets/images/map.png',
+            width: 38,
+            height: 38,
+          ),
           title: const Text("Map"),
           selectedColor: Colors.green,
         ),
 
         /// Profile
         SalomonBottomBarItem(
-          icon: const Icon(Icons.person),
+          icon: Image.asset(
+            'assets/images/profile.png',
+            width: 38,
+            height: 38,
+          ),
           title: const Text("Profile"),
           selectedColor: Colors.pink,
         ),
       ],
     );
+
+    
   }
 
   /// Builds the drawer with user information and menu options.
@@ -376,62 +367,87 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               color: isDarkMode ? Colors.grey[850] : AppColors.primaryColor,
             ),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 42),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            child: Column(
               children: [
-                // Profile Picture
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 2,
+                // App Logo and Name
+                Row(
+                  children: [
+                    Image.asset(
+                      'assets/images/logo2.png',
+                      width: 40,
+                      height: 40,
                     ),
-                  ),
-                  child: CircleAvatar(
-                    radius: 34,
-                    backgroundColor:
-                        isDarkMode ? Colors.grey[800] : Colors.white,
-                    backgroundImage: userDetails?.profileImageUrl != null
-                        ? NetworkImage(userDetails.profileImageUrl!)
-                        : null,
-                    child: userDetails?.profileImageUrl == null
-                        ? Icon(
-                            Icons.person,
-                            size: 34,
-                            color: AppColors.primaryColor,
-                          )
-                        : null,
-                  ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'PathPal',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 18),
-                // User info: Name and Email.
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        fullName.isNotEmpty ? fullName : 'User',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                const SizedBox(height: 20),
+                // User Profile Info
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Profile Picture
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                          width: 2,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        authState.user?.email ?? 'No email',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      child: CircleAvatar(
+                        radius: 34,
+                        backgroundColor:
+                            isDarkMode ? Colors.grey[800] : Colors.white,
+                        backgroundImage: userDetails?.profileImageUrl != null
+                            ? NetworkImage(userDetails.profileImageUrl!)
+                            : null,
+                        child: userDetails?.profileImageUrl == null
+                            ? Icon(
+                                Icons.person,
+                                size: 34,
+                                color: AppColors.primaryColor,
+                              )
+                            : null,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 18),
+                    // User info: Name and Email.
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fullName.isNotEmpty ? fullName : 'User',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            authState.user?.email ?? 'No email',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -441,6 +457,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             leading: const Icon(Icons.edit),
             title: const Text('Update Profile'),
             onTap: () => context.push('/update-profile'),
+          ),
+          // Add Support Tickets feature link here
+          ListTile(
+            leading: const Icon(Icons.support_agent),
+            title: const Text('Support Tickets'),
+            onTap: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TicketListScreen(),
+                ),
+              );
+            },
           ),
           // Add Vocabulary feature link here
           ListTile(
@@ -458,30 +490,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               );
             },
           ),
-          // Add Chatbot feature here
+          // Update Chatbot feature text
           ListTile(
-            leading: const Icon(Icons.auto_awesome),
-            title: Row(
-              children: [
-                const Text('Tunisia AI Assistant'),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.amber,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    'NEW',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-              ],
+            leading: ClipOval(
+              child: Image.asset(
+                'assets/images/amSloma.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+              ),
             ),
+            title: const Text('Talk with Am Slouma'),
             onTap: () {
               if (Navigator.of(context).canPop()) {
                 Navigator.of(context).pop();
@@ -494,13 +513,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               );
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
-            onTap: () {
-              // Add settings navigation here.
-            },
-          ),
+
           ListTile(
             leading: const Icon(Icons.business),
             title: const Text('Manage Business'),
@@ -600,9 +613,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       floatingActionButton: _currentIndex == 0
           ? FloatingActionButton(
               onPressed: () => context.push('/create-post'),
-              child: const Icon(Icons.add),
+              backgroundColor: Color(0xFF862C24),
+              child: Image.asset(
+                'assets/images/add.png',
+                width: 30,
+                height: 30,
+              ),
             )
           : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
 
     // If on the Home tab, wrap the scaffold in a DefaultTabController.

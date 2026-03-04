@@ -17,8 +17,8 @@ class VocabularyModel {
     this.notes,
     this.createdAt,
     this.updatedAt,
-    this.languageFrom = 'en',
-    this.languageTo = 'fr',
+    this.languageFrom = 'ar',
+    this.languageTo = 'en',
   });
 
   factory VocabularyModel.fromJson(Map<String, dynamic> json) {

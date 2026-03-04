@@ -55,6 +55,7 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
   @override
   Widget build(BuildContext context) {
     final chatHistory = ref.watch(chatHistoryProvider);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     // Scroll to bottom when new messages are added
     if (chatHistory.isNotEmpty) {
@@ -63,12 +64,20 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: isDarkMode
+            ? Colors.grey.shade800 // Grey in dark mode
+            : AppColors.primaryColor, // Red in light mode
+        foregroundColor: Colors.white, // White text for both modes
         title: Row(
           children: [
             CircleAvatar(
-              backgroundColor: AppColors.primaryColor.withOpacity(0.2),
-              child:
-                  const Icon(Icons.auto_awesome, color: AppColors.primaryColor),
+              backgroundColor: Colors.white.withOpacity(0.2),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/amSloma.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             const SizedBox(width: 10),
             const Column(
@@ -111,22 +120,6 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
       ),
       body: Column(
         children: [
-          // Beta badge
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            color: Colors.amber,
-            child: const Center(
-              child: Text(
-                '✨ BETA FEATURE ✨',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
-
           // Chat messages
           Expanded(
             child: chatHistory.isEmpty
@@ -140,9 +133,12 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                           height: 200,
                         ),
                         const SizedBox(height: 20),
-                        const Text(
+                        Text(
                           'Ask Am Slouma about Tunisia!',
-                          style: TextStyle(fontSize: 16),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                          ),
                         ),
                       ],
                     ),
@@ -153,7 +149,10 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
                     itemCount: chatHistory.length,
                     itemBuilder: (context, index) {
                       final message = chatHistory[index];
-                      return _MessageBubble(message: message);
+                      return _MessageBubble(
+                        message: message,
+                        isDarkMode: isDarkMode,
+                      );
                     },
                   ),
           ),
@@ -165,11 +164,15 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
               alignment: Alignment.centerLeft,
               child: Row(
                 children: [
-                  const CircleAvatar(
-                    radius: 16,
+                  CircleAvatar(
+                    radius: 18,
                     backgroundColor: AppColors.primaryColor,
-                    child:
-                        Icon(Icons.auto_awesome, color: Colors.white, size: 16),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/images/amSloma.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   DefaultTextStyle(
@@ -247,8 +250,12 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
 
 class _MessageBubble extends StatelessWidget {
   final ChatbotMessage message;
+  final bool isDarkMode;
 
-  const _MessageBubble({required this.message});
+  const _MessageBubble({
+    required this.message,
+    required this.isDarkMode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -264,10 +271,14 @@ class _MessageBubble extends StatelessWidget {
         children: [
           if (!isUser) ...[
             CircleAvatar(
-              radius: 16,
+              radius: 18,
               backgroundColor: AppColors.primaryColor,
-              child:
-                  const Icon(Icons.auto_awesome, color: Colors.white, size: 16),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/amSloma.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             const SizedBox(width: 8),
           ],
@@ -277,7 +288,9 @@ class _MessageBubble extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isUser
                     ? AppColors.primaryColor
-                    : Colors.grey.withOpacity(0.1),
+                    : isDarkMode
+                        ? Colors.grey.shade800 // Darker background in dark mode
+                        : Colors.grey.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16).copyWith(
                   bottomLeft: isUser
                       ? const Radius.circular(16)
@@ -293,7 +306,7 @@ class _MessageBubble extends StatelessWidget {
                   Text(
                     message.text,
                     style: TextStyle(
-                      color: isUser ? Colors.white : Colors.black,
+                      color: isUser || isDarkMode ? Colors.white : Colors.black,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -301,8 +314,9 @@ class _MessageBubble extends StatelessWidget {
                     time,
                     style: TextStyle(
                       fontSize: 10,
-                      color:
-                          isUser ? Colors.white.withOpacity(0.7) : Colors.grey,
+                      color: isUser || isDarkMode
+                          ? Colors.white.withOpacity(0.7)
+                          : Colors.grey,
                     ),
                   ),
                 ],
@@ -312,9 +326,12 @@ class _MessageBubble extends StatelessWidget {
           if (isUser) ...[
             const SizedBox(width: 8),
             CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.grey.withOpacity(0.2),
-              child: const Icon(Icons.person, color: Colors.grey, size: 16),
+              radius: 18,
+              backgroundColor: isDarkMode
+                  ? Colors.grey.shade700
+                  : Colors.grey.withOpacity(0.2),
+              child: Icon(Icons.person,
+                  color: isDarkMode ? Colors.white70 : Colors.grey, size: 18),
             ),
           ],
         ],

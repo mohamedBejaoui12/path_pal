@@ -11,7 +11,8 @@ class TodosScreen extends ConsumerStatefulWidget {
   _TodosScreenState createState() => _TodosScreenState();
 }
 
-class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProviderStateMixin {
+class _TodosScreenState extends ConsumerState<TodosScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late String currentUserEmail;
 
@@ -19,10 +20,10 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    
+
     // Get current user email from Supabase
     currentUserEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
-    
+
     // Load todos when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(todosProvider.notifier).loadTodos(currentUserEmail);
@@ -33,14 +34,18 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Todos',style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),),
+        title: Text(
+          'My Todos',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.white,  // Set tab text color to white
-          unselectedLabelColor: Colors.white70,  // Slightly faded white for unselected tabs
+          labelColor: Colors.white, // Set tab text color to white
+          unselectedLabelColor:
+              Colors.white70, // Slightly faded white for unselected tabs
           tabs: [
             Tab(text: 'Food'),
             Tab(text: 'Places'),
@@ -59,8 +64,11 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddTodoBottomSheet(context),
         backgroundColor: Color(0xFF862C24),
-       
-        child: Icon(Icons.add,color: Colors.white,),
+        child: Image.asset(
+          'assets/images/add.png',
+          width: 30,
+          height: 30,
+        ),
       ),
     );
   }

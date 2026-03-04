@@ -7,14 +7,14 @@ import 'package:pfe1/shared/theme/theme_provider.dart';
 import 'dart:io';
 
 import '../../../shared/theme/app_colors.dart';
-import '../presentation/business_profile_screen.dart'; // Import the business profile screen
+import '../presentation/business_profile_screen.dart'; 
 
 import '../../interests/domain/interest_model.dart';
 import '../data/business_post_provider.dart';
 
 class CreateBusinessPostScreen extends ConsumerStatefulWidget {
-  final int? businessId; // Optional business ID parameter
-  final BusinessPostModel? existingPost; // Optional existing post for editing
+  final int? businessId; 
+  final BusinessPostModel? existingPost; 
 
   const CreateBusinessPostScreen({Key? key, this.businessId, this.existingPost})
       : super(key: key);
@@ -38,15 +38,12 @@ class _CreateBusinessPostScreenState
   void initState() {
     super.initState();
 
-    // If editing an existing post, pre-fill the form
     if (widget.existingPost != null) {
       _titleController.text = widget.existingPost!.title;
       _descriptionController.text = widget.existingPost!.description ?? '';
       _existingImageUrl = widget.existingPost!.imageUrl;
 
-      // Fetch interests to pre-select existing interests
       ref.read(interestProvider.future).then((allInterests) {
-        // Convert existing interests to InterestModel
         final existingInterestNames = widget.existingPost!.interests;
         final matchedInterests = allInterests
             .where((interest) => existingInterestNames.contains(interest.name))
@@ -126,7 +123,6 @@ class _CreateBusinessPostScreenState
             ),
           );
         } else {
-          // Fallback navigation if no business ID is available
           Navigator.of(context).pop(true);
         }
       }
@@ -143,7 +139,6 @@ class _CreateBusinessPostScreenState
     }
   }
 
-  // In the build method of CreateBusinessPostScreen
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeProvider);
@@ -164,7 +159,7 @@ class _CreateBusinessPostScreenState
         actions: [
           IconButton(
             icon: const Icon(Icons.check, color: Colors.white),
-            onPressed: _submitPost, // Changed from _savePost to _submitPost
+            onPressed: _submitPost, 
           ),
         ],
       ),

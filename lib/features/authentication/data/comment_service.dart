@@ -14,10 +14,8 @@ class CommentService {
     required String userEmail,
   }) async {
     try {
-      // Fetch user details
       final userDetails = await _fetchUserDetails(userEmail);
 
-      // Prepare comment data
       final commentData = {
         'post_id': postId,
         'user_email': userEmail,
@@ -25,20 +23,17 @@ class CommentService {
         'created_at': DateTime.now().toIso8601String(),
       };
 
-      // Insert comment to database
       final response = await _supabase
           .from('post_comments')
           .insert(commentData)
           .select()
           .single();
 
-      // Update comment count in user_posts
       await _supabase
           .rpc('increment_post_comment_count', params: {
             'p_post_id': postId,
           });
 
-      // Convert to CommentModel
       return CommentModel(
         id: response['id'],
         userEmail: userEmail,
@@ -58,7 +53,6 @@ class CommentService {
     try {
       debugPrint('Fetching comments for postId: $postId');
 
-      // First, fetch comments for the specific post
       final commentsResponse = await _supabase
           .from('post_comments')
           .select('*')
@@ -72,7 +66,6 @@ class CommentService {
         return [];
       }
 
-      // Process comments and fetch user details for each comment
       final List<CommentModel> comments = [];
       for (var commentData in commentsResponse) {
         // Fetch user details for each comment

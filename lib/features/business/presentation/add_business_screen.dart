@@ -24,15 +24,15 @@ class _AddBusinessScreenState extends ConsumerState<AddBusinessScreen> {
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
   final _customCategoryController =
-      TextEditingController(); // Added for custom category
+      TextEditingController(); 
 
   File? _imageFile;
   LocationInputMethod _locationMethod = LocationInputMethod.manual;
   bool _isLoadingLocation = false;
-  bool _isCustomCategory = false; // Flag for custom category
-  String? _selectedCategory; // For dropdown selection
+  bool _isCustomCategory = false; 
+  String? _selectedCategory; 
 
-  // Predefined categories
+  
   final List<String> _predefinedCategories = [
     'Restaurant',
     'Cafe',
@@ -52,7 +52,7 @@ class _AddBusinessScreenState extends ConsumerState<AddBusinessScreen> {
     _emailController.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
-    _customCategoryController.dispose(); // Dispose custom category controller
+    _customCategoryController.dispose(); 
     super.dispose();
   }
 
@@ -169,8 +169,8 @@ class _AddBusinessScreenState extends ConsumerState<AddBusinessScreen> {
         centerTitle: true,
         elevation: 0,
         backgroundColor: AppColors
-            .primaryColor, // Set AppBar background to primary color (reddish)
-        foregroundColor: Colors.white, // Set AppBar text and icons to white
+            .primaryColor, 
+        foregroundColor: Colors.white, 
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -183,7 +183,7 @@ class _AddBusinessScreenState extends ConsumerState<AddBusinessScreen> {
               _buildBusinessImagePicker(),
               const SizedBox(height: 20),
 
-              // Business Name and Email Fields (existing implementation)
+              // Business Name and Email Fields 
               _buildTextField(
                 controller: _businessNameController,
                 label: 'Business Name',
@@ -338,7 +338,7 @@ class _AddBusinessScreenState extends ConsumerState<AddBusinessScreen> {
                         ),
               const SizedBox(height: 24),
 
-              // Submit Button (existing implementation)
+              // Submit Button 
               ElevatedButton(
                 onPressed: _submitBusiness,
                 style: ElevatedButton.styleFrom(

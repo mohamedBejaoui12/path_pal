@@ -13,10 +13,7 @@ class UserDataUpdateService {
   final BuildContext context;
   final _supabase = Supabase.instance.client;
 
-  UserDataUpdateService({
-    required this.ref, 
-    required this.context
-  });
+  UserDataUpdateService({required this.ref, required this.context});
 
   Future<void> uploadProfileImage() async {
     final ImagePicker picker = ImagePicker();
@@ -33,7 +30,8 @@ class UserDataUpdateService {
     final userEmail = authState.user?.email;
 
     if (userEmail == null) {
-      _showSnackBar('Unable to upload image: No user email found', isError: true);
+      _showSnackBar('Unable to upload image: No user email found',
+          isError: true);
       return;
     }
 
@@ -45,40 +43,38 @@ class UserDataUpdateService {
 
       // Upload image to Supabase storage
       await _supabase.storage.from('profile_images').upload(
-        filePath,
-        file,
-        fileOptions: FileOptions(upsert: true),
-      );
+            filePath,
+            file,
+            fileOptions: FileOptions(upsert: true),
+          );
 
       // Get public URL
-      final imageUrl = _supabase.storage.from('profile_images').getPublicUrl(filePath);
+      final imageUrl =
+          _supabase.storage.from('profile_images').getPublicUrl(filePath);
 
       // Update user profile in database
       await _supabase
           .from('user')
-          .update({'profile_image_url': imageUrl})
-          .eq('email', userEmail);
+          .update({'profile_image_url': imageUrl}).eq('email', userEmail);
 
       _showSnackBar('Profile image updated successfully');
     } catch (e) {
-      _showSnackBar('Failed to upload profile image: ${e.toString()}', isError: true);
+      _showSnackBar('Failed to upload profile image: ${e.toString()}',
+          isError: true);
     }
   }
 
   Future<void> updateUserProfile(UserDetailsModel userDetails) async {
     try {
-      await _supabase
-          .from('user')
-          .update({
-            'name': userDetails.name,
-            'family_name': userDetails.familyName,
-            'date_of_birth': userDetails.dateOfBirth.toIso8601String(),
-            'phone_number': userDetails.phoneNumber,
-            'city_of_birth': userDetails.cityOfBirth,
-            'gender': userDetails.gender == Gender.male ? 'male' : 'female',
-            'description': userDetails.description,
-          })
-          .eq('email', userDetails.email);
+      await _supabase.from('user').update({
+        'name': userDetails.name,
+        'family_name': userDetails.familyName,
+        'date_of_birth': userDetails.dateOfBirth.toIso8601String(),
+        'phone_number': userDetails.phoneNumber,
+        'city_of_birth': userDetails.cityOfBirth,
+        'gender': userDetails.gender == Gender.male ? 'male' : 'female',
+        'description': userDetails.description,
+      }).eq('email', userDetails.email);
 
       _showSnackBar('Profile updated successfully');
     } catch (e) {
@@ -90,9 +86,7 @@ class UserDataUpdateService {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError 
-          ? Colors.red 
-          : AppColors.primaryColor,
+        backgroundColor: isError ? Colors.red : AppColors.primaryColor,
       ),
     );
   }
@@ -107,7 +101,8 @@ class UserDataUpdateService {
 
   String? validatePhoneNumber(String? value) {
     if (value != null && value.isNotEmpty) {
-      final phoneRegex = RegExp(r'^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$');
+      final phoneRegex =
+          RegExp(r'^[+]?[(]?[0-9]{2,3}[)]?[-\s.]?[0-9]{2,3}[-\s.]?[0-9]{2,4}$');
       if (!phoneRegex.hasMatch(value)) {
         return 'Invalid phone number format';
       }
@@ -117,6 +112,7 @@ class UserDataUpdateService {
 }
 
 // Provider for easy access
-final userDataUpdateServiceProvider = Provider.family<UserDataUpdateService, BuildContext>((ref, context) {
+final userDataUpdateServiceProvider =
+    Provider.family<UserDataUpdateService, BuildContext>((ref, context) {
   return UserDataUpdateService(ref: ref, context: context);
 });

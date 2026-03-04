@@ -98,7 +98,6 @@ class BusinessProfileProvider {
       return null;
     }
   }
-  // Add this method to BusinessProfileProvider class
 Future<BusinessModel?> updateBusinessProfile({
   required int businessId,
   String? businessName,

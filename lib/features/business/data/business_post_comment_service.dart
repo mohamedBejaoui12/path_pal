@@ -10,7 +10,6 @@ class BusinessPostCommentService {
     try {
       debugPrint('Fetching comments for business post ID: $businessPostId');
       
-      // Modified query to use the user table instead of profiles
       final response = await _supabase
           .from('business_post_comments')
           .select('''
@@ -26,12 +25,9 @@ class BusinessPostCommentService {
 
       debugPrint('Raw response: $response');
 
-      // Validate and map comments
       return (response as List).map((json) {
-        // Handle user data - user is now a direct object, not a list
         final userData = json['user'] ?? {};
 
-        // Construct comment JSON
         final commentJson = {
           'id': json['id'],
           'postId': json['business_post_id'],
@@ -57,7 +53,6 @@ class BusinessPostCommentService {
     required String userEmail,
   }) async {
     try {
-      // First insert the comment
       final insertResponse = await _supabase
           .from('business_post_comments')
           .insert({
@@ -69,7 +64,6 @@ class BusinessPostCommentService {
           .select()
           .single();
       
-      // Then fetch the user profile from the user table
       final userResponse = await _supabase
           .from('user')
           .select('name, family_name, profile_image_url')
@@ -78,7 +72,6 @@ class BusinessPostCommentService {
 
       final userData = userResponse ?? {};
       
-      // Construct comment JSON
       final commentJson = {
         'id': insertResponse['id'],
         'postId': insertResponse['business_post_id'],
@@ -97,7 +90,6 @@ class BusinessPostCommentService {
     }
   }
 
-  // Helper method to generate default profile image
   String _generateDefaultProfileImage(String name) {
     return 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random&color=fff&size=200';
   }

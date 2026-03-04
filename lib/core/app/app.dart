@@ -13,30 +13,28 @@ import 'package:pfe1/features/chat/presentation/chat_room_screen.dart';
 import 'package:pfe1/features/chat/presentation/user_search_screen.dart';
 import 'package:pfe1/features/home/presentation/create_post_screen.dart';
 import 'package:pfe1/features/home/presentation/home_screen.dart';
-
 import 'package:pfe1/features/home/presentation/user_profile_screen.dart';
 import 'package:pfe1/features/home/presentation/user_update_screen.dart';
 import 'package:pfe1/features/interests/presentation/interests_selection_screen.dart';
 import 'package:pfe1/shared/theme/app_colors.dart';
 import 'package:pfe1/shared/theme/theme_provider.dart';
+import 'package:pfe1/shared/screens/splash_screen.dart'; 
 
 class RouterNotifier extends ChangeNotifier { 
   final WidgetRef _ref;
 
   RouterNotifier(this._ref) {
-    _ref.listen(authProvider, (previous, next) { // to93ed tesma3 oo testana fi il  authProvider changes
-      // Only notify listeners if the authentication status has significantly changed
+    _ref.listen(authProvider, (previous, next) { 
       if (previous?.status != next.status && 
-          (next.status == AuthStatus.authenticated || // User is authenticated
-           next.status == AuthStatus.unauthenticated)) { // User is unauthenticated
-        // Notify listeners
+          (next.status == AuthStatus.authenticated || 
+           next.status == AuthStatus.unauthenticated)) { 
         notifyListeners();
       }
     });
   }
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   final bool isAuthenticated;
 
   const MyApp({
@@ -45,18 +43,57 @@ class MyApp extends ConsumerWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Restore session on app startup
-    WidgetsBinding.instance.addPostFrameCallback((_) { // This is called after the widget is built 
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(authProvider.notifier).restoreSession();
     });
+    
+    await Future.delayed(const Duration(seconds: 2));
+    
+    if (mounted) {
+      setState(() {
+        _showSplash = false;
+      });
+    }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeProvider);
 
+    if (_showSplash) {
+      return MaterialApp(
+        title: 'PathPal',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        darkTheme: ThemeData.dark().copyWith(
+          primaryColor: AppColors.primaryColor,
+          scaffoldBackgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+        ),
+        themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+        home: const SplashScreen(),
+      );
+    }
+
     return MaterialApp.router(
-      title: 'PFE App',
+      title: 'PathPal',
       debugShowCheckedModeBanner: false,
-      routerConfig: _router(ref, isAuthenticated),
+      routerConfig: _router(ref, widget.isAuthenticated),
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -111,10 +148,10 @@ class MyApp extends ConsumerWidget {
           path: '/create-post',
           builder: (context, state) => const CreatePostScreen(),
         ),
-         GoRoute(
-      path: '/home',
-      builder: (context, state) => HomeScreen(),
-    ),
+        GoRoute(
+          path: '/home',
+          builder: (context, state) => HomeScreen(),
+        ),
         GoRoute(
           path: '/verify-email',
           builder: (context, state) {
@@ -122,7 +159,6 @@ class MyApp extends ConsumerWidget {
             return EmailVerificationScreen(email: email);
           },
         ),
-
         GoRoute(
           path: '/user-details',
           builder: (context, state) {
@@ -131,43 +167,38 @@ class MyApp extends ConsumerWidget {
           },
         ),
         GoRoute(
-  path: '/update-profile',
-  builder: (context, state) => const UserUpdateScreen(),
-),
-
-      
-   GoRoute(
-  path: '/select-interests',
-  builder: (context, state) {
-    final userId = state.extra as int;
-    return InterestsSelectionScreen(userId: userId);
-  },
-),
-GoRoute(
-  path: '/user-profile',
-  builder: (context, state) {
-    // Extract userEmail and isOtherUserProfile from extra
-    final Map<String, dynamic>? params = state.extra as Map<String, dynamic>?;
-    
-    // Require userEmail, default isOtherUserProfile to true
-    final String? userEmail = params?['userEmail'];
-    final bool isOtherUserProfile = params?['isOtherUserProfile'] ?? true;
-
-    if (userEmail == null) {
-      // Fallback or error handling
-      return const Scaffold(
-        body: Center(
-          child: Text('User email is required'),
+          path: '/update-profile',
+          builder: (context, state) => const UserUpdateScreen(),
         ),
-      );
-    }
+        GoRoute(
+          path: '/select-interests',
+          builder: (context, state) {
+            final userId = state.extra as int;
+            return InterestsSelectionScreen(userId: userId);
+          },
+        ),
+        GoRoute(
+          path: '/user-profile',
+          builder: (context, state) {
+            final Map<String, dynamic>? params = state.extra as Map<String, dynamic>?;
+            
+            final String? userEmail = params?['userEmail'];
+            final bool isOtherUserProfile = params?['isOtherUserProfile'] ?? true;
 
-    return UserProfileScreen(
-      userEmail: userEmail,
-      isOtherUserProfile: isOtherUserProfile,
-    );
-  },
-),
+            if (userEmail == null) {
+              return const Scaffold(
+                body: Center(
+                  child: Text('User email is required'),
+                ),
+              );
+            }
+
+            return UserProfileScreen(
+              userEmail: userEmail,
+              isOtherUserProfile: isOtherUserProfile,
+            );
+          },
+        ),
         GoRoute(
           path: '/chat/list',
           builder: (context, state) => const ChatListScreen(),
@@ -183,25 +214,22 @@ GoRoute(
             return ChatRoomScreen(chatRoomId: roomId);
           },
         ),
-GoRoute(
-  path: '/business-profile/:businessId',
-  builder: (context, state) {
-    final businessId = int.parse(state.pathParameters['businessId']!);
-    return BusinessProfileScreen(businessId: businessId);
-  },
-),
-GoRoute(
-  path: '/add-business',
-  builder: (context, state) => const AddBusinessScreen(),
-),
-       
+        GoRoute(
+          path: '/business-profile/:businessId',
+          builder: (context, state) {
+            final businessId = int.parse(state.pathParameters['businessId']!);
+            return BusinessProfileScreen(businessId: businessId);
+          },
+        ),
+        GoRoute(
+          path: '/add-business',
+          builder: (context, state) => const AddBusinessScreen(),
+        ),
       ],
-      // Minimal redirect logic
       redirect: (BuildContext context, GoRouterState state) {
         final authState = ref.read(authProvider);
         final currentPath = state.uri.path;
 
-        // Only redirect to login for home screen if not authenticated
         if (currentPath == '/' && authState.status != AuthStatus.authenticated) {
           return '/login';
         }

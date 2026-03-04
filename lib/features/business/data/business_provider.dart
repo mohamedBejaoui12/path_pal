@@ -25,12 +25,12 @@ class CreateBusinessNotifier extends StateNotifier<AsyncValue<BusinessModel?>> {
   required double latitude,
   required double longitude,
   required File imageFile,
-  String? category, // Added category parameter
+  String? category, 
 }) async {
   state = const AsyncValue.loading();
 
   try {
-    // Get current user
+
     final authState = ref.read(authProvider);
     if (authState.user == null) {
       throw Exception('User must be authenticated');
@@ -44,7 +44,6 @@ class CreateBusinessNotifier extends StateNotifier<AsyncValue<BusinessModel?>> {
       imageFile.path
     );
 
-    // Create business model without ID
     final business = BusinessModel.create(
       businessName: businessName,
       email: email,
@@ -52,10 +51,10 @@ class CreateBusinessNotifier extends StateNotifier<AsyncValue<BusinessModel?>> {
       latitude: latitude,
       longitude: longitude,
       userEmail: authState.user!.email!,
-      category: category, // Added category parameter
+      category: category, 
     );
 
-    // Create business in database
+  
     final createdBusiness = await businessService.createBusiness(business);
 
     state = AsyncValue.data(createdBusiness);

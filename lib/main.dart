@@ -9,21 +9,17 @@ import 'features/authentication/data/auth_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // this line is to intialize supabase
   await Supabase.initialize(
-    url: AppConfig.supabaseUrl, // supabase url
-    anonKey: AppConfig.supabaseAnonKey, // supabase anon key
-    debug: false, // debug mode
+    url: AppConfig.supabaseUrl,
+    anonKey: AppConfig.supabaseAnonKey,
+    debug: false,
   );
 
-  // Initialize persistent session
-  final authService = AuthService(); // initialize auth service
-  final sessionMaintained =
-      await authService.maintainSession(); // maintain session
+  final authService = AuthService();
+  final sessionMaintained = await authService.maintainSession();
 
   runApp(
     ProviderScope(
-      // wrap it with provider scope to use riverpod
       child: MyApp(isAuthenticated: sessionMaintained),
     ),
   );

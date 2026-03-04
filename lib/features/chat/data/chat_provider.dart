@@ -7,23 +7,19 @@ import '../domain/chat_room_model.dart';
 import './chat_service.dart';
 import '../../authentication/providers/auth_provider.dart';
 
-// Supabase Client Provider
 final supabaseProvider = Provider<SupabaseClient>((ref) {
   return Supabase.instance.client;
 });
 
-// Chat Service Provider
 final chatServiceProvider = Provider<ChatService>((ref) {
   final supabase = ref.watch(supabaseProvider);
   return ChatService(supabase);
 });
 
-// Current Chat Room Provider
 final currentChatRoomProvider = StateNotifierProvider<CurrentChatRoomNotifier, ChatRoom?>((ref) {
   return CurrentChatRoomNotifier();
 });
 
-// Chat Messages Provider
 final chatMessagesProvider = StreamProvider.family<List<Map<String, dynamic>>, String>((ref, chatRoomId) {
   final chatService = ref.watch(chatServiceProvider);
   return chatService.watchChatMessages(chatRoomId).map((messages) => 
@@ -37,7 +33,6 @@ final chatMessagesProvider = StreamProvider.family<List<Map<String, dynamic>>, S
   );
 });
 
-// User Chat Rooms Provider with detailed user information
 final userChatRoomsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final authState = ref.watch(authProvider);
   final chatService = ref.watch(chatServiceProvider);

@@ -21,14 +21,11 @@ final businessPostInteractionProvider =
   return BusinessPostInteractionNotifier(ref, postId);
 });
 
-// Provider for home business posts
-// Update the homeBusinessPostsProvider to include debugging
 final homeBusinessPostsProvider =
     FutureProvider<List<BusinessPostModel>>((ref) async {
   final businessPostService = ref.read(businessPostServiceProvider);
   final posts = await businessPostService.fetchAllBusinessPosts();
 
-  // Debug print to check verification status of all posts
   for (var post in posts) {
     debugPrint(
         'Fetched business post: ${post.businessName}, isVerified: ${post.isVerified}');
@@ -73,7 +70,6 @@ class BusinessPostInteractionNotifier extends StateNotifier<bool> {
     if (userEmail == null) return;
 
     try {
-      // Check if user has already liked the post
       final likeResponse = await _supabase
           .from('business_post_likes')
           .select()
@@ -82,12 +78,11 @@ class BusinessPostInteractionNotifier extends StateNotifier<bool> {
           .maybeSingle();
 
       if (likeResponse == null) {
-        // Add like
         await _supabase.from('business_post_likes').insert({
           'post_id': postId,
           'user_email': userEmail,
         });
-        state = true; // Update state to liked
+        state = true; 
       } else {
         // Remove like
         await _supabase
@@ -95,10 +90,9 @@ class BusinessPostInteractionNotifier extends StateNotifier<bool> {
             .delete()
             .eq('post_id', postId)
             .eq('user_email', userEmail);
-        state = false; // Update state to unliked
+        state = false; 
       }
 
-      // Invalidate both home and business profile posts providers
       ref.invalidate(homeBusinessPostsProvider);
     } catch (e) {
       debugPrint('Error toggling like: $e');
@@ -109,7 +103,6 @@ class BusinessPostInteractionNotifier extends StateNotifier<bool> {
 class BusinessPostsWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Get the current theme mode
     final isDarkMode = ref.watch(themeProvider);
 
     // Fetch all business posts using the provider
@@ -161,18 +154,15 @@ class BusinessPostsWidget extends ConsumerWidget {
     );
   }
 
-  // Inside the _buildBusinessPostCard method, add debug prints
   Widget _buildBusinessPostCard(BuildContext context, WidgetRef ref,
       BusinessPostModel post, bool isDarkMode) {
     final authState = ref.read(authProvider);
     final currentUserEmail = authState.user?.email;
     final isCurrentUser = post.userEmail == currentUserEmail;
 
-    // Add debug print to check verification status
     debugPrint(
         'Business: ${post.businessName}, isVerified: ${post.isVerified}');
 
-    // Provider for individual post interaction
     final postInteractionProvider =
         businessPostInteractionProvider(post.id ?? 0);
 
@@ -198,7 +188,6 @@ class BusinessPostsWidget extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Business Header
               ListTile(
                 leading: CircleAvatar(
                   radius: 20,
@@ -210,12 +199,10 @@ class BusinessPostsWidget extends ConsumerWidget {
                       ? const Icon(Icons.business, size: 30)
                       : null,
                 ),
-                // Inside the _buildBusinessPostCard method, update the title section
 
                 title: GestureDetector(
                   onTap: () {
                     if (authState.user?.email == post.userEmail) {
-                      // Navigate to own business profile
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => BusinessProfileScreen(
@@ -224,7 +211,6 @@ class BusinessPostsWidget extends ConsumerWidget {
                         ),
                       );
                     } else {
-                      // Navigate to other user's business profile
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => UserBusinessProfileScreen(
@@ -246,7 +232,6 @@ class BusinessPostsWidget extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      // Direct approach for verification icon
                       if (post.isVerified)
                         Padding(
                           padding: const EdgeInsets.only(left: 4.0),
@@ -389,7 +374,6 @@ class BusinessPostsWidget extends ConsumerWidget {
                     : null,
               ),
 
-              // Post Content
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
@@ -421,7 +405,6 @@ class BusinessPostsWidget extends ConsumerWidget {
                 ),
               ),
 
-              // Post Image
               if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -449,7 +432,6 @@ class BusinessPostsWidget extends ConsumerWidget {
                   ),
                 ),
 
-              // Interests
               if (post.interests.isNotEmpty)
                 Padding(
                   padding:
@@ -473,7 +455,6 @@ class BusinessPostsWidget extends ConsumerWidget {
                   ),
                 ),
 
-              // Comments and Likes Section
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -519,7 +500,6 @@ class BusinessPostsWidget extends ConsumerWidget {
                         );
                       },
                     ),
-                    // Comments Button
                     Row(
                       children: [
                         IconButton(

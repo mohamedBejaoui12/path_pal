@@ -12,35 +12,29 @@ import 'business_post_service.dart';
 import '../../authentication/providers/auth_provider.dart';
 import '../../business/data/business_profile_provider.dart';
 
-// Declare businessProfileServiceProvider first
 final businessProfileServiceProvider = Provider<BusinessProfileService>((ref) {
   return BusinessProfileService();
 });
 
-// Move the fetchAllBusinessPosts implementation into the BusinessPostService class
-// and then use the provider to access it
 
 final businessPostsProvider = FutureProvider<List<BusinessPostModel>>((ref) async {
   final service = ref.read(businessPostServiceProvider);
   return await service.fetchAllBusinessPosts();
 });
 
-// Declare BusinessProfileProvider before using it
 final businessProfileProvider = Provider<BusinessProfileProvider>((ref) {
   return BusinessProfileProvider(ref);
 });
 
-// Declare businessPostServiceProvider before using it
 final businessPostServiceProvider = Provider<BusinessPostService>((ref) {
   return BusinessPostService();
 });
 
-// Declare businessServiceProvider before using it
 final businessServiceProvider = Provider<BusinessService>((ref) {
   return BusinessService();
 });
 
-// Interest Provider
+
 final interestProvider = FutureProvider<List<InterestModel>>((ref) async {
   final service = ref.read(businessPostServiceProvider);
   return service.fetchAllInterests();
@@ -64,7 +58,7 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
     state = const AsyncValue.loading();
 
     try {
-      // Get current user and business
+   
       final authState = ref.read(authProvider);
       final userEmail = authState.user?.email;
       
@@ -72,7 +66,6 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
         throw Exception('User must be authenticated');
       }
 
-      // More robust business retrieval
       final businessProfileProviderInstance = ref.read(businessProfileProvider);
       final businesses = await businessProfileProviderInstance.getUserBusinesses(userEmail);
       
@@ -80,20 +73,16 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
         throw Exception('No business found for the current user');
       }
 
-      // Use the first business if multiple exist
       final business = businesses.first;
 
-      // Debug print to check business object
       print('Business Object: $business');
       print('Business ID: ${business.id}');
 
-      // Ensure businessId is a valid number
       final businessId = business.id;
       if (businessId == null) {
         throw Exception('Business ID is null');
       }
 
-      // Upload image if exists
       String? imageUrl;
       if (imageFile != null) {
         final businessService = ref.read(businessServiceProvider);
@@ -104,10 +93,9 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
         );
       }
 
-      // Create business post
       final businessPostService = ref.read(businessPostServiceProvider);
       final businessPost = await businessPostService.createBusinessPost(
-        businessId: businessId,  // Use the original business ID
+        businessId: businessId,  
         userEmail: userEmail,
         businessName: business.businessName,
         title: title,
@@ -119,7 +107,6 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
       state = AsyncValue.data(businessPost);
       return businessPost;
     } catch (e, stackTrace) {
-      // Log the full error for debugging
       print('Error in createBusinessPost: $e');
       print('Stacktrace: $stackTrace');
       
@@ -128,7 +115,6 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
     }
   }
 
-  // Add methods for updating and deleting business posts
   Future<BusinessPostModel?> updateBusinessPost({
     required int postId,
     required String title,
@@ -139,7 +125,6 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
     state = const AsyncValue.loading();
 
     try {
-      // Get current user and business
       final authState = ref.read(authProvider);
       final userEmail = authState.user?.email;
       
@@ -147,7 +132,6 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
         throw Exception('User must be authenticated');
       }
 
-      // Upload image if exists
       String? imageUrl;
       if (imageFile != null) {
         final businessService = ref.read(businessServiceProvider);
@@ -158,7 +142,6 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
         );
       }
 
-      // Update business post
       final businessPostService = ref.read(businessPostServiceProvider);
       final businessPost = await businessPostService.updateBusinessPost(
         postId: postId,
@@ -172,7 +155,6 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
       state = AsyncValue.data(businessPost);
       return businessPost;
     } catch (e, stackTrace) {
-      // Log the full error for debugging
       print('Error in updateBusinessPost: $e');
       print('Stacktrace: $stackTrace');
       
@@ -187,7 +169,6 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
     state = const AsyncValue.loading();
 
     try {
-      // Get current user and business
       final authState = ref.read(authProvider);
       final userEmail = authState.user?.email;
       
@@ -195,17 +176,14 @@ class CreateBusinessPostNotifier extends StateNotifier<AsyncValue<BusinessPostMo
         throw Exception('User must be authenticated');
       }
 
-      // Delete business post
       final businessPostService = ref.read(businessPostServiceProvider);
       await businessPostService.deleteBusinessPost(
         postId: postId,
         userEmail: userEmail,
       );
 
-      // Reset state after successful deletion
       state = const AsyncValue.data(null);
     } catch (e, stackTrace) {
-      // Log the full error for debugging
       print('Error in deleteBusinessPost: $e');
       print('Stacktrace: $stackTrace');
       

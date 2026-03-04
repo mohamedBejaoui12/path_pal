@@ -41,15 +41,13 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           cityOfBirth: _cityController.text.trim(),
           gender: _selectedGender!,
           email: widget.email,
-          description: _descriptionController.text.trim().isNotEmpty 
-              ? _descriptionController.text.trim() 
+          description: _descriptionController.text.trim().isNotEmpty
+              ? _descriptionController.text.trim()
               : null,
         );
 
-        // Save user details and get the inserted user's ID
         final userId = await _userDetailsService.saveUserDetails(userDetails);
 
-        // Navigate to interests selection screen with user ID using context.go()
         context.go('/select-interests', extra: userId);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -66,7 +64,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
+      firstDate: DateTime(1950),
       lastDate: DateTime.now(),
     );
     if (picked != null && picked != _selectedDate) {
@@ -138,7 +136,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                   decoration: BoxDecoration(
                     color: AppColors.backgroundColor,
                     borderRadius: const BorderRadius.only(
@@ -162,14 +161,18 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                             controller: _nameController,
                             labelText: 'First Name',
                             prefixIcon: Icons.person_outline,
-                            validator: (value) => value!.isEmpty ? 'Please enter your name' : null,
+                            validator: (value) => value!.isEmpty
+                                ? 'Please enter your name'
+                                : null,
                           ),
                           const SizedBox(height: 20),
                           CustomTextFormField(
                             controller: _familyNameController,
                             labelText: 'Family Name',
                             prefixIcon: Icons.family_restroom_outlined,
-                            validator: (value) => value!.isEmpty ? 'Please enter your family name' : null,
+                            validator: (value) => value!.isEmpty
+                                ? 'Please enter your family name'
+                                : null,
                           ),
                           const SizedBox(height: 20),
                           CustomTextFormField(
@@ -177,14 +180,18 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                             labelText: 'Phone Number',
                             prefixIcon: Icons.phone_outlined,
                             keyboardType: TextInputType.phone,
-                            validator: (value) => value!.isEmpty ? 'Please enter your phone number' : null,
+                            validator: (value) => value!.isEmpty
+                                ? 'Please enter your phone number'
+                                : null,
                           ),
                           const SizedBox(height: 20),
                           CustomTextFormField(
                             controller: _cityController,
                             labelText: 'City of Birth',
                             prefixIcon: Icons.location_city_outlined,
-                            validator: (value) => value!.isEmpty ? 'Please enter your city of birth' : null,
+                            validator: (value) => value!.isEmpty
+                                ? 'Please enter your city of birth'
+                                : null,
                           ),
                           const SizedBox(height: 20),
                           Row(
@@ -192,7 +199,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                               Expanded(
                                 child: Text(
                                   'Date of Birth: ${_selectedDate != null ? DateFormat('yyyy-MM-dd').format(_selectedDate!) : 'Not selected'}',
-                                  style: TextStyle(color: AppColors.primaryColor),
+                                  style:
+                                      TextStyle(color: AppColors.primaryColor),
                                 ),
                               ),
                               ElevatedButton(
@@ -208,14 +216,18 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                           DropdownButtonFormField<Gender>(
                             decoration: InputDecoration(
                               labelText: 'Gender',
-                              labelStyle: TextStyle(color: AppColors.primaryColor),
+                              labelStyle:
+                                  TextStyle(color: AppColors.primaryColor),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: AppColors.primaryColor.withOpacity(0.5)),
+                                borderSide: BorderSide(
+                                    color: AppColors.primaryColor
+                                        .withOpacity(0.5)),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+                                borderSide: BorderSide(
+                                    color: AppColors.primaryColor, width: 2),
                               ),
                             ),
                             value: _selectedGender,
@@ -232,11 +244,14 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                 value: gender,
                                 child: Text(
                                   gender.name.toUpperCase(),
-                                  style: TextStyle(color: AppColors.primaryColor),
+                                  style:
+                                      TextStyle(color: AppColors.primaryColor),
                                 ),
                               );
                             }).toList(),
-                            validator: (value) => value == null ? 'Please select your gender' : null,
+                            validator: (value) => value == null
+                                ? 'Please select your gender'
+                                : null,
                           ),
                           const SizedBox(height: 20),
                           TextField(
@@ -244,18 +259,23 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                             decoration: InputDecoration(
                               labelText: 'Description (Optional)',
                               hintText: 'Tell us a bit about yourself...',
-                              prefixIcon: Icon(Icons.description_outlined, color: AppColors.primaryColor),
+                              prefixIcon: Icon(Icons.description_outlined,
+                                  color: AppColors.primaryColor),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppColors.primaryColor),
+                                borderSide:
+                                    BorderSide(color: AppColors.primaryColor),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppColors.primaryColor.withOpacity(0.5)),
+                                borderSide: BorderSide(
+                                    color: AppColors.primaryColor
+                                        .withOpacity(0.5)),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+                                borderSide: BorderSide(
+                                    color: AppColors.primaryColor, width: 2),
                               ),
                             ),
                             maxLines: 3,
@@ -269,12 +289,14 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                               onPressed: _submitForm,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryColor,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 elevation: 3,
-                                shadowColor: AppColors.primaryColor.withOpacity(0.3),
+                                shadowColor:
+                                    AppColors.primaryColor.withOpacity(0.3),
                               ),
                               child: const Text(
                                 'Save Details',

@@ -13,11 +13,9 @@ import '../domain/business_post_model.dart';
 import '../data/business_post_provider.dart';
 import '../../authentication/providers/auth_provider.dart';
 import '../../../shared/theme/theme_provider.dart';
-// Add these imports
 import '../data/business_rate_provider.dart';
 import '../presentation/rate_business_bottom_sheet.dart';
 
-// Provider for business post interactions in user view
 final userBusinessPostInteractionProvider = StateNotifierProvider.family<
     UserBusinessPostInteractionNotifier, bool, int>((ref, postId) {
   return UserBusinessPostInteractionNotifier(ref, postId);
@@ -59,7 +57,6 @@ class UserBusinessPostInteractionNotifier extends StateNotifier<bool> {
     if (userEmail == null) return;
 
     try {
-      // Check if user has already liked the post
       final likeResponse = await _supabase
           .from('business_post_likes')
           .select()
@@ -68,23 +65,20 @@ class UserBusinessPostInteractionNotifier extends StateNotifier<bool> {
           .maybeSingle();
 
       if (likeResponse == null) {
-        // Add like
         await _supabase.from('business_post_likes').insert({
           'post_id': postId,
           'user_email': userEmail,
         });
-        state = true; // Update state to liked
+        state = true; 
       } else {
-        // Remove like
         await _supabase
             .from('business_post_likes')
             .delete()
             .eq('post_id', postId)
             .eq('user_email', userEmail);
-        state = false; // Update state to unliked
+        state = false; 
       }
 
-      // Invalidate the posts provider to refresh the data
       ref.invalidate(userBusinessPostsProvider(postId));
       ref.invalidate(businessPostsProvider);
       ref.invalidate(homeBusinessPostsProvider);
@@ -94,7 +88,6 @@ class UserBusinessPostInteractionNotifier extends StateNotifier<bool> {
   }
 }
 
-// Provider to fetch business posts for a specific business
 final userBusinessPostsProvider =
     FutureProvider.family<List<BusinessPostModel>, int>(
         (ref, businessId) async {
@@ -119,10 +112,8 @@ class _UserBusinessProfileScreenState
       GlobalKey<RefreshIndicatorState>();
 
   Future<void> _refreshPosts() async {
-    // Invalidate both business details and posts
     ref.invalidate(businessDetailsProvider(widget.businessId));
     ref.invalidate(userBusinessPostsProvider(widget.businessId));
-    // Also invalidate ratings when refreshing
     ref.invalidate(businessAverageRatingProvider(widget.businessId));
   }
 
@@ -140,7 +131,6 @@ class _UserBusinessProfileScreenState
     );
   }
 
-  // Add this method to show the rating bottom sheet
   void _showRateBusinessBottomSheet() {
     final businessDetailsAsync =
         ref.read(businessDetailsProvider(widget.businessId));
@@ -157,7 +147,6 @@ class _UserBusinessProfileScreenState
       ),
     ).then((result) {
       if (result == true) {
-        // Refresh ratings if a new rating was submitted
         ref.invalidate(businessAverageRatingProvider(widget.businessId));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Thank you for your rating!')),
@@ -166,7 +155,6 @@ class _UserBusinessProfileScreenState
     });
   }
 
-  // Add this method to navigate to ratings page
   void _navigateToRatingsPage() {
     Navigator.push(
       context,
@@ -184,7 +172,6 @@ class _UserBusinessProfileScreenState
     final businessPostsAsync =
         ref.watch(userBusinessPostsProvider(widget.businessId));
     final isDarkMode = ref.watch(themeProvider);
-    // Add this to get the average rating
     final averageRatingAsync =
         ref.watch(businessAverageRatingProvider(widget.businessId));
 
@@ -199,7 +186,6 @@ class _UserBusinessProfileScreenState
         ),
         backgroundColor: isDarkMode ? Colors.grey[900] : AppColors.primaryColor,
         actions: [
-          // Add rating button
           averageRatingAsync.when(
             data: (rating) => IconButton(
               icon: const Icon(Icons.star, color: Colors.white),

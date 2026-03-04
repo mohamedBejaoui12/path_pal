@@ -8,7 +8,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class BusinessPostService {
   final _supabase = Supabase.instance.client;
 
-  // Remove the first fetchAllBusinessPosts method and keep only the one below
 
   Future<List<InterestModel>> fetchAllInterests() async {
     try {
@@ -90,7 +89,6 @@ class BusinessPostService {
       rethrow;
     }
   }
-  // Add this method to the BusinessPostService class
 
   Future<List<BusinessPostModel>> fetchBusinessPostsByBusinessId(
       int businessId) async {
@@ -106,7 +104,6 @@ class BusinessPostService {
           .eq('business_id', businessId)
           .order('created_at', ascending: false);
 
-      // Debug: Print the first post response to see structure
       if (postsResponse.isNotEmpty) {
         debugPrint('First post response: ${postsResponse[0]}');
         if (postsResponse[0]['businesses'] != null) {
@@ -114,16 +111,13 @@ class BusinessPostService {
         }
       }
 
-      // Prepare the final list of business posts
       final List<BusinessPostModel> businessPosts = [];
       for (var postJson in postsResponse) {
-        // Count likes for this post
         final likesCountResponse = await _supabase
             .from('business_post_likes')
             .select('*')
             .eq('post_id', postJson['id']);
 
-        // Check if current user liked the post
         bool isLikedByCurrentUser = false;
         if (userEmail != null) {
           final userLikeResponse = await _supabase
@@ -139,7 +133,6 @@ class BusinessPostService {
         String? businessProfileImage;
         if (postJson['businesses'] != null &&
             postJson['businesses']['image_url'] != null) {
-          // Use the URL directly from the database without any manipulation
           businessProfileImage = postJson['businesses']['image_url'];
           debugPrint('Using business profile image URL: $businessProfileImage');
         }
@@ -161,13 +154,11 @@ class BusinessPostService {
 
   Future<List<BusinessPostModel>> fetchAllBusinessPosts() async {
     try {
-      // Debug the table structure first - change 'businesses' to 'business'
       final businessTableInfo =
           await _supabase.from('business').select('*').limit(1);
 
       debugPrint('Business table structure: $businessTableInfo');
 
-      // Update the query with correct table name
       final response = await _supabase.from('business_posts').select('''
             *,
             business!business_id(
@@ -182,31 +173,25 @@ class BusinessPostService {
 
       debugPrint('Raw business posts response: ${response.length} posts');
 
-      // Get current user email for checking if post is liked
       final currentUserEmail = _supabase.auth.currentUser?.email;
 
-      // Process the response
-      // In the fetchAllBusinessPosts method, update how we map the business data
+      
       
       return (response as List).map((post) {
-      // Extract business data - handle null case properly
       final businessData = post['business'] ?? {};
       
       debugPrint('Business data: $businessData');
       
-      // Explicitly check the verification status
       final isVerified = businessData['is_verified'] == true;
-      debugPrint('Is business verified (explicit check in service): $isVerified');
+      debugPrint('Is business verified : $isVerified');
 
         // Count likes and check if current user liked the post
         final likes = post['business_post_likes'] as List? ?? [];
         final isLikedByCurrentUser = currentUserEmail != null &&
             likes.any((like) => like['user_email'] == currentUserEmail);
 
-        // Count comments
         final comments = post['business_post_comments'] as List? ?? [];
 
-        // Parse interests
         List<String> interests = [];
         if (post['interests'] != null) {
           if (post['interests'] is String) {
@@ -259,7 +244,6 @@ class BusinessPostService {
     List<InterestModel>? interests,
   }) async {
     try {
-      // Validate inputs
       if (postId <= 0) {
         throw Exception('Invalid post ID');
       }
@@ -267,10 +251,8 @@ class BusinessPostService {
         throw Exception('User email cannot be empty');
       }
 
-      // Prepare the update data
       final updateData = <String, dynamic>{};
 
-      // Add fields to update if they are not null
       if (title != null && title.isNotEmpty) {
         updateData['title'] = title;
       }
@@ -293,7 +275,6 @@ class BusinessPostService {
         }
       }
 
-      // Verify the post belongs to the user
       final existingPost = await _supabase
           .from('business_posts')
           .select()
@@ -306,7 +287,6 @@ class BusinessPostService {
             'Post not found or you do not have permission to update');
       }
 
-      // Perform the update
       final response = await _supabase
           .from('business_posts')
           .update(updateData)
@@ -326,7 +306,6 @@ class BusinessPostService {
     required String userEmail,
   }) async {
     try {
-      // Validate inputs
       if (postId <= 0) {
         throw Exception('Invalid post ID');
       }
@@ -334,7 +313,6 @@ class BusinessPostService {
         throw Exception('User email cannot be empty');
       }
 
-      // Verify the post belongs to the user before deleting
       final existingPost = await _supabase
           .from('business_posts')
           .select()
@@ -347,7 +325,6 @@ class BusinessPostService {
             'Post not found or you do not have permission to delete');
       }
 
-      // Delete the post
       await _supabase.from('business_posts').delete().eq('id', postId);
     } catch (e) {
       debugPrint('Error deleting business post: $e');
@@ -356,12 +333,10 @@ class BusinessPostService {
   }
 }
 
-// Keep the existing provider
 final businessPostServiceProvider = Provider<BusinessPostService>((ref) {
   return BusinessPostService();
 });
 
-// Add the missing provider for all business posts
 final allBusinessPostsProvider =
     FutureProvider<List<BusinessPostModel>>((ref) async {
   final businessPostService = ref.read(businessPostServiceProvider);

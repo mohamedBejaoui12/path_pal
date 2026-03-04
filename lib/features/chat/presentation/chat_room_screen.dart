@@ -176,7 +176,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                     color: Colors.white,
                   ),
                 ),
-                Text(
+                 Text(
                   'Online',
                   style: TextStyle(
                     fontSize: 12,

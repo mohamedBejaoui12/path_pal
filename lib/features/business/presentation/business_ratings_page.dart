@@ -32,7 +32,6 @@ class BusinessRatingsPage extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // Average Rating Card
           Card(
             margin: const EdgeInsets.all(16),
             child: Padding(
@@ -165,14 +164,12 @@ class BusinessRatingsPage extends ConsumerWidget {
           children: [
             Row(
               children: [
-                // Replace CircleAvatar with proper user profile image handling
                 rating.userProfileImage != null &&
                         rating.userProfileImage!.isNotEmpty
                     ? CircleAvatar(
                         backgroundImage: NetworkImage(rating.userProfileImage!),
                         radius: 20,
                         onBackgroundImageError: (_, __) {
-                          // Fallback to initial if image fails to load
                           return;
                         },
                       )
@@ -233,7 +230,6 @@ class BusinessRatingsPage extends ConsumerWidget {
     );
   }
 
-  // Update this method to handle nullable DateTime
   String _formatDate(DateTime? date) {
     if (date == null) {
       return 'Unknown date';
@@ -255,7 +251,6 @@ class BusinessRatingsPage extends ConsumerWidget {
       ),
     ).then((result) {
       if (result == true) {
-        // Refresh ratings if a new rating was submitted
         ref.invalidate(businessRatingsProvider(businessId));
         ref.invalidate(businessAverageRatingProvider(businessId));
 

@@ -13,8 +13,8 @@ class VocabularyService {
     required String originalWord,
     required String translation,
     String? notes,
-    String languageFrom = 'en',
-    String languageTo = 'fr',
+    String languageFrom = 'ar',
+    String languageTo = 'en',
   }) async {
     try {
       final response = await _supabase.from(_tableName).insert({

@@ -34,7 +34,6 @@ class BusinessPostInteractionNotifier extends StateNotifier<bool> {
     if (userEmail == null) return;
 
     try {
-      // Check if user has already liked the post
       final likeResponse = await _supabase
           .from('business_post_likes')
           .select()
@@ -43,7 +42,6 @@ class BusinessPostInteractionNotifier extends StateNotifier<bool> {
           .maybeSingle();
 
       if (likeResponse == null) {
-        // Add like
         await _supabase
             .from('business_post_likes')
             .insert({
@@ -51,7 +49,6 @@ class BusinessPostInteractionNotifier extends StateNotifier<bool> {
           'user_email': userEmail,
         });
       } else {
-        // Remove like
         await _supabase
             .from('business_post_likes')
             .delete()
@@ -59,7 +56,6 @@ class BusinessPostInteractionNotifier extends StateNotifier<bool> {
             .eq('user_email', userEmail);
       }
 
-      // Invalidate the posts provider to refresh the data
       ref.invalidate(businessPostsProvider);
     } catch (e) {
       debugPrint('Error toggling like: $e');
@@ -67,30 +63,25 @@ class BusinessPostInteractionNotifier extends StateNotifier<bool> {
   }
 }
 
-// New provider to fetch business posts
 final businessPostsProvider = FutureProvider.family<List<BusinessPostModel>, int>((ref, businessId) async {
   final supabase = Supabase.instance.client;
   final authState = ref.read(authProvider);
   final userEmail = authState.user?.email;
 
   try {
-    // First, fetch the business posts
     final postsResponse = await supabase
         .from('business_posts')
         .select('*')
         .eq('business_id', businessId)
         .order('created_at', ascending: false);
     
-    // Convert to BusinessPostModel and enrich with likes information
     final enrichedPosts = await Future.wait(
       postsResponse.map<Future<BusinessPostModel>>((json) async {
-        // Fetch likes count for this post
         final likesResponse = await supabase
             .from('business_post_likes')
             .select('*')
             .eq('post_id', json['id']);
         
-        // Check if current user has liked the post
         final userLikeResponse = userEmail != null
           ? await supabase
               .from('business_post_likes')
@@ -100,7 +91,6 @@ final businessPostsProvider = FutureProvider.family<List<BusinessPostModel>, int
               .maybeSingle()
           : null;
 
-        // Create the business post model
         final businessPost = BusinessPostModel.fromJson(json);
         
         return businessPost.copyWith(
@@ -134,7 +124,6 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> w
       GlobalKey<RefreshIndicatorState>();
 
   Future<void> _refreshPosts() async {
-    // Invalidate both business details and posts
     ref.invalidate(businessDetailsProvider(widget.businessId));
     ref.invalidate(businessPostsProvider(widget.businessId));
   }

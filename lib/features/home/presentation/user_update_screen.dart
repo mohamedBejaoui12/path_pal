@@ -19,14 +19,14 @@ class UserUpdateScreen extends ConsumerStatefulWidget {
 
 class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   late TextEditingController _nameController;
   late TextEditingController _familyNameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   late TextEditingController _cityController;
   late TextEditingController _descriptionController;
-  
+
   late DateTime _dateOfBirth;
   late Gender _selectedGender;
 
@@ -35,7 +35,7 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
     super.initState();
     _initializeControllers();
     _setDefaultValues();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchAndPopulateUserDetails();
     });
@@ -57,16 +57,17 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
 
   void _fetchAndPopulateUserDetails() {
     final authState = ref.read(authProvider);
-    
+
     if (authState.user?.email != null) {
-      ref.read(userDetailsProvider.notifier)
-        .fetchUserDetails(authState.user!.email)
-        .then((_) {
-          final userDetailsState = ref.read(userDetailsProvider);
-          if (userDetailsState.userDetails != null) {
-            _updateControllersWithUserDetails(userDetailsState.userDetails!);
-          }
-        });
+      ref
+          .read(userDetailsProvider.notifier)
+          .fetchUserDetails(authState.user!.email)
+          .then((_) {
+        final userDetailsState = ref.read(userDetailsProvider);
+        if (userDetailsState.userDetails != null) {
+          _updateControllersWithUserDetails(userDetailsState.userDetails!);
+        }
+      });
     }
   }
 
@@ -88,16 +89,18 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
     final authState = ref.read(authProvider);
 
     if (authState.user?.email == null) {
-      _showSnackBar('Unable to upload image: No user email found', isError: true);
+      _showSnackBar('Unable to upload image: No user email found',
+          isError: true);
       return;
     }
 
     try {
-      final imageUrl = await userDetailsNotifier.uploadProfileImage(authState.user!.email!);
-      
+      final imageUrl =
+          await userDetailsNotifier.uploadProfileImage(authState.user!.email!);
+
       if (imageUrl != null) {
         _showSnackBar('Profile image updated successfully');
-        
+
         // Refresh user details to show new image
         await userDetailsNotifier.fetchUserDetails(authState.user!.email);
       } else {
@@ -111,9 +114,10 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
       final authState = ref.read(authProvider);
-      
+
       if (authState.user?.email == null) {
-        _showSnackBar('Unable to save profile: No user email found', isError: true);
+        _showSnackBar('Unable to save profile: No user email found',
+            isError: true);
         return;
       }
 
@@ -125,20 +129,20 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
         phoneNumber: _phoneController.text.trim(),
         cityOfBirth: _cityController.text.trim(),
         gender: _selectedGender,
-        description: _descriptionController.text.trim().isEmpty 
-          ? null 
-          : _descriptionController.text.trim(),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
       );
 
-      ref.read(userDetailsProvider.notifier)
-        .updateUserDetails(userDetails)
-        .then((_) {
-          _showSnackBar('Profile updated successfully');
-          context.pop(); // Return to previous screen
-        })
-        .catchError((error) {
-          _showSnackBar('Failed to update profile: $error', isError: true);
-        });
+      ref
+          .read(userDetailsProvider.notifier)
+          .updateUserDetails(userDetails)
+          .then((_) {
+        _showSnackBar('Profile updated successfully');
+        context.pop(); // Return to previous screen
+      }).catchError((error) {
+        _showSnackBar('Failed to update profile: $error', isError: true);
+      });
     }
   }
 
@@ -193,7 +197,8 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
     );
   }
 
-  SliverAppBar _buildProfileHeader(UserDetailsModel? userDetails, bool isDarkMode) {
+  SliverAppBar _buildProfileHeader(
+      UserDetailsModel? userDetails, bool isDarkMode) {
     return SliverAppBar(
       expandedHeight: 250,
       floating: false,
@@ -209,7 +214,7 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
               color: Colors.black.withOpacity(0.5),
               colorBlendMode: BlendMode.darken,
             ),
-            
+
             // Profile Image with Upload Button
             Positioned(
               bottom: 16,
@@ -239,13 +244,14 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
                               width: 112,
                               height: 112,
                               fit: BoxFit.cover,
-                              placeholder: (context, url) => 
-                                const CircularProgressIndicator(),
-                              errorWidget: (context, url, error) => 
-                                const Icon(Icons.person, size: 56),
+                              placeholder: (context, url) =>
+                                  const CircularProgressIndicator(),
+                              errorWidget: (context, url, error) =>
+                                  const Icon(Icons.person, size: 56),
                             ),
                           )
-                        : const Icon(Icons.person, size: 56, color: Colors.grey),
+                        : const Icon(Icons.person,
+                            size: 56, color: Colors.grey),
                   ),
                 ),
               ),
@@ -256,10 +262,11 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
     );
   }
 
-  Widget _buildProfileContent(UserDetailsState userDetailsState, bool isDarkMode) {
+  Widget _buildProfileContent(
+      UserDetailsState userDetailsState, bool isDarkMode) {
     return userDetailsState.isLoading
-      ? const Center(child: CircularProgressIndicator())
-      : _buildProfileForm(isDarkMode);
+        ? const Center(child: CircularProgressIndicator())
+        : _buildProfileForm(isDarkMode);
   }
 
   Widget _buildProfileForm(bool isDarkMode) {
@@ -278,9 +285,8 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
                     controller: _nameController,
                     label: 'First Name',
                     icon: Icons.person_outline,
-                    validator: (value) => 
-                      value == null || value.trim().isEmpty 
-                        ? 'First name is required' 
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'First name is required'
                         : null,
                   ),
                 ),
@@ -290,9 +296,8 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
                     controller: _familyNameController,
                     label: 'Last Name',
                     icon: Icons.family_restroom_outlined,
-                    validator: (value) => 
-                      value == null || value.trim().isEmpty 
-                        ? 'Last name is required' 
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Last name is required'
                         : null,
                   ),
                 ),
@@ -437,7 +442,8 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
       decoration: InputDecoration(
         labelText: 'About You (Optional)',
         hintText: 'Share something about yourself...',
-        prefixIcon: Icon(Icons.description_outlined, color: AppColors.primaryColor),
+        prefixIcon:
+            Icon(Icons.description_outlined, color: AppColors.primaryColor),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -467,7 +473,8 @@ class _UserUpdateScreenState extends ConsumerState<UserUpdateScreen> {
 
   String? _validatePhoneNumber(String? value) {
     if (value != null && value.isNotEmpty) {
-      final phoneRegex = RegExp(r'^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$');
+      final phoneRegex =
+          RegExp(r'^[+]?[(]?[0-9]{2,3}[)]?[-\s.]?[0-9]{2,3}[-\s.]?[0-9]{2,4}$');
       if (!phoneRegex.hasMatch(value)) {
         return 'Invalid phone number format';
       }

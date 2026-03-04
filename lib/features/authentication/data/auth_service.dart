@@ -2,19 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
-  final _supabase = Supabase.instance.client; // Supabase client initialization
+  final _supabase = Supabase.instance.client; 
 
   Future<Session?> initializeSession() async {
     try {
-      // Attempt to restore the session
       final session = _supabase.auth.currentSession;
 
       if (session != null) {
-        // Check if the session is still valid
         if (_isSessionValid(session)) {
           debugPrint('Existing session recovered successfully');
           
-          // Attempt to refresh the session to extend its validity
           try {
             final refreshedSession = await _supabase.auth.refreshSession();
             debugPrint('Session refreshed successfully');
@@ -37,15 +34,12 @@ class AuthService {
     }
   }
 
-  // Enhanced session validation
   bool _isSessionValid(Session session) {
-    // Check if access token is not empty
     if (session.accessToken.isEmpty) {
       debugPrint('Session invalid: Empty access token');
       return false;
     }
 
-    // Check session expiration with more robust handling
     final expiresAt = session.expiresAt;
     if (expiresAt != null) {
       final now = DateTime.now().toUtc();
@@ -54,7 +48,6 @@ class AuthService {
         isUtc: true,
       );
       
-      // Allow a small buffer before expiration (5 minutes)
       final bufferTime = expirationTime.subtract(Duration(minutes: 30));
       
       if (now.isAfter(bufferTime)) {
@@ -66,7 +59,6 @@ class AuthService {
     return true;
   }
 
-  // Method to check and maintain session
   Future<bool> maintainSession() async {
     final session = await initializeSession();
     return session != null;
@@ -109,7 +101,6 @@ class AuthService {
     }
   }
 
-  // Centralized error handling method
   void _handleAuthException(AuthException e, String context) {
     switch (e.message) {
       case 'User already exists':
@@ -161,7 +152,6 @@ class AuthService {
 
   Future<bool> checkEmailAvailability(String email) async {
     try {
-      // Attempt to sign up with the email to check availability
       final response = await _supabase.auth.signUp(
         email: email,
         password: _generateTemporaryPassword(),
@@ -170,7 +160,7 @@ class AuthService {
       return true; // Email is available
     } on AuthException catch (e) {
       if (e.message.contains('User already exists')) {
-        return false; // Email is already in use
+        return false;
       }
       debugPrint('Email availability check error: $e');
       return false;
@@ -180,9 +170,7 @@ class AuthService {
     }
   }
 
-  // Generate a secure temporary password for email availability check
   String _generateTemporaryPassword() {
-    // Generate a random, secure temporary password
     return DateTime.now().millisecondsSinceEpoch.toString();
   }
 }
